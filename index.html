@@ -310,6 +310,10 @@
     // ✅ سلة
     const LS_KEY = "AX_CART_V1";
 
+    // ✅ (حل مشكلة "منتج افتراضي" + تصفير أول مرة بعد تحديث الكود)
+    const CART_VER_KEY = "AX_CART_SCHEMA_VER";
+    const CART_SCHEMA_VER = "2"; // لو غيرتها لاحقًا هتتصفّر مرة واحدة
+
     // ✅ كاش المنتجات (لتسريع الفتح والريفريش)
     const PROD_CACHE_KEY = "AX_PRODUCTS_CACHE_V1";
     const PROD_CACHE_TS  = "AX_PRODUCTS_CACHE_TS_V1";
@@ -344,16 +348,43 @@
       return "st-available";
     }
 
-    // ✅ WebP images by SKU: images/ITM01.webp
+    // ✅ صور WebP داخل المشروع: images/ITM01.webp
+    // ولو الـ API بعت image حقيقي (مش placeholder) هنستخدمه.
     function resolveImage(p){
+      const apiImg = (p && p.image) ? String(p.image).trim() : "";
+      if(apiImg && apiImg !== "images/placeholder.jpg" && apiImg !== "placeholder.jpg"){
+        return apiImg; // لو حطيت روابط ويب لاحقًا من الشيت
+      }
       return `images/${p.id}.webp`;
+    }
+
+    // ✅ تصفير مرة واحدة بعد تحديث الكود (لو كان في LocalStorage بيانات قديمة/تجربة)
+    function initCartSchema(){
+      const v = localStorage.getItem(CART_VER_KEY);
+      if(v !== CART_SCHEMA_VER){
+        localStorage.setItem(CART_VER_KEY, CART_SCHEMA_VER);
+        localStorage.setItem(LS_KEY, JSON.stringify([])); // أول مرة: السلة فاضية
+      } else {
+        // تأكد من سلامة شكل السلة
+        try{
+          const raw = localStorage.getItem(LS_KEY);
+          const arr = raw ? JSON.parse(raw) : [];
+          const ok = Array.isArray(arr) && arr.every(x => x && typeof x.id === "string" && Number(x.qty) > 0);
+          if(!ok) localStorage.setItem(LS_KEY, JSON.stringify([]));
+        }catch(e){
+          localStorage.setItem(LS_KEY, JSON.stringify([]));
+        }
+      }
     }
 
     function getCart(){
       try{
         const raw = localStorage.getItem(LS_KEY);
-        return raw ? JSON.parse(raw) : [];
-      }catch(e){ return []; }
+        const arr = raw ? JSON.parse(raw) : [];
+        return Array.isArray(arr) ? arr : [];
+      }catch(e){
+        return [];
+      }
     }
     function setCart(items){
       localStorage.setItem(LS_KEY, JSON.stringify(items));
@@ -441,6 +472,7 @@
         const img = document.createElement("img");
         img.className = "thumb";
         img.loading = "lazy";
+        img.decoding = "async";
         img.src = resolveImage(p);
         img.onerror = ()=> img.src = IMG_PLACEHOLDER;
 
@@ -527,7 +559,7 @@
 
         card.innerHTML = `
           <div class="media">
-            <img src="${imgSrc}" alt="${p.name}" loading="lazy"
+            <img src="${imgSrc}" alt="${p.name}" loading="lazy" decoding="async"
               onerror="this.onerror=null;this.src='${IMG_PLACEHOLDER}'"/>
             <div class="chip">${p.category}</div>
           </div>
@@ -599,10 +631,19 @@
       return Array.isArray(data) ? data : [];
     }
 
+    function listFingerprint(list){
+      // بصمة سريعة بدل JSON.stringify الكبير
+      // (id|availability|name) لأول 200 عنصر (أكثر من كفاية)
+      return list.slice(0,200).map(p => `${p.id}|${p.availability}|${p.name}`).join("~");
+    }
+
     async function hydrateProducts(){
-      // 1) اعرض من الكاش فورًا
+      // 1) عرض سريع من الكاش
       const cached = loadProductsFromCache();
-      if(cached && cached.list.length){
+      const now = Date.now();
+      const hasCache = cached && cached.list && cached.list.length;
+
+      if(hasCache){
         products = cached.list;
         renderCats();
         renderCatalog();
@@ -611,26 +652,37 @@
         renderSkeleton(12);
       }
 
-      // 2) حدّث من الـ API في الخلفية
-      try{
-        const freshList = await fetchProductsFromApi();
+      // 2) تحديث من الـ API:
+      // - لو الكاش "طازة" (داخل TTL) هنأخر التحديث ثواني عشان الإحساس يبقى أسرع.
+      // - لو قديم/مفيش كاش هنجيب فورًا.
+      const cacheFresh = hasCache && (now - cached.ts) < CACHE_TTL_MS;
+      const doFetch = async () => {
+        try{
+          const freshList = await fetchProductsFromApi();
 
-        const changed = JSON.stringify(freshList) !== JSON.stringify(products);
-        products = freshList;
-        saveProductsCache(freshList);
+          const changed = !hasCache || (listFingerprint(freshList) !== listFingerprint(products));
+          products = freshList;
+          saveProductsCache(freshList);
 
-        if(!cached || changed){
-          renderCats();
-          renderCatalog();
+          if(changed){
+            renderCats();
+            renderCatalog();
+          }
+          updateCartBadge();
+        }catch(err){
+          console.error(err);
+          if(!hasCache){
+            elGrid.innerHTML = `<div class="empty">حصل خطأ في تحميل المنتجات. تأكد من رابط الـ API والنشر.</div>`;
+          } else {
+            showToast("⚠️ تم عرض آخر نسخة محفوظة من المنتجات.");
+          }
         }
-        updateCartBadge();
-      }catch(err){
-        console.error(err);
-        if(!cached){
-          elGrid.innerHTML = `<div class="empty">حصل خطأ في تحميل المنتجات. تأكد من رابط الـ API والنشر.</div>`;
-        } else {
-          showToast("⚠️ تم عرض آخر نسخة محفوظة من المنتجات.");
-        }
+      };
+
+      if(cacheFresh){
+        setTimeout(doFetch, 2500); // تحديث هادي بعد ما الصفحة تفتح بسرعة
+      } else {
+        await doFetch();
       }
     }
 
@@ -650,7 +702,8 @@
     });
 
     // Init
-    hydrateProducts();
+    initCartSchema();     // ✅ مهم جدًا (يحل موضوع المنتج الافتراضي/البيانات القديمة)
+    hydrateProducts();    // ✅ كاش سريع + تحديث في الخلفية
     updateCartBadge();
 
     // ⭐ تحديث خفيف كل 3 دقائق (اختياري)
