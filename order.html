@@ -126,7 +126,16 @@
       font-weight:900;border:1px solid var(--stroke);
       background:rgba(255,255,255,.06);color:var(--text);
       flex:1;
+      transition: opacity .15s ease, transform .15s ease;
     }
+    button:active{transform: translateY(1px)}
+    button:disabled{
+      opacity:.45;
+      cursor:not-allowed;
+      transform:none;
+      filter:saturate(.85);
+    }
+
     .primary{
       border-color:rgba(96,165,250,.45);
       background:linear-gradient(135deg, rgba(96,165,250,.30), rgba(167,139,250,.18));
@@ -187,7 +196,7 @@
     <input id="address" placeholder="المحافظة / المنطقة / تفاصيل" />
 
     <div class="btns">
-      <button class="primary" id="sendOrder">إرسال الطلب (واتساب + إيميل)</button>
+      <button class="primary" id="sendOrder">إرسال الطلب (واتساب)</button>
       <button id="clear">تفريغ السلة</button>
     </div>
 
@@ -198,7 +207,6 @@
 <script>
   /* ====== بياناتك ====== */
   const OWNER_WA = "201146476993";
-  const OWNER_EMAIL = "axentroofficial@gmail.com";
 
   /* ====== نفس API بتاع Google Sheets ====== */
   const API_URL = "https://script.google.com/macros/s/AKfycbwsPPw3UiW6TBngBcbFxY4E8rB7JYgK1W2LRn0WaS9C7OitA1FgZ1vAz9Qr1u_ojlZ8/exec";
@@ -207,6 +215,7 @@
   const cartBox = document.getElementById("cartBox");
   const note = document.getElementById("note");
   const ok = document.getElementById("ok");
+  const sendBtn = document.getElementById("sendOrder");
 
   // ✅ المنتجات هتتحمل من الشيت
   let products = [];
@@ -235,8 +244,16 @@
       return raw ? JSON.parse(raw) : [];
     }catch(e){ return []; }
   }
+
   function setCart(items){
     localStorage.setItem(LS_KEY, JSON.stringify(items));
+  }
+
+  // ✅ مهم: أول مرة فقط لو مفيش سلة محفوظة → نخليها فاضية
+  function ensureCartInitialized(){
+    if(localStorage.getItem(LS_KEY) === null){
+      setCart([]);
+    }
   }
 
   function setQty(pid, qty){
@@ -269,7 +286,6 @@
     cart.forEach(it=>{
       const p = findProduct(it.id);
 
-      // لو المنتج مش موجود في الشيت (اتمسح أو اتغير ID)
       const safe = p || {
         id: it.id,
         name: "منتج غير متاح (تم تحديث الكتالوج)",
@@ -328,46 +344,124 @@
     });
   }
 
+  /* ====== رقم طلب ====== */
+  function generateOrderId(){
+    const d = new Date();
+    const y = d.getFullYear();
+    const m = String(d.getMonth()+1).padStart(2,"0");
+    const day = String(d.getDate()).padStart(2,"0");
+    const rnd = Math.floor(100 + Math.random()*900);
+    return `AX-${y}${m}${day}-${rnd}`;
+  }
+
+  function getStableOrderId(){
+    let id = sessionStorage.getItem("AX_ORDER_ID");
+    if(!id){
+      id = generateOrderId();
+      sessionStorage.setItem("AX_ORDER_ID", id);
+    }
+    return id;
+  }
+
+  /* ====== تحقق ====== */
   function validate(){
     const cart = getCart();
     if(!cart.length) return "السلة فارغة.";
-    const phone = (document.getElementById("phone").value||"").trim();
-    if(!phone) return "ادخل رقم الموبايل.";
-    return "";
-  }
 
-  function buildMsg(){
-    const cart = getCart();
-    const t = getType();
     const name = (document.getElementById("name").value||"").trim();
     const phone = (document.getElementById("phone").value||"").trim();
     const address = (document.getElementById("address").value||"").trim();
 
+    if(!name) return "ادخل الاسم.";
+    if(!phone) return "ادخل رقم الموبايل.";
+    if(!address) return "ادخل العنوان.";
+
+    const p = phone.replace(/\s+/g,"");
+    const okPhone = /^01\d{9}$/.test(p) || /^(\+?20)1\d{9}$/.test(p);
+    if(!okPhone) return "رقم الموبايل غير صحيح. مثال: 01xxxxxxxxx";
+
+    const hasOut = cart.some(it=>{
+      const pr = findProduct(it.id);
+      return pr && pr.availability === "Out of stock";
+    });
+    if(hasOut) return "فيه صنف غير متاح (Out of stock) داخل السلة. احذفه الأول.";
+
+    return "";
+  }
+
+  /* ====== فاتورة واتساب قوية ====== */
+  function buildMsg(){
+    const cart = getCart();
+    const orderId = getStableOrderId();
+    const type = getType();
+
+    const name = (document.getElementById("name").value||"").trim();
+    const phone = (document.getElementById("phone").value||"").trim();
+    const address = (document.getElementById("address").value||"").trim();
+
+    const now = new Date();
+    const dt = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}-${String(now.getDate()).padStart(2,"0")}  ${String(now.getHours()).padStart(2,"0")}:${String(now.getMinutes()).padStart(2,"0")}`;
+
+    const line = "━━━━━━━━━━━━━━━━━━━━";
+    const sub  = "────────────────────";
+
+    let totalQty = 0;
+
     const lines = [];
-    lines.push("🧾 طلب جديد");
-    lines.push("");
-    lines.push(`نوع الطلب: ${t}`);
-    lines.push("");
-    lines.push("الأصناف:");
+    lines.push("🧾 *فاتورة طلب*");
+    lines.push(line);
+    lines.push(`🆔 رقم الطلب: *${orderId}*`);
+    lines.push(`🗓️ التاريخ: ${dt}`);
+    lines.push(`🛍️ نوع الطلب: *${type}*`);
+    lines.push(sub);
+    lines.push("📦 *تفاصيل الأصناف:*");
 
     cart.forEach((it, i)=>{
-      const p = findProduct(it.id);
-      const pname = p ? p.name : "منتج غير متاح (تم تحديث الكتالوج)";
-      const pstatus = p ? p.availability : "Unknown";
-      lines.push(`${i+1}) ${pname} (${it.id}) — كمية: ${it.qty} — حالة: ${pstatus}`);
+      const pr = findProduct(it.id);
+      const safe = pr || {
+        id: it.id,
+        name: "منتج غير متاح (تم تحديث الكتالوج)",
+        category: "—",
+        availability: "Unknown"
+      };
+
+      const qty = Number(it.qty)||1;
+      totalQty += qty;
+
+      const statusIcon =
+        safe.availability === "Available" ? "✅" :
+        safe.availability === "Low stock" ? "⚠️" :
+        safe.availability === "Out of stock" ? "⛔" :
+        "❔";
+
+      lines.push(
+        `\n${i+1}) *${safe.name}* ${statusIcon}\n` +
+        `   🧾 كود: ${safe.id}\n` +
+        `   🔢 كمية: *${qty}*\n` +
+        `   📌 حالة: ${safe.availability}\n` +
+        `   🗂️ فئة: ${safe.category}`
+      );
     });
 
-    lines.push("");
-    lines.push("بيانات العميل:");
-    lines.push(`الاسم: ${name || "—"}`);
-    lines.push(`الموبايل: ${phone || "—"}`);
-    lines.push(`العنوان: ${address || "—"}`);
+    lines.push("\n" + sub);
+    lines.push(`📦 *إجمالي القطع:* ${totalQty}`);
+    lines.push(sub);
+    lines.push("👤 *بيانات العميل:*");
+    lines.push(`• الاسم: ${name}`);
+    lines.push(`• الموبايل: ${phone}`);
+    lines.push(`• العنوان: ${address}`);
+    lines.push(line);
+
+    lines.push(
+      type === "جملة"
+      ? "✅ *تم إرسال طلب الجملة.* سيتم مراجعة الطلب وتحديد السعر النهائي والتواصل معكم."
+      : "✅ *تم إرسال الطلب.* سيتم التواصل لتأكيد الطلب وإرسال الفاتورة."
+    );
 
     return lines.join("\n");
   }
 
   async function loadProducts(){
-    // رسالة بسيطة بدل ما الصفحة تبقى فاضية
     cartBox.innerHTML = `<div class="empty">جارٍ تحميل بيانات المنتجات...</div>`;
     try{
       const res = await fetch(API_URL, { cache: "no-store" });
@@ -376,11 +470,9 @@
       const data = await res.json();
       products = Array.isArray(data) ? data : [];
 
-      // بعد التحميل نرسم السلة
       renderCart();
     }catch(err){
       console.error(err);
-      // حتى لو API وقع، نعرض السلة لكن بدون أسماء محدثة
       products = [];
       renderCart();
       note.textContent = "⚠️ ملاحظة: لم يتم تحميل بيانات المنتجات من الشيت الآن، لكن يمكنك إرسال الطلب وسيصل مع الـ IDs والكميات.";
@@ -394,31 +486,45 @@
     setCart([]);
     renderCart();
     ok.style.display="none";
+    sessionStorage.removeItem("AX_ORDER_ID");
   });
 
-  document.getElementById("sendOrder").addEventListener("click", ()=>{
+  sendBtn.addEventListener("click", ()=>{
     const err = validate();
     if(err) return alert(err);
 
+    const oldText = sendBtn.textContent;
+    sendBtn.disabled = true;
+    sendBtn.textContent = "جارٍ فتح واتساب...";
+
     const msg = buildMsg();
 
-    // 1) WhatsApp
     const waUrl = `https://wa.me/${OWNER_WA}?text=${encodeURIComponent(msg)}`;
     window.open(waUrl, "_blank");
-
-    // 2) Email (mailto) بعد 300ms
-    const subject = "طلب جديد من الكتالوج";
-    const mailUrl = `mailto:${encodeURIComponent(OWNER_EMAIL)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(msg)}`;
-    setTimeout(() => { window.location.href = mailUrl; }, 300);
 
     ok.style.display="block";
     ok.textContent =
       (getType()==="جملة")
-      ? "✅ تم استلام طلب الجملة بنجاح. سيتم مراجعة الطلب وتحديد السعر النهائي والتواصل معك."
-      : "✅ تم استلام طلبك بنجاح. سيتم التواصل معك لتأكيد الطلب وإرسال الفاتورة.";
+      ? "✅ تم إرسال طلب الجملة بنجاح. سيتم مراجعة الطلب والتواصل معك."
+      : "✅ تم إرسال الطلب بنجاح. سيتم التواصل لتأكيده وإرسال الفاتورة.";
+
+    // ✅ تفريغ السلة تلقائيًا بعد الإرسال
+    setCart([]);
+    renderCart();
+
+    // ✅ بعد الإرسال: امسح رقم الطلب الثابت
+    sessionStorage.removeItem("AX_ORDER_ID");
+
+    // ✅ رجّع الزرار + ارجع للكتالوج تلقائيًا
+    setTimeout(()=>{
+      sendBtn.disabled = false;
+      sendBtn.textContent = oldText; // "إرسال الطلب (واتساب)"
+      window.location.href = "./";   // ✅ رجوع للكتالوج
+    }, 1200);
   });
 
   // Init
+  ensureCartInitialized(); // ✅ مهم للسلة الفاضية أول مرة
   loadProducts();
 </script>
 </body>
