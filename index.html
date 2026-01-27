@@ -7,15 +7,12 @@
 
   <style>
     :root{
-      --bg1:#0b1020;
-      --bg2:#0f172a;
-      --stroke:#ffffff1a;
-      --text:#e5e7eb;
-      --muted:#94a3b8;
+      --bg1:#0b1020; --bg2:#0f172a;
+      --stroke:#ffffff1a; --text:#e5e7eb; --muted:#94a3b8;
       --shadow: 0 18px 50px rgba(0,0,0,.45);
       --radius:18px;
-      --accent:#60a5fa;
-      --accent2:#a78bfa;
+      --accent:#60a5fa; --accent2:#a78bfa;
+      --ok:#22c55e; --warn:#facc15; --bad:#ef4444;
     }
     *{box-sizing:border-box}
     body{
@@ -30,10 +27,10 @@
     }
     a{color:inherit;text-decoration:none}
     .topbar{
-      position:sticky; top:0; z-index:5;
-      display:flex; gap:14px; align-items:center; justify-content:space-between;
-      padding:14px 18px;
-      background: linear-gradient(180deg, rgba(15,23,42,.85), rgba(15,23,42,.55));
+      position:sticky; top:0; z-index:10;
+      display:flex; gap:12px; align-items:center; justify-content:space-between;
+      padding:14px 16px;
+      background: linear-gradient(180deg, rgba(15,23,42,.88), rgba(15,23,42,.55));
       border-bottom:1px solid var(--stroke);
       backdrop-filter: blur(12px);
     }
@@ -48,9 +45,9 @@
     }
     .brand-title{font-size:16px;font-weight:900}
     .brand-sub{font-size:12px;color:var(--muted)}
-    .actions{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
+    .actions{display:flex; gap:10px; align-items:center; flex-wrap:wrap; justify-content:flex-end}
     .input{
-      width:260px; max-width:85vw;
+      width:220px; max-width:85vw;
       padding:12px 12px;
       border-radius:14px;
       border:1px solid var(--stroke);
@@ -60,11 +57,30 @@
     }
     .input::placeholder{color:#9ca3af}
 
-    .container{max-width:1100px; margin:22px auto; padding:0 16px}
+    .cartBtn{
+      display:flex; align-items:center; gap:10px;
+      padding:11px 12px;
+      border-radius:14px;
+      border:1px solid rgba(96,165,250,.35);
+      background: linear-gradient(135deg, rgba(96,165,250,.20), rgba(167,139,250,.12));
+      font-weight:900; cursor:pointer;
+      user-select:none;
+    }
+    .badge{
+      min-width:26px; height:22px;
+      padding:0 8px;
+      border-radius:999px;
+      display:grid; place-items:center;
+      border:1px solid var(--stroke);
+      background: rgba(0,0,0,.25);
+      font-size:12px;
+    }
+
+    .container{max-width:1100px; margin:18px auto; padding:0 16px}
     .grid{
       display:grid;
-      grid-template-columns: repeat( auto-fill, minmax(230px, 1fr) );
-      gap:14px;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap:12px;
     }
     .card{
       border-radius: var(--radius);
@@ -74,58 +90,164 @@
       box-shadow: var(--shadow);
       transition: transform .18s ease, border-color .18s ease;
     }
-    .card:hover{transform: translateY(-3px); border-color: rgba(96,165,250,.45)}
-    .media{position:relative; height:175px; background: rgba(255,255,255,.03)}
+    .card:hover{transform: translateY(-2px); border-color: rgba(96,165,250,.45)}
+    .media{position:relative; height:120px; background: rgba(255,255,255,.03)}
     .media img{width:100%; height:100%; object-fit:cover; display:block}
     .chip{
-      position:absolute; bottom:10px; right:10px;
-      padding:6px 10px;
+      position:absolute; bottom:8px; right:8px;
+      padding:5px 9px;
       border-radius:999px;
       background: rgba(15,23,42,.75);
       border:1px solid var(--stroke);
-      font-size:12px;
+      font-size:11px;
     }
-    .body{padding:12px}
-    .title{font-weight:900; font-size:15px}
-    .meta{margin-top:6px; font-size:12px; color:var(--muted); display:flex; gap:10px; flex-wrap:wrap}
+    .body{padding:10px}
+    .title{font-weight:900; font-size:13px; line-height:1.3}
+    .meta{margin-top:6px; font-size:11px; color:var(--muted); display:flex; gap:8px; flex-wrap:wrap; align-items:center}
     .status{
       font-weight:900;
-      padding:4px 8px;
+      padding:3px 7px;
       border-radius:999px;
       border:1px solid var(--stroke);
       background: rgba(255,255,255,.04);
-      font-size:12px;
+      font-size:11px;
     }
-    .st-available{color:#22c55e}
-    .st-low{color:#facc15}
-    .st-out{color:#ef4444}
+    .st-available{color:var(--ok)}
+    .st-low{color:var(--warn)}
+    .st-out{color:var(--bad)}
 
-    .btn{
-      margin-top:10px;
-      display:block;
-      text-align:center;
-      padding:11px 12px;
+    .addBtn{
+      margin-top:9px;
+      width:100%;
+      padding:10px 10px;
       border-radius:14px;
       border:1px solid rgba(96,165,250,.35);
       background: linear-gradient(135deg, rgba(96,165,250,.22), rgba(167,139,250,.15));
-      font-weight:900;
-      font-size:13px;
+      font-weight:900; font-size:12px; cursor:pointer;
+      color:var(--text);
+    }
+    .addBtn:disabled{
+      opacity:.45; cursor:not-allowed;
+      border-color: var(--stroke);
+      background: rgba(255,255,255,.06);
     }
 
-    .footer{
-      padding:18px;
-      text-align:center;
-      color:var(--muted);
+    /* Drawer */
+    .overlay{
+      position:fixed; inset:0;
+      background: rgba(0,0,0,.55);
+      backdrop-filter: blur(4px);
+      display:none;
+      z-index:50;
+    }
+    .drawer{
+      position:fixed; top:0; bottom:0; left:0;
+      width:min(420px, 92vw);
+      background: linear-gradient(180deg, rgba(15,23,42,.95), rgba(2,6,23,.95));
+      border-right:1px solid var(--stroke);
+      box-shadow: var(--shadow);
+      transform: translateX(-110%);
+      transition: transform .2s ease;
+      z-index:60;
+      display:flex; flex-direction:column;
+    }
+    .drawer.open{transform: translateX(0)}
+    .overlay.show{display:block}
+    .dHead{
+      padding:14px 14px;
+      display:flex; justify-content:space-between; align-items:center;
+      border-bottom:1px solid var(--stroke);
+    }
+    .dTitle{font-weight:900}
+    .xBtn{
+      padding:8px 10px; border-radius:12px;
+      border:1px solid var(--stroke); background: rgba(255,255,255,.06);
+      cursor:pointer;
+    }
+    .dBody{padding:12px; overflow:auto; flex:1}
+    .item{
+      border:1px solid var(--stroke);
+      background: rgba(255,255,255,.05);
+      border-radius:16px;
+      padding:10px;
+      display:flex; gap:10px; align-items:center;
+      margin-bottom:10px;
+    }
+    .thumb{
+      width:56px; height:56px; border-radius:14px;
+      border:1px solid var(--stroke);
+      object-fit:cover; background: rgba(255,255,255,.04);
+      flex:0 0 auto;
+    }
+    .iInfo{flex:1; min-width:0}
+    .iName{font-weight:900; font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+    .iMeta{font-size:11px; color:var(--muted); margin-top:3px}
+    .qtyBox{
+      display:flex; align-items:center; gap:6px;
+      flex:0 0 auto;
+    }
+    .qBtn{
+      width:32px; height:32px;
+      border-radius:12px;
+      border:1px solid var(--stroke);
+      background: rgba(255,255,255,.06);
+      color:var(--text);
+      cursor:pointer;
+      font-weight:900;
+    }
+    .qVal{
+      width:40px; text-align:center;
+      border:1px solid var(--stroke);
+      background: rgba(255,255,255,.04);
+      border-radius:12px;
+      padding:7px 6px;
+      font-weight:900; font-size:12px;
+    }
+    .rmBtn{
+      margin-top:6px;
+      font-size:11px;
+      color: #fca5a5;
+      cursor:pointer;
+      user-select:none;
+    }
+    .dFoot{
+      padding:12px;
       border-top:1px solid var(--stroke);
-      background: rgba(15,23,42,.35);
-      margin-top:18px;
+      display:flex; gap:10px; flex-wrap:wrap;
+      background: rgba(255,255,255,.03);
+    }
+    .footBtn{
+      flex:1;
+      padding:12px 12px;
+      border-radius:16px;
+      border:1px solid var(--stroke);
+      background: rgba(255,255,255,.06);
+      color:var(--text);
+      font-weight:900;
+      cursor:pointer;
+      text-align:center;
+    }
+    .primary{
+      border-color: rgba(96,165,250,.45);
+      background: linear-gradient(135deg, rgba(96,165,250,.28), rgba(167,139,250,.18));
     }
     .empty{
-      padding:18px;
+      padding:14px;
       border:1px dashed var(--stroke);
       border-radius: var(--radius);
       color:var(--muted);
       text-align:center;
+    }
+    .toast{
+      position:fixed; bottom:16px; right:16px;
+      padding:10px 12px;
+      border-radius:14px;
+      border:1px solid var(--stroke);
+      background: rgba(15,23,42,.85);
+      box-shadow: var(--shadow);
+      display:none;
+      z-index:80;
+      font-weight:900; font-size:12px;
     }
   </style>
 </head>
@@ -136,7 +258,7 @@
       <div class="logo">AX</div>
       <div>
         <div class="brand-title">كتالوج المنتجات 📦</div>
-        <div class="brand-sub">بدون أسعار — اطلب وسيتم التواصل معك لتأكيد الطلب</div>
+        <div class="brand-sub">بدون أسعار — أضف للسلة ثم أكمل الطلب</div>
       </div>
     </div>
 
@@ -145,6 +267,10 @@
       <select id="cat" class="input">
         <option value="">كل الفئات</option>
       </select>
+      <div id="cartBtn" class="cartBtn" role="button" tabindex="0">
+        🛒 السلة
+        <span id="cartCount" class="badge">0</span>
+      </div>
     </div>
   </header>
 
@@ -152,9 +278,21 @@
     <div id="grid" class="grid"></div>
   </main>
 
-  <footer class="footer">
-    © Axentro — يتم استلام الطلب للمراجعة والتأكيد وإرسال الفاتورة
-  </footer>
+  <!-- Drawer -->
+  <div id="overlay" class="overlay"></div>
+  <aside id="drawer" class="drawer" aria-hidden="true">
+    <div class="dHead">
+      <div class="dTitle">🛒 السلة</div>
+      <button id="closeDrawer" class="xBtn">إغلاق</button>
+    </div>
+    <div class="dBody" id="cartList"></div>
+    <div class="dFoot">
+      <button id="clearCart" class="footBtn">تفريغ السلة</button>
+      <a id="checkout" class="footBtn primary" href="order.html">إتمام الطلب</a>
+    </div>
+  </aside>
+
+  <div id="toast" class="toast"></div>
 
   <script>
     // ✅ ضع JSON منتجاتك هنا (من شيت JSON_Export)
@@ -166,10 +304,22 @@
       {"id":"ITM05","name":"فرشة توزيع سيليكون","category":"مستحضرات تجميل","image":"images/placeholder.jpg","availability":"Low stock"}
     ];
 
+    const LS_KEY = "AX_CART_V1";
+
     const state = { q:"", cat:"" };
     const elGrid = document.getElementById("grid");
     const elQ = document.getElementById("q");
     const elCat = document.getElementById("cat");
+
+    const cartBtn = document.getElementById("cartBtn");
+    const cartCount = document.getElementById("cartCount");
+    const overlay = document.getElementById("overlay");
+    const drawer = document.getElementById("drawer");
+    const closeDrawer = document.getElementById("closeDrawer");
+    const cartList = document.getElementById("cartList");
+    const clearCart = document.getElementById("clearCart");
+    const toast = document.getElementById("toast");
+    const checkout = document.getElementById("checkout");
 
     function norm(s=""){ return String(s).toLowerCase().trim(); }
 
@@ -177,6 +327,150 @@
       if(av === "Low stock") return "st-low";
       if(av === "Out of stock") return "st-out";
       return "st-available";
+    }
+
+    function getCart(){
+      try{
+        const raw = localStorage.getItem(LS_KEY);
+        return raw ? JSON.parse(raw) : [];
+      }catch(e){
+        return [];
+      }
+    }
+
+    function setCart(items){
+      localStorage.setItem(LS_KEY, JSON.stringify(items));
+    }
+
+    function cartTotalCount(){
+      const c = getCart();
+      return c.reduce((sum,it)=>sum + (Number(it.qty)||0), 0);
+    }
+
+    function showToast(msg){
+      toast.textContent = msg;
+      toast.style.display = "block";
+      clearTimeout(showToast._t);
+      showToast._t = setTimeout(()=> toast.style.display="none", 1800);
+    }
+
+    function openDrawer(){
+      overlay.classList.add("show");
+      drawer.classList.add("open");
+      drawer.setAttribute("aria-hidden","false");
+      renderCart();
+    }
+    function closeDrawerFn(){
+      overlay.classList.remove("show");
+      drawer.classList.remove("open");
+      drawer.setAttribute("aria-hidden","true");
+    }
+
+    function addToCart(pid){
+      const p = products.find(x=>x.id===pid);
+      if(!p) return;
+      if(p.availability === "Out of stock"){
+        showToast("هذا المنتج غير متاح حاليًا.");
+        return;
+      }
+      const cart = getCart();
+      const idx = cart.findIndex(x=>x.id===pid);
+      if(idx >= 0){
+        cart[idx].qty = (Number(cart[idx].qty)||0) + 1;
+      } else {
+        cart.push({ id: pid, qty: 1 });
+      }
+      setCart(cart);
+      updateCartBadge();
+      showToast("تمت الإضافة للسلة ✅");
+    }
+
+    function setQty(pid, qty){
+      const cart = getCart();
+      const idx = cart.findIndex(x=>x.id===pid);
+      if(idx < 0) return;
+      const q = Math.max(1, Number(qty)||1);
+      cart[idx].qty = q;
+      setCart(cart);
+      updateCartBadge();
+      renderCart();
+    }
+
+    function removeItem(pid){
+      const cart = getCart().filter(x=>x.id!==pid);
+      setCart(cart);
+      updateCartBadge();
+      renderCart();
+    }
+
+    function renderCart(){
+      const cart = getCart();
+      cartList.innerHTML = "";
+      checkout.style.pointerEvents = cart.length ? "auto" : "none";
+      checkout.style.opacity = cart.length ? "1" : ".45";
+
+      if(cart.length === 0){
+        cartList.innerHTML = `<div class="empty">السلة فارغة. أضف منتجات من الكتالوج.</div>`;
+        return;
+      }
+
+      cart.forEach(it=>{
+        const p = products.find(x=>x.id===it.id);
+        if(!p) return;
+        const row = document.createElement("div");
+        row.className = "item";
+
+        const img = document.createElement("img");
+        img.className = "thumb";
+        img.src = p.image || "https://via.placeholder.com/300x200?text=No+Image";
+        img.onerror = ()=> img.src = "https://via.placeholder.com/300x200?text=No+Image";
+
+        const info = document.createElement("div");
+        info.className = "iInfo";
+        info.innerHTML = `
+          <div class="iName">${p.name}</div>
+          <div class="iMeta">${p.category} • <span class="${statusClass(p.availability)}" style="font-weight:900">${p.availability}</span> • ${p.id}</div>
+          <div class="rmBtn" data-rm="${p.id}">حذف من السلة</div>
+        `;
+
+        const qtyBox = document.createElement("div");
+        qtyBox.className = "qtyBox";
+        qtyBox.innerHTML = `
+          <button class="qBtn" data-minus="${p.id}">−</button>
+          <div class="qVal">${Number(it.qty)||1}</div>
+          <button class="qBtn" data-plus="${p.id}">+</button>
+        `;
+
+        row.appendChild(img);
+        row.appendChild(info);
+        row.appendChild(qtyBox);
+        cartList.appendChild(row);
+      });
+
+      // Handlers
+      cartList.querySelectorAll("[data-plus]").forEach(b=>{
+        b.onclick = ()=> {
+          const id = b.getAttribute("data-plus");
+          const cart = getCart();
+          const it = cart.find(x=>x.id===id);
+          setQty(id, (Number(it?.qty)||1) + 1);
+        };
+      });
+      cartList.querySelectorAll("[data-minus]").forEach(b=>{
+        b.onclick = ()=> {
+          const id = b.getAttribute("data-minus");
+          const cart = getCart();
+          const it = cart.find(x=>x.id===id);
+          setQty(id, Math.max(1, (Number(it?.qty)||1) - 1));
+        };
+      });
+      cartList.querySelectorAll("[data-rm]").forEach(b=>{
+        b.onclick = ()=> removeItem(b.getAttribute("data-rm"));
+      });
+    }
+
+    function updateCartBadge(){
+      cartCount.textContent = String(cartTotalCount());
     }
 
     function renderCats(){
@@ -188,7 +482,7 @@
       });
     }
 
-    function render(){
+    function renderCatalog(){
       const q = norm(state.q);
       const cat = state.cat;
 
@@ -205,11 +499,12 @@
       }
 
       filtered.forEach(p=>{
-        const a = document.createElement("a");
-        a.className = "card";
-        a.href = `order.html?pid=${encodeURIComponent(p.id)}`;
+        const card = document.createElement("div");
+        card.className = "card";
 
-        a.innerHTML = `
+        const disabled = p.availability === "Out of stock";
+
+        card.innerHTML = `
           <div class="media">
             <img src="${p.image}" alt="${p.name}" loading="lazy"
               onerror="this.src='https://via.placeholder.com/600x400?text=No+Image'"/>
@@ -219,20 +514,44 @@
             <div class="title">${p.name}</div>
             <div class="meta">
               <span class="status ${statusClass(p.availability)}">${p.availability}</span>
-              <span style="color:var(--muted);font-size:12px;">${p.id}</span>
+              <span>${p.id}</span>
             </div>
-            <div class="btn">اطلب الآن</div>
+            <button class="addBtn" ${disabled ? "disabled" : ""} data-add="${p.id}">
+              ${disabled ? "غير متاح" : "➕ أضف للسلة"}
+            </button>
           </div>
         `;
-        elGrid.appendChild(a);
+        elGrid.appendChild(card);
+      });
+
+      elGrid.querySelectorAll("[data-add]").forEach(btn=>{
+        btn.addEventListener("click", ()=>{
+          addToCart(btn.getAttribute("data-add"));
+          // تفتح السلة تلقائيًا (اختياري) — سيبها كده عشان الإحساس يبقى أحسن
+          openDrawer();
+        });
       });
     }
 
-    elQ.addEventListener("input", e=>{ state.q = e.target.value; render(); });
-    elCat.addEventListener("change", e=>{ state.cat = e.target.value; render(); });
+    // Events
+    elQ.addEventListener("input", e=>{ state.q = e.target.value; renderCatalog(); });
+    elCat.addEventListener("change", e=>{ state.cat = e.target.value; renderCatalog(); });
 
+    cartBtn.addEventListener("click", openDrawer);
+    closeDrawer.addEventListener("click", closeDrawerFn);
+    overlay.addEventListener("click", closeDrawerFn);
+
+    clearCart.addEventListener("click", ()=>{
+      setCart([]);
+      updateCartBadge();
+      renderCart();
+      showToast("تم تفريغ السلة");
+    });
+
+    // Init
     renderCats();
-    render();
+    renderCatalog();
+    updateCartBadge();
   </script>
 </body>
 </html>
