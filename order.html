@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>إتمام الطلب</title>
+
+  <style>
+    :root{
+      --bg1:#0b1020; --bg2:#0f172a;
+      --stroke:#ffffff1a; --text:#e5e7eb; --muted:#94a3b8;
+      --shadow:0 18px 50px rgba(0,0,0,.45);
+      --radius:18px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: system-ui, -apple-system, "Segoe UI", Tahoma, Arial;
+      color:var(--text);
+      background:
+        radial-gradient(900px 500px at 10% 10%, rgba(96,165,250,.25), transparent 55%),
+        radial-gradient(700px 500px at 90% 20%, rgba(167,139,250,.18), transparent 55%),
+        linear-gradient(180deg, var(--bg1), var(--bg2));
+      padding:18px;
+      min-height:100vh;
+    }
+    a{color:inherit;text-decoration:none}
+    .wrap{max-width:900px;margin:0 auto}
+    .top{
+      display:flex;justify-content:space-between;align-items:center;
+      padding:12px 14px;border:1px solid var(--stroke);
+      border-radius:18px;background:rgba(255,255,255,.06);
+      box-shadow:var(--shadow);backdrop-filter:blur(10px);
+    }
+    .back{
+      padding:10px 12px;border-radius:14px;
+      border:1px solid var(--stroke);background:rgba(255,255,255,.06)
+    }
+    .title{font-weight:900}
+
+    .card{
+      margin-top:14px;padding:14px;
+      border:1px solid var(--stroke);border-radius:var(--radius);
+      background:rgba(255,255,255,.06);box-shadow:var(--shadow);
+    }
+    .grid{display:grid;grid-template-columns:220px 1fr;gap:14px}
+    @media(max-width:720px){.grid{grid-template-columns:1fr}}
+
+    .img{
+      width:100%;height:220px;border-radius:16px;
+      border:1px solid var(--stroke);object-fit:cover;
+    }
+    label{display:block;font-size:12px;color:var(--muted);margin:10px 0 6px}
+    input,select{
+      width:100%;padding:12px;border-radius:14px;
+      border:1px solid var(--stroke);
+      background:rgba(255,255,255,.06);color:var(--text);
+    }
+    .seg{
+      display:flex;gap:14px;flex-wrap:wrap;
+      padding:10px;border-radius:14px;
+      border:1px solid var(--stroke);
+      background:rgba(255,255,255,.04);
+    }
+    .note{
+      margin-top:12px;padding:12px;border-radius:16px;
+      border:1px solid rgba(96,165,250,.25);
+      background:rgba(96,165,250,.08);
+      color:#dbeafe;font-weight:700;line-height:1.6;
+    }
+    .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    @media(max-width:720px){.row2{grid-template-columns:1fr}}
+
+    .btns{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+    button{
+      cursor:pointer;border-radius:16px;padding:12px 14px;
+      font-weight:900;border:1px solid var(--stroke);
+      background:rgba(255,255,255,.06);color:var(--text);
+    }
+    .primary{
+      border-color:rgba(96,165,250,.45);
+      background:linear-gradient(135deg, rgba(96,165,250,.30), rgba(167,139,250,.18));
+    }
+    .success{
+      margin-top:12px;padding:12px;border-radius:16px;
+      border:1px solid rgba(34,197,94,.25);
+      background:rgba(34,197,94,.10);
+      color:#dcfce7;font-weight:900;line-height:1.7;
+      display:none;
+    }
+  </style>
+</head>
+
+<body>
+<div class="wrap">
+
+  <div class="top">
+    <a class="back" href="./">← رجوع للكتالوج</a>
+    <div class="title">إتمام الطلب</div>
+    <div></div>
+  </div>
+
+  <div class="card">
+    <div class="grid">
+      <img id="pImg" class="img" src="https://via.placeholder.com/600x400?text=No+Image">
+
+      <div>
+        <div id="pName" style="font-size:18px;font-weight:900"></div>
+        <div id="pMeta" style="font-size:12px;color:var(--muted);margin-top:4px"></div>
+
+        <label>المنتج</label>
+        <select id="pid"></select>
+
+        <label>الكمية</label>
+        <input id="qty" type="number" min="1" value="1">
+
+        <label>نوع الطلب</label>
+        <div class="seg">
+          <label><input type="radio" name="type" value="قطاعي" checked> قطاعي</label>
+          <label><input type="radio" name="type" value="جملة"> جملة</label>
+        </div>
+
+        <div id="note" class="note"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div style="font-weight:900;margin-bottom:8px">بيانات العميل</div>
+
+    <div class="row2">
+      <div>
+        <label>الاسم</label>
+        <input id="name">
+      </div>
+      <div>
+        <label>رقم الموبايل</label>
+        <input id="phone">
+      </div>
+    </div>
+
+    <label>العنوان</label>
+    <input id="address">
+
+    <div class="btns">
+      <button class="primary" id="sendOrder">إرسال الطلب</button>
+    </div>
+
+    <div id="ok" class="success"></div>
+  </div>
+
+</div>
+
+<script>
+  /* ====== بياناتك ====== */
+  const OWNER_WA = "201146476993";
+  const OWNER_EMAIL = "axentroofficial@gmail.com";
+
+  /* ====== المنتجات (نفس JSON) ====== */
+  const products = [
+    {"id":"ITM01","name":"شست شفاف","category":"مستحضرات تجميل","image":"images/placeholder.jpg","availability":"Available"},
+    {"id":"ITM02","name":"شست بشرة ميوا","category":"مستحضرات تجميل","image":"images/placeholder.jpg","availability":"Available"},
+    {"id":"ITM03","name":"سيروم","category":"مستحضرات تجميل","image":"images/placeholder.jpg","availability":"Low stock"},
+    {"id":"ITM04","name":"ماسك","category":"مستحضرات تجميل","image":"images/placeholder.jpg","availability":"Out of stock"},
+    {"id":"ITM05","name":"فرشة توزيع سيليكون","category":"مستحضرات تجميل","image":"images/placeholder.jpg","availability":"Low stock"}
+  ];
+
+  const pid = document.getElementById("pid");
+  const qty = document.getElementById("qty");
+  const note = document.getElementById("note");
+  const ok = document.getElementById("ok");
+
+  function getType(){
+    return document.querySelector("input[name='type']:checked").value;
+  }
+
+  function setNote(){
+    note.textContent =
+      getType()==="جملة"
+      ? "سيتم مراجعة طلب الجملة وتحديد السعر النهائي والتواصل معك."
+      : "سيتم التواصل معك لتأكيد الطلب وإرسال الفاتورة.";
+  }
+
+  function findProduct(id){ return products.find(p=>p.id===id); }
+
+  function buildMessage(p){
+    return [
+      "🧾 طلب جديد",
+      "",
+      `المنتج: ${p.name} (${p.id})`,
+      `الحالة: ${p.availability}`,
+      `الكمية: ${qty.value}`,
+      `نوع الطلب: ${getType()}`,
+      "",
+      "بيانات العميل:",
+      `الاسم: ${document.getElementById("name").value}`,
+      `الموبايل: ${document.getElementById("phone").value}`,
+      `العنوان: ${document.getElementById("address").value}`
+    ].join("\n");
+  }
+
+  products.forEach(p=>{
+    const o=document.createElement("option");
+    o.value=p.id; o.textContent=p.name;
+    pid.appendChild(o);
+  });
+
+  pid.addEventListener("change", ()=>{
+    const p=findProduct(pid.value);
+    document.getElementById("pName").textContent=p.name;
+    document.getElementById("pMeta").textContent=`${p.category} — ${p.availability}`;
+    document.getElementById("pImg").src=p.image;
+  });
+
+  document.querySelectorAll("input[name='type']").forEach(r=>r.addEventListener("change",setNote));
+  setNote();
+
+  document.getElementById("sendOrder").onclick=()=>{
+    const p=findProduct(pid.value);
+    const msg=buildMessage(p);
+
+    // WhatsApp
+    window.open(`https://wa.me/${OWNER_WA}?text=${encodeURIComponent(msg)}`,"_blank");
+
+    // Email
+    setTimeout(()=>{
+      location.href=`mailto:${OWNER_EMAIL}?subject=${encodeURIComponent("طلب جديد من الكتالوج")}&body=${encodeURIComponent(msg)}`;
+    },300);
+
+    ok.style.display="block";
+    ok.textContent="✅ تم استلام طلبك بنجاح وسيتم التواصل معك قريبًا.";
+  };
+
+  const urlPid=new URLSearchParams(location.search).get("pid");
+  if(urlPid){ pid.value=urlPid; pid.dispatchEvent(new Event("change")); }
+</script>
+</body>
+</html>
