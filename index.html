@@ -1,113 +1,238 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>كتالوج المنتجات</title>
+
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: linear-gradient(135deg, #0f172a, #020617);
-      color: #fff;
-      padding: 20px;
+    :root{
+      --bg1:#0b1020;
+      --bg2:#0f172a;
+      --stroke:#ffffff1a;
+      --text:#e5e7eb;
+      --muted:#94a3b8;
+      --shadow: 0 18px 50px rgba(0,0,0,.45);
+      --radius:18px;
+      --accent:#60a5fa;
+      --accent2:#a78bfa;
     }
-    h1 {
-      text-align: center;
-      margin-bottom: 30px;
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: system-ui, -apple-system, "Segoe UI", Tahoma, Arial;
+      color:var(--text);
+      background:
+        radial-gradient(900px 500px at 10% 10%, rgba(96,165,250,.25), transparent 55%),
+        radial-gradient(700px 500px at 90% 20%, rgba(167,139,250,.18), transparent 55%),
+        linear-gradient(180deg, var(--bg1), var(--bg2));
+      min-height:100vh;
     }
-    #catalog {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-      gap: 20px;
+    a{color:inherit;text-decoration:none}
+    .topbar{
+      position:sticky; top:0; z-index:5;
+      display:flex; gap:14px; align-items:center; justify-content:space-between;
+      padding:14px 18px;
+      background: linear-gradient(180deg, rgba(15,23,42,.85), rgba(15,23,42,.55));
+      border-bottom:1px solid var(--stroke);
+      backdrop-filter: blur(12px);
     }
-    .card {
-      background: #111827;
-      border-radius: 14px;
-      padding: 15px;
-      box-shadow: 0 10px 25px rgba(0,0,0,.4);
+    .brand{display:flex; align-items:center; gap:12px}
+    .logo{
+      width:44px; height:44px; border-radius:14px;
+      display:grid; place-items:center;
+      background: linear-gradient(135deg, rgba(96,165,250,.35), rgba(167,139,250,.25));
+      border:1px solid var(--stroke);
+      box-shadow: var(--shadow);
+      font-weight:900;
     }
-    .card img {
-      width: 100%;
-      height: 180px;
-      object-fit: cover;
-      border-radius: 10px;
+    .brand-title{font-size:16px;font-weight:900}
+    .brand-sub{font-size:12px;color:var(--muted)}
+    .actions{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
+    .input{
+      width:260px; max-width:85vw;
+      padding:12px 12px;
+      border-radius:14px;
+      border:1px solid var(--stroke);
+      background: rgba(255,255,255,.06);
+      color:var(--text);
+      outline:none;
     }
-    .status {
-      margin-top: 8px;
-      font-size: 13px;
+    .input::placeholder{color:#9ca3af}
+
+    .container{max-width:1100px; margin:22px auto; padding:0 16px}
+    .grid{
+      display:grid;
+      grid-template-columns: repeat( auto-fill, minmax(230px, 1fr) );
+      gap:14px;
     }
-    .available { color: #22c55e; }
-    .low { color: #facc15; }
-    .out { color: #ef4444; }
-    button {
-      margin-top: 12px;
-      width: 100%;
-      padding: 10px;
-      border: none;
-      border-radius: 10px;
-      background: #2563eb;
-      color: white;
-      font-size: 14px;
+    .card{
+      border-radius: var(--radius);
+      overflow:hidden;
+      border:1px solid var(--stroke);
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+      box-shadow: var(--shadow);
+      transition: transform .18s ease, border-color .18s ease;
+    }
+    .card:hover{transform: translateY(-3px); border-color: rgba(96,165,250,.45)}
+    .media{position:relative; height:175px; background: rgba(255,255,255,.03)}
+    .media img{width:100%; height:100%; object-fit:cover; display:block}
+    .chip{
+      position:absolute; bottom:10px; right:10px;
+      padding:6px 10px;
+      border-radius:999px;
+      background: rgba(15,23,42,.75);
+      border:1px solid var(--stroke);
+      font-size:12px;
+    }
+    .body{padding:12px}
+    .title{font-weight:900; font-size:15px}
+    .meta{margin-top:6px; font-size:12px; color:var(--muted); display:flex; gap:10px; flex-wrap:wrap}
+    .status{
+      font-weight:900;
+      padding:4px 8px;
+      border-radius:999px;
+      border:1px solid var(--stroke);
+      background: rgba(255,255,255,.04);
+      font-size:12px;
+    }
+    .st-available{color:#22c55e}
+    .st-low{color:#facc15}
+    .st-out{color:#ef4444}
+
+    .btn{
+      margin-top:10px;
+      display:block;
+      text-align:center;
+      padding:11px 12px;
+      border-radius:14px;
+      border:1px solid rgba(96,165,250,.35);
+      background: linear-gradient(135deg, rgba(96,165,250,.22), rgba(167,139,250,.15));
+      font-weight:900;
+      font-size:13px;
+    }
+
+    .footer{
+      padding:18px;
+      text-align:center;
+      color:var(--muted);
+      border-top:1px solid var(--stroke);
+      background: rgba(15,23,42,.35);
+      margin-top:18px;
+    }
+    .empty{
+      padding:18px;
+      border:1px dashed var(--stroke);
+      border-radius: var(--radius);
+      color:var(--muted);
+      text-align:center;
     }
   </style>
 </head>
+
 <body>
-
-<h1>📦 كتالوج المنتجات</h1>
-<div id="catalog"></div>
-
-<script>
-const products = [
-  {
-    "id": "ITM01",
-    "name": "شست شفاف",
-    "category": "مستحضرات تجميل",
-    "image": "https://via.placeholder.com/300x200?text=No+Image",
-    "availability": "Available"
-  },
-  {
-    "id": "ITM02",
-    "name": "شست بشرة ميوا",
-    "category": "مستحضرات تجميل",
-    "image": "https://via.placeholder.com/300x200?text=No+Image",
-    "availability": "Available"
-  },
-  {
-    "id": "ITM03",
-    "name": "سيروم",
-    "category": "مستحضرات تجميل",
-    "image": "https://via.placeholder.com/300x200?text=No+Image",
-    "availability": "Low stock"
-  },
-  {
-    "id": "ITM04",
-    "name": "ماسك",
-    "category": "مستحضرات تجميل",
-    "image": "https://via.placeholder.com/300x200?text=No+Image",
-    "availability": "Out of stock"
-  }
-];
-
-const box = document.getElementById("catalog");
-
-products.forEach(p => {
-  let statusClass = "available";
-  if (p.availability === "Low stock") statusClass = "low";
-  if (p.availability === "Out of stock") statusClass = "out";
-
-  box.innerHTML += `
-    <div class="card">
-      <img src="${p.image}">
-      <h3>${p.name}</h3>
-      <div class="status ${statusClass}">
-        ${p.availability}
+  <header class="topbar">
+    <div class="brand">
+      <div class="logo">AX</div>
+      <div>
+        <div class="brand-title">كتالوج المنتجات 📦</div>
+        <div class="brand-sub">بدون أسعار — اطلب وسيتم التواصل معك لتأكيد الطلب</div>
       </div>
-      <button onclick="alert('تم استلام طلبك وسيتم التواصل معك')">
-        اطلب الآن
-      </button>
     </div>
-  `;
-});
-</script>
 
+    <div class="actions">
+      <input id="q" class="input" placeholder="ابحث عن منتج..." />
+      <select id="cat" class="input">
+        <option value="">كل الفئات</option>
+      </select>
+    </div>
+  </header>
+
+  <main class="container">
+    <div id="grid" class="grid"></div>
+  </main>
+
+  <footer class="footer">
+    © Axentro — يتم استلام الطلب للمراجعة والتأكيد وإرسال الفاتورة
+  </footer>
+
+  <script>
+    // ✅ ضع JSON منتجاتك هنا (من شيت JSON_Export)
+    const products = [
+      {"id":"ITM01","name":"شست شفاف","category":"مستحضرات تجميل","image":"images/placeholder.jpg","availability":"Available"},
+      {"id":"ITM02","name":"شست بشرة ميوا","category":"مستحضرات تجميل","image":"images/placeholder.jpg","availability":"Available"},
+      {"id":"ITM03","name":"سيروم","category":"مستحضرات تجميل","image":"images/placeholder.jpg","availability":"Low stock"},
+      {"id":"ITM04","name":"ماسك","category":"مستحضرات تجميل","image":"images/placeholder.jpg","availability":"Out of stock"},
+      {"id":"ITM05","name":"فرشة توزيع سيليكون","category":"مستحضرات تجميل","image":"images/placeholder.jpg","availability":"Low stock"}
+    ];
+
+    const state = { q:"", cat:"" };
+    const elGrid = document.getElementById("grid");
+    const elQ = document.getElementById("q");
+    const elCat = document.getElementById("cat");
+
+    function norm(s=""){ return String(s).toLowerCase().trim(); }
+
+    function statusClass(av){
+      if(av === "Low stock") return "st-low";
+      if(av === "Out of stock") return "st-out";
+      return "st-available";
+    }
+
+    function renderCats(){
+      const cats = Array.from(new Set(products.map(p=>p.category))).sort();
+      cats.forEach(c=>{
+        const opt = document.createElement("option");
+        opt.value = c; opt.textContent = c;
+        elCat.appendChild(opt);
+      });
+    }
+
+    function render(){
+      const q = norm(state.q);
+      const cat = state.cat;
+
+      const filtered = products.filter(p=>{
+        const okQ = !q || norm(p.name).includes(q) || norm(p.id).includes(q);
+        const okC = !cat || p.category === cat;
+        return okQ && okC;
+      });
+
+      elGrid.innerHTML = "";
+      if(filtered.length === 0){
+        elGrid.innerHTML = `<div class="empty">لا توجد نتائج مطابقة.</div>`;
+        return;
+      }
+
+      filtered.forEach(p=>{
+        const a = document.createElement("a");
+        a.className = "card";
+        a.href = `order.html?pid=${encodeURIComponent(p.id)}`;
+
+        a.innerHTML = `
+          <div class="media">
+            <img src="${p.image}" alt="${p.name}" loading="lazy"
+              onerror="this.src='https://via.placeholder.com/600x400?text=No+Image'"/>
+            <div class="chip">${p.category}</div>
+          </div>
+          <div class="body">
+            <div class="title">${p.name}</div>
+            <div class="meta">
+              <span class="status ${statusClass(p.availability)}">${p.availability}</span>
+              <span style="color:var(--muted);font-size:12px;">${p.id}</span>
+            </div>
+            <div class="btn">اطلب الآن</div>
+          </div>
+        `;
+        elGrid.appendChild(a);
+      });
+    }
+
+    elQ.addEventListener("input", e=>{ state.q = e.target.value; render(); });
+    elCat.addEventListener("change", e=>{ state.cat = e.target.value; render(); });
+
+    renderCats();
+    render();
+  </script>
 </body>
 </html>
