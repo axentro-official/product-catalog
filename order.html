@@ -166,7 +166,7 @@
   </div>
 
   <div class="card">
-    <div style="font-weight:900">🛒 محتويات السلة</div>
+    <div style="font-weight:900">محتويات السلة</div>
     <div id="cartBox" class="items"></div>
 
     <div class="note" id="note"></div>
@@ -216,6 +216,12 @@
   const note = document.getElementById("note");
   const ok = document.getElementById("ok");
   const sendBtn = document.getElementById("sendOrder");
+
+  // ✅ صور WebP من فولدر images/ (images/ITM01.webp)
+  const IMG_PLACEHOLDER = "https://via.placeholder.com/600x400?text=No+Image";
+  function resolveImageById(id){
+    return `images/${id}.webp`;
+  }
 
   // ✅ المنتجات هتتحمل من الشيت
   let products = [];
@@ -290,7 +296,6 @@
         id: it.id,
         name: "منتج غير متاح (تم تحديث الكتالوج)",
         category: "—",
-        image: "https://via.placeholder.com/300x200?text=No+Image",
         availability: "Unknown"
       };
 
@@ -298,8 +303,8 @@
       row.className = "item";
 
       row.innerHTML = `
-        <img class="thumb" src="${safe.image || "https://via.placeholder.com/300x200?text=No+Image"}"
-          onerror="this.src='https://via.placeholder.com/300x200?text=No+Image'">
+        <img class="thumb" loading="lazy" src="${resolveImageById(safe.id)}"
+          onerror="this.onerror=null;this.src='${IMG_PLACEHOLDER}'">
 
         <div class="iInfo">
           <div class="iName">${safe.name}</div>
@@ -344,21 +349,36 @@
     });
   }
 
-  /* ====== رقم طلب ====== */
+  /* ====== الوقت (12 ساعة) ====== */
+  function formatDateTime12(d){
+    const dd = String(d.getDate()).padStart(2,"0");
+    const mm = String(d.getMonth()+1).padStart(2,"0");
+    const yyyy = d.getFullYear();
+
+    let h = d.getHours();
+    const min = String(d.getMinutes()).padStart(2,"0");
+    const ampm = h >= 12 ? "PM" : "AM";
+    h = h % 12; if(h === 0) h = 12;
+    const hh = String(h).padStart(2,"0");
+
+    return `${dd}-${mm}-${yyyy} ${hh}:${min} ${ampm}`;
+  }
+
+  /* ====== رقم طلب (BS-YYYYMMDD-XXX) بدون توقيت ====== */
   function generateOrderId(){
     const d = new Date();
     const y = d.getFullYear();
     const m = String(d.getMonth()+1).padStart(2,"0");
     const day = String(d.getDate()).padStart(2,"0");
     const rnd = Math.floor(100 + Math.random()*900);
-    return `AX-${y}${m}${day}-${rnd}`;
+    return `BS-${y}${m}${day}-${rnd}`;
   }
 
   function getStableOrderId(){
-    let id = sessionStorage.getItem("AX_ORDER_ID");
+    let id = sessionStorage.getItem("BS_ORDER_ID");
     if(!id){
       id = generateOrderId();
-      sessionStorage.setItem("AX_ORDER_ID", id);
+      sessionStorage.setItem("BS_ORDER_ID", id);
     }
     return id;
   }
@@ -389,7 +409,7 @@
     return "";
   }
 
-  /* ====== فاتورة واتساب قوية ====== */
+  /* ====== رسالة واتساب (فاتورة صغيرة - بدون رموز/إيموجي) ====== */
   function buildMsg(){
     const cart = getCart();
     const orderId = getStableOrderId();
@@ -400,21 +420,21 @@
     const address = (document.getElementById("address").value||"").trim();
 
     const now = new Date();
-    const dt = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}-${String(now.getDate()).padStart(2,"0")}  ${String(now.getHours()).padStart(2,"0")}:${String(now.getMinutes()).padStart(2,"0")}`;
+    const dt = formatDateTime12(now);
 
-    const line = "━━━━━━━━━━━━━━━━━━━━";
-    const sub  = "────────────────────";
+    const line = "------------------------------";
+    const line2 = "==============================";
 
     let totalQty = 0;
 
     const lines = [];
-    lines.push("🧾 *فاتورة طلب*");
+    lines.push("فاتورة طلب");
+    lines.push(line2);
+    lines.push(`رقم الطلب: ${orderId}`);
+    lines.push(`التاريخ: ${dt}`);
+    lines.push(`نوع الطلب: ${type}`);
     lines.push(line);
-    lines.push(`🆔 رقم الطلب: *${orderId}*`);
-    lines.push(`🗓️ التاريخ: ${dt}`);
-    lines.push(`🛍️ نوع الطلب: *${type}*`);
-    lines.push(sub);
-    lines.push("📦 *تفاصيل الأصناف:*");
+    lines.push("تفاصيل الأصناف:");
 
     cart.forEach((it, i)=>{
       const pr = findProduct(it.id);
@@ -428,34 +448,29 @@
       const qty = Number(it.qty)||1;
       totalQty += qty;
 
-      const statusIcon =
-        safe.availability === "Available" ? "✅" :
-        safe.availability === "Low stock" ? "⚠️" :
-        safe.availability === "Out of stock" ? "⛔" :
-        "❔";
-
-      lines.push(
-        `\n${i+1}) *${safe.name}* ${statusIcon}\n` +
-        `   🧾 كود: ${safe.id}\n` +
-        `   🔢 كمية: *${qty}*\n` +
-        `   📌 حالة: ${safe.availability}\n` +
-        `   🗂️ فئة: ${safe.category}`
-      );
+      lines.push("");
+      lines.push(`${i+1}) ${safe.name}`);
+      lines.push(`كود: ${safe.id}`);
+      lines.push(`كمية: ${qty}`);
+      lines.push(`حالة: ${safe.availability}`);
+      lines.push(`فئة: ${safe.category}`);
     });
 
-    lines.push("\n" + sub);
-    lines.push(`📦 *إجمالي القطع:* ${totalQty}`);
-    lines.push(sub);
-    lines.push("👤 *بيانات العميل:*");
-    lines.push(`• الاسم: ${name}`);
-    lines.push(`• الموبايل: ${phone}`);
-    lines.push(`• العنوان: ${address}`);
+    lines.push("");
     lines.push(line);
+    lines.push(`إجمالي القطع: ${totalQty}`);
+    lines.push(line);
+    lines.push("بيانات العميل:");
+    lines.push(`الاسم: ${name}`);
+    lines.push(`الموبايل: ${phone}`);
+    lines.push(`العنوان: ${address}`);
+    lines.push(line2);
 
+    // ✅ آخر سطر (زي ما اتفقنا)
     lines.push(
       type === "جملة"
       ? "✅ *تم إرسال طلب الجملة.* سيتم مراجعة الطلب وتحديد السعر النهائي والتواصل معكم."
-      : "✅ *تم إرسال الطلب.* سيتم التواصل لتأكيد الطلب وإرسال الفاتورة."
+      : "تم إرسال الطلب. سيتم التواصل لتأكيد الطلب وإرسال الفاتورة."
     );
 
     return lines.join("\n");
@@ -486,7 +501,7 @@
     setCart([]);
     renderCart();
     ok.style.display="none";
-    sessionStorage.removeItem("AX_ORDER_ID");
+    sessionStorage.removeItem("BS_ORDER_ID");
   });
 
   sendBtn.addEventListener("click", ()=>{
@@ -513,7 +528,7 @@
     renderCart();
 
     // ✅ بعد الإرسال: امسح رقم الطلب الثابت
-    sessionStorage.removeItem("AX_ORDER_ID");
+    sessionStorage.removeItem("BS_ORDER_ID");
 
     // ✅ رجّع الزرار + ارجع للكتالوج تلقائيًا
     setTimeout(()=>{
@@ -529,3 +544,4 @@
 </script>
 </body>
 </html>
+```0
