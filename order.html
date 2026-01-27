@@ -94,6 +94,7 @@
     .st-available{color:var(--ok)}
     .st-low{color:var(--warn)}
     .st-out{color:var(--bad)}
+    .st-unknown{color:#cbd5e1}
 
     .qtyBox{display:flex; align-items:center; gap:6px}
     .qBtn{
@@ -199,24 +200,22 @@
   const OWNER_WA = "201146476993";
   const OWNER_EMAIL = "axentroofficial@gmail.com";
 
-  /* ====== لازم يكون نفس JSON بتاعك ====== */
-  const products = [
-    {"id":"ITM01","name":"شست شفاف","category":"مستحضرات تجميل","image":"images/placeholder.jpg","availability":"Available"},
-    {"id":"ITM02","name":"شست بشرة ميوا","category":"مستحضرات تجميل","image":"images/placeholder.jpg","availability":"Available"},
-    {"id":"ITM03","name":"سيروم","category":"مستحضرات تجميل","image":"images/placeholder.jpg","availability":"Low stock"},
-    {"id":"ITM04","name":"ماسك","category":"مستحضرات تجميل","image":"images/placeholder.jpg","availability":"Out of stock"},
-    {"id":"ITM05","name":"فرشة توزيع سيليكون","category":"مستحضرات تجميل","image":"images/placeholder.jpg","availability":"Low stock"}
-  ];
+  /* ====== نفس API بتاع Google Sheets ====== */
+  const API_URL = "https://script.google.com/macros/s/AKfycbwsPPw3UiW6TBngBcbFxY4E8rB7JYgK1W2LRn0WaS9C7OitA1FgZ1vAz9Qr1u_ojlZ8/exec";
 
   const LS_KEY = "AX_CART_V1";
   const cartBox = document.getElementById("cartBox");
   const note = document.getElementById("note");
   const ok = document.getElementById("ok");
 
+  // ✅ المنتجات هتتحمل من الشيت
+  let products = [];
+
   function statusClass(av){
     if(av === "Low stock") return "st-low";
     if(av === "Out of stock") return "st-out";
-    return "st-available";
+    if(av === "Available") return "st-available";
+    return "st-unknown";
   }
 
   function getType(){
@@ -248,9 +247,14 @@
     setCart(cart);
     renderCart();
   }
+
   function removeItem(pid){
     setCart(getCart().filter(x=>x.id!==pid));
     renderCart();
+  }
+
+  function findProduct(pid){
+    return products.find(x=>x.id===pid) || null;
   }
 
   function renderCart(){
@@ -263,30 +267,38 @@
     }
 
     cart.forEach(it=>{
-      const p = products.find(x=>x.id===it.id);
-      if(!p) return;
+      const p = findProduct(it.id);
+
+      // لو المنتج مش موجود في الشيت (اتمسح أو اتغير ID)
+      const safe = p || {
+        id: it.id,
+        name: "منتج غير متاح (تم تحديث الكتالوج)",
+        category: "—",
+        image: "https://via.placeholder.com/300x200?text=No+Image",
+        availability: "Unknown"
+      };
 
       const row = document.createElement("div");
       row.className = "item";
 
       row.innerHTML = `
-        <img class="thumb" src="${p.image || "https://via.placeholder.com/300x200?text=No+Image"}"
+        <img class="thumb" src="${safe.image || "https://via.placeholder.com/300x200?text=No+Image"}"
           onerror="this.src='https://via.placeholder.com/300x200?text=No+Image'">
 
         <div class="iInfo">
-          <div class="iName">${p.name}</div>
+          <div class="iName">${safe.name}</div>
           <div class="iMeta">
-            ${p.category} •
-            <span class="status ${statusClass(p.availability)}">${p.availability}</span> •
-            ${p.id}
+            ${safe.category} •
+            <span class="status ${statusClass(safe.availability)}">${safe.availability}</span> •
+            ${safe.id}
           </div>
-          <div class="rmBtn" data-rm="${p.id}">حذف من السلة</div>
+          <div class="rmBtn" data-rm="${safe.id}">حذف من السلة</div>
         </div>
 
         <div class="qtyBox">
-          <button class="qBtn" data-minus="${p.id}">−</button>
+          <button class="qBtn" data-minus="${safe.id}">−</button>
           <div class="qVal">${Number(it.qty)||1}</div>
-          <button class="qBtn" data-plus="${p.id}">+</button>
+          <button class="qBtn" data-plus="${safe.id}">+</button>
         </div>
       `;
 
@@ -301,6 +313,7 @@
         setQty(id, (Number(it?.qty)||1) + 1);
       };
     });
+
     cartBox.querySelectorAll("[data-minus]").forEach(b=>{
       b.onclick = ()=> {
         const id = b.getAttribute("data-minus");
@@ -309,6 +322,7 @@
         setQty(id, Math.max(1, (Number(it?.qty)||1) - 1));
       };
     });
+
     cartBox.querySelectorAll("[data-rm]").forEach(b=>{
       b.onclick = ()=> removeItem(b.getAttribute("data-rm"));
     });
@@ -337,9 +351,10 @@
     lines.push("الأصناف:");
 
     cart.forEach((it, i)=>{
-      const p = products.find(x=>x.id===it.id);
-      if(!p) return;
-      lines.push(`${i+1}) ${p.name} (${p.id}) — كمية: ${it.qty} — حالة: ${p.availability}`);
+      const p = findProduct(it.id);
+      const pname = p ? p.name : "منتج غير متاح (تم تحديث الكتالوج)";
+      const pstatus = p ? p.availability : "Unknown";
+      lines.push(`${i+1}) ${pname} (${it.id}) — كمية: ${it.qty} — حالة: ${pstatus}`);
     });
 
     lines.push("");
@@ -351,9 +366,29 @@
     return lines.join("\n");
   }
 
+  async function loadProducts(){
+    // رسالة بسيطة بدل ما الصفحة تبقى فاضية
+    cartBox.innerHTML = `<div class="empty">جارٍ تحميل بيانات المنتجات...</div>`;
+    try{
+      const res = await fetch(API_URL, { cache: "no-store" });
+      if(!res.ok) throw new Error("HTTP " + res.status);
+
+      const data = await res.json();
+      products = Array.isArray(data) ? data : [];
+
+      // بعد التحميل نرسم السلة
+      renderCart();
+    }catch(err){
+      console.error(err);
+      // حتى لو API وقع، نعرض السلة لكن بدون أسماء محدثة
+      products = [];
+      renderCart();
+      note.textContent = "⚠️ ملاحظة: لم يتم تحميل بيانات المنتجات من الشيت الآن، لكن يمكنك إرسال الطلب وسيصل مع الـ IDs والكميات.";
+    }
+  }
+
   document.querySelectorAll("input[name='type']").forEach(r=> r.addEventListener("change", setNote));
   setNote();
-  renderCart();
 
   document.getElementById("clear").addEventListener("click", ()=>{
     setCart([]);
@@ -382,6 +417,9 @@
       ? "✅ تم استلام طلب الجملة بنجاح. سيتم مراجعة الطلب وتحديد السعر النهائي والتواصل معك."
       : "✅ تم استلام طلبك بنجاح. سيتم التواصل معك لتأكيد الطلب وإرسال الفاتورة.";
   });
+
+  // Init
+  loadProducts();
 </script>
 </body>
 </html>
