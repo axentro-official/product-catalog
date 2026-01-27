@@ -182,10 +182,7 @@
     .iInfo{flex:1; min-width:0}
     .iName{font-weight:900; font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
     .iMeta{font-size:11px; color:var(--muted); margin-top:3px}
-    .qtyBox{
-      display:flex; align-items:center; gap:6px;
-      flex:0 0 auto;
-    }
+    .qtyBox{display:flex; align-items:center; gap:6px; flex:0 0 auto;}
     .qBtn{
       width:32px; height:32px;
       border-radius:12px;
@@ -250,6 +247,17 @@
       z-index:80;
       font-weight:900; font-size:12px;
     }
+
+    /* Skeleton */
+    .skeleton{position:relative; overflow:hidden}
+    .skeleton::after{
+      content:"";
+      position:absolute; inset:0;
+      transform:translateX(-100%);
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,.08), transparent);
+      animation: shimmer 1.1s infinite;
+    }
+    @keyframes shimmer{100%{transform:translateX(100%)}}
   </style>
 </head>
 
@@ -299,7 +307,16 @@
     // ✅ رابط الـ API (Apps Script Web App)
     const API_URL = "https://script.google.com/macros/s/AKfycbwsPPw3UiW6TBngBcbFxY4E8rB7JYgK1W2LRn0WaS9C7OitA1FgZ1vAz9Qr1u_ojlZ8/exec";
 
+    // ✅ سلة
     const LS_KEY = "AX_CART_V1";
+
+    // ✅ كاش المنتجات (لتسريع الفتح والريفريش)
+    const PROD_CACHE_KEY = "AX_PRODUCTS_CACHE_V1";
+    const PROD_CACHE_TS  = "AX_PRODUCTS_CACHE_TS_V1";
+    const CACHE_TTL_MS   = 10 * 60 * 1000; // 10 دقائق
+
+    // ✅ Placeholder للصورة لو لسه مش مرفوعة
+    const IMG_PLACEHOLDER = "https://via.placeholder.com/600x400?text=No+Image";
 
     // ✅ المنتجات هتتحمل من الشيت
     let products = [];
@@ -327,19 +344,20 @@
       return "st-available";
     }
 
+    // ✅ WebP images by SKU: images/ITM01.webp
+    function resolveImage(p){
+      return `images/${p.id}.webp`;
+    }
+
     function getCart(){
       try{
         const raw = localStorage.getItem(LS_KEY);
         return raw ? JSON.parse(raw) : [];
-      }catch(e){
-        return [];
-      }
+      }catch(e){ return []; }
     }
-
     function setCart(items){
       localStorage.setItem(LS_KEY, JSON.stringify(items));
     }
-
     function cartTotalCount(){
       const c = getCart();
       return c.reduce((sum,it)=>sum + (Number(it.qty)||0), 0);
@@ -376,11 +394,8 @@
       const cart = getCart();
       const idx = cart.findIndex(x=>x.id===pid);
 
-      if(idx >= 0){
-        cart[idx].qty = (Number(cart[idx].qty)||0) + 1;
-      } else {
-        cart.push({ id: pid, qty: 1 });
-      }
+      if(idx >= 0) cart[idx].qty = (Number(cart[idx].qty)||0) + 1;
+      else cart.push({ id: pid, qty: 1 });
 
       setCart(cart);
       updateCartBadge();
@@ -392,17 +407,14 @@
       const idx = cart.findIndex(x=>x.id===pid);
       if(idx < 0) return;
 
-      const q = Math.max(1, Number(qty)||1);
-      cart[idx].qty = q;
-
+      cart[idx].qty = Math.max(1, Number(qty)||1);
       setCart(cart);
       updateCartBadge();
       renderCart();
     }
 
     function removeItem(pid){
-      const cart = getCart().filter(x=>x.id!==pid);
-      setCart(cart);
+      setCart(getCart().filter(x=>x.id!==pid));
       updateCartBadge();
       renderCart();
     }
@@ -428,8 +440,9 @@
 
         const img = document.createElement("img");
         img.className = "thumb";
-        img.src = p.image || "https://via.placeholder.com/300x200?text=No+Image";
-        img.onerror = ()=> img.src = "https://via.placeholder.com/300x200?text=No+Image";
+        img.loading = "lazy";
+        img.src = resolveImage(p);
+        img.onerror = ()=> img.src = IMG_PLACEHOLDER;
 
         const info = document.createElement("div");
         info.className = "iInfo";
@@ -456,8 +469,7 @@
       cartList.querySelectorAll("[data-plus]").forEach(b=>{
         b.onclick = ()=> {
           const id = b.getAttribute("data-plus");
-          const cart = getCart();
-          const it = cart.find(x=>x.id===id);
+          const it = getCart().find(x=>x.id===id);
           setQty(id, (Number(it?.qty)||1) + 1);
         };
       });
@@ -465,8 +477,7 @@
       cartList.querySelectorAll("[data-minus]").forEach(b=>{
         b.onclick = ()=> {
           const id = b.getAttribute("data-minus");
-          const cart = getCart();
-          const it = cart.find(x=>x.id===id);
+          const it = getCart().find(x=>x.id===id);
           setQty(id, Math.max(1, (Number(it?.qty)||1) - 1));
         };
       });
@@ -482,6 +493,7 @@
 
     function renderCats(){
       const cats = Array.from(new Set(products.map(p=>p.category))).filter(Boolean).sort();
+      elCat.innerHTML = `<option value="">كل الفئات</option>`;
       cats.forEach(c=>{
         const opt = document.createElement("option");
         opt.value = c; opt.textContent = c;
@@ -511,11 +523,12 @@
         card.className = "card";
 
         const disabled = p.availability === "Out of stock";
+        const imgSrc = resolveImage(p);
 
         card.innerHTML = `
           <div class="media">
-            <img src="${p.image}" alt="${p.name}" loading="lazy"
-              onerror="this.src='https://via.placeholder.com/600x400?text=No+Image'"/>
+            <img src="${imgSrc}" alt="${p.name}" loading="lazy"
+              onerror="this.onerror=null;this.src='${IMG_PLACEHOLDER}'"/>
             <div class="chip">${p.category}</div>
           </div>
           <div class="body">
@@ -541,28 +554,83 @@
       });
     }
 
-    // ✅ تحميل المنتجات من الـ API
-    async function loadProducts(){
-      elGrid.innerHTML = `<div class="empty">جارٍ تحميل المنتجات...</div>`;
+    function renderSkeleton(count=12){
+      elGrid.innerHTML = "";
+      for(let i=0;i<count;i++){
+        const sk = document.createElement("div");
+        sk.className = "card skeleton";
+        sk.innerHTML = `
+          <div class="media"></div>
+          <div class="body">
+            <div class="title" style="height:14px; background:rgba(255,255,255,.06); border-radius:10px"></div>
+            <div class="meta" style="margin-top:10px">
+              <span class="status" style="height:14px; width:70px; background:rgba(255,255,255,.06)"></span>
+              <span style="height:14px; width:55px; background:rgba(255,255,255,.06); border-radius:10px; display:inline-block"></span>
+            </div>
+            <div style="margin-top:12px; height:34px; background:rgba(255,255,255,.06); border-radius:14px"></div>
+          </div>
+        `;
+        elGrid.appendChild(sk);
+      }
+    }
+
+    function saveProductsCache(list){
+      localStorage.setItem(PROD_CACHE_KEY, JSON.stringify(list));
+      localStorage.setItem(PROD_CACHE_TS, String(Date.now()));
+    }
+
+    function loadProductsFromCache(){
       try{
-        const res = await fetch(API_URL, { cache: "no-store" });
-        if(!res.ok) throw new Error("HTTP " + res.status);
+        const raw = localStorage.getItem(PROD_CACHE_KEY);
+        const ts = Number(localStorage.getItem(PROD_CACHE_TS) || 0);
+        if(!raw) return null;
+        const list = JSON.parse(raw);
+        if(!Array.isArray(list)) return null;
+        return { list, ts };
+      }catch(e){
+        return null;
+      }
+    }
 
-        const data = await res.json();
-        products = Array.isArray(data) ? data : [];
+    async function fetchProductsFromApi(){
+      const res = await fetch(API_URL, { cache: "no-store" });
+      if(!res.ok) throw new Error("HTTP " + res.status);
+      const data = await res.json();
+      return Array.isArray(data) ? data : [];
+    }
 
-        // Reset filters UI
-        elCat.innerHTML = `<option value="">كل الفئات</option>`;
-        state.cat = "";
-        state.q = "";
-        elQ.value = "";
-
+    async function hydrateProducts(){
+      // 1) اعرض من الكاش فورًا
+      const cached = loadProductsFromCache();
+      if(cached && cached.list.length){
+        products = cached.list;
         renderCats();
         renderCatalog();
         updateCartBadge();
+      } else {
+        renderSkeleton(12);
+      }
+
+      // 2) حدّث من الـ API في الخلفية
+      try{
+        const freshList = await fetchProductsFromApi();
+
+        const changed = JSON.stringify(freshList) !== JSON.stringify(products);
+        products = freshList;
+        saveProductsCache(freshList);
+
+        if(!cached || changed){
+          renderCats();
+          renderCatalog();
+        }
+        updateCartBadge();
       }catch(err){
         console.error(err);
-        elGrid.innerHTML = `<div class="empty">حصل خطأ في تحميل المنتجات. تأكد من رابط الـ API والنشر.</div>`;
+        if(!cached){
+          elGrid.innerHTML = `<div class="empty">حصل خطأ في تحميل المنتجات. تأكد من رابط الـ API والنشر.</div>`;
+        } else {
+          showToast("⚠️ تم عرض آخر نسخة محفوظة من المنتجات.");
+        }
       }
     }
 
@@ -582,10 +650,11 @@
     });
 
     // Init
-    loadProducts();
+    hydrateProducts();
+    updateCartBadge();
 
-    // ⭐ تحديث تلقائي (اختياري) كل دقيقة
-    // setInterval(loadProducts, 60000);
+    // ⭐ تحديث خفيف كل 3 دقائق (اختياري)
+    // setInterval(hydrateProducts, 180000);
   </script>
 </body>
 </html>
