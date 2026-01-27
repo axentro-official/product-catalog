@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>BS Catalog</title>
+  <title>كتالوج المنتجات</title>
 
   <style>
     :root{
@@ -237,6 +237,7 @@
       border-radius: var(--radius);
       color:var(--muted);
       text-align:center;
+      width:100%;
     }
     .toast{
       position:fixed; bottom:16px; right:16px;
@@ -295,16 +296,13 @@
   <div id="toast" class="toast"></div>
 
   <script>
-    // ✅ ضع JSON منتجاتك هنا (من شيت JSON_Export)
-    const products = [
-      {"id":"ITM01","name":"شست شفاف","category":"مستحضرات تجميل","image":"images/placeholder.jpg","availability":"Available"},
-      {"id":"ITM02","name":"شست بشرة ميوا","category":"مستحضرات تجميل","image":"images/placeholder.jpg","availability":"Available"},
-      {"id":"ITM03","name":"سيروم","category":"مستحضرات تجميل","image":"images/placeholder.jpg","availability":"Low stock"},
-      {"id":"ITM04","name":"ماسك","category":"مستحضرات تجميل","image":"images/placeholder.jpg","availability":"Out of stock"},
-      {"id":"ITM05","name":"فرشة توزيع سيليكون","category":"مستحضرات تجميل","image":"images/placeholder.jpg","availability":"Low stock"}
-    ];
+    // ✅ رابط الـ API (Apps Script Web App)
+    const API_URL = "https://script.google.com/macros/s/AKfycbwsPPw3UiW6TBngBcbFxY4E8rB7JYgK1W2LRn0WaS9C7OitA1FgZ1vAz9Qr1u_ojlZ8/exec";
 
     const LS_KEY = "AX_CART_V1";
+
+    // ✅ المنتجات هتتحمل من الشيت
+    let products = [];
 
     const state = { q:"", cat:"" };
     const elGrid = document.getElementById("grid");
@@ -369,17 +367,21 @@
     function addToCart(pid){
       const p = products.find(x=>x.id===pid);
       if(!p) return;
+
       if(p.availability === "Out of stock"){
         showToast("هذا المنتج غير متاح حاليًا.");
         return;
       }
+
       const cart = getCart();
       const idx = cart.findIndex(x=>x.id===pid);
+
       if(idx >= 0){
         cart[idx].qty = (Number(cart[idx].qty)||0) + 1;
       } else {
         cart.push({ id: pid, qty: 1 });
       }
+
       setCart(cart);
       updateCartBadge();
       showToast("تمت الإضافة للسلة ✅");
@@ -389,8 +391,10 @@
       const cart = getCart();
       const idx = cart.findIndex(x=>x.id===pid);
       if(idx < 0) return;
+
       const q = Math.max(1, Number(qty)||1);
       cart[idx].qty = q;
+
       setCart(cart);
       updateCartBadge();
       renderCart();
@@ -406,6 +410,7 @@
     function renderCart(){
       const cart = getCart();
       cartList.innerHTML = "";
+
       checkout.style.pointerEvents = cart.length ? "auto" : "none";
       checkout.style.opacity = cart.length ? "1" : ".45";
 
@@ -417,6 +422,7 @@
       cart.forEach(it=>{
         const p = products.find(x=>x.id===it.id);
         if(!p) return;
+
         const row = document.createElement("div");
         row.className = "item";
 
@@ -447,7 +453,6 @@
         cartList.appendChild(row);
       });
 
-      // Handlers
       cartList.querySelectorAll("[data-plus]").forEach(b=>{
         b.onclick = ()=> {
           const id = b.getAttribute("data-plus");
@@ -456,6 +461,7 @@
           setQty(id, (Number(it?.qty)||1) + 1);
         };
       });
+
       cartList.querySelectorAll("[data-minus]").forEach(b=>{
         b.onclick = ()=> {
           const id = b.getAttribute("data-minus");
@@ -464,6 +470,7 @@
           setQty(id, Math.max(1, (Number(it?.qty)||1) - 1));
         };
       });
+
       cartList.querySelectorAll("[data-rm]").forEach(b=>{
         b.onclick = ()=> removeItem(b.getAttribute("data-rm"));
       });
@@ -474,7 +481,7 @@
     }
 
     function renderCats(){
-      const cats = Array.from(new Set(products.map(p=>p.category))).sort();
+      const cats = Array.from(new Set(products.map(p=>p.category))).filter(Boolean).sort();
       cats.forEach(c=>{
         const opt = document.createElement("option");
         opt.value = c; opt.textContent = c;
@@ -493,6 +500,7 @@
       });
 
       elGrid.innerHTML = "";
+
       if(filtered.length === 0){
         elGrid.innerHTML = `<div class="empty">لا توجد نتائج مطابقة.</div>`;
         return;
@@ -521,16 +529,41 @@
             </button>
           </div>
         `;
+
         elGrid.appendChild(card);
       });
 
       elGrid.querySelectorAll("[data-add]").forEach(btn=>{
         btn.addEventListener("click", ()=>{
           addToCart(btn.getAttribute("data-add"));
-          // تفتح السلة تلقائيًا (اختياري) — سيبها كده عشان الإحساس يبقى أحسن
           openDrawer();
         });
       });
+    }
+
+    // ✅ تحميل المنتجات من الـ API
+    async function loadProducts(){
+      elGrid.innerHTML = `<div class="empty">جارٍ تحميل المنتجات...</div>`;
+      try{
+        const res = await fetch(API_URL, { cache: "no-store" });
+        if(!res.ok) throw new Error("HTTP " + res.status);
+
+        const data = await res.json();
+        products = Array.isArray(data) ? data : [];
+
+        // Reset filters UI
+        elCat.innerHTML = `<option value="">كل الفئات</option>`;
+        state.cat = "";
+        state.q = "";
+        elQ.value = "";
+
+        renderCats();
+        renderCatalog();
+        updateCartBadge();
+      }catch(err){
+        console.error(err);
+        elGrid.innerHTML = `<div class="empty">حصل خطأ في تحميل المنتجات. تأكد من رابط الـ API والنشر.</div>`;
+      }
     }
 
     // Events
@@ -549,9 +582,10 @@
     });
 
     // Init
-    renderCats();
-    renderCatalog();
-    updateCartBadge();
+    loadProducts();
+
+    // ⭐ تحديث تلقائي (اختياري) كل دقيقة
+    // setInterval(loadProducts, 60000);
   </script>
 </body>
 </html>
