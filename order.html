@@ -349,19 +349,21 @@
     });
   }
 
-  /* ====== الوقت (12 ساعة) ====== */
-  function formatDateTime12(d){
+  /* ====== التاريخ والوقت (12 ساعة) ====== */
+  function formatDateOnly(d){
     const dd = String(d.getDate()).padStart(2,"0");
     const mm = String(d.getMonth()+1).padStart(2,"0");
     const yyyy = d.getFullYear();
+    return `${dd}-${mm}-${yyyy}`;
+  }
 
+  function formatTimeOnly12(d){
     let h = d.getHours();
     const min = String(d.getMinutes()).padStart(2,"0");
     const ampm = h >= 12 ? "PM" : "AM";
     h = h % 12; if(h === 0) h = 12;
     const hh = String(h).padStart(2,"0");
-
-    return `${dd}-${mm}-${yyyy} ${hh}:${min} ${ampm}`;
+    return `${hh}:${min} ${ampm}`;
   }
 
   /* ====== رقم طلب (BS-YYYYMMDD-XXX) بدون توقيت ====== */
@@ -409,7 +411,7 @@
     return "";
   }
 
-  /* ====== رسالة واتساب (فاتورة صغيرة - بدون رموز/إيموجي) ====== */
+  /* ====== رسالة واتساب (احترافية - بدون إيموجيز) ====== */
   function buildMsg(){
     const cart = getCart();
     const orderId = getStableOrderId();
@@ -420,7 +422,8 @@
     const address = (document.getElementById("address").value||"").trim();
 
     const now = new Date();
-    const dt = formatDateTime12(now);
+    const dOnly = formatDateOnly(now);
+    const tOnly = formatTimeOnly12(now);
 
     const line = "------------------------------";
     const line2 = "==============================";
@@ -428,10 +431,11 @@
     let totalQty = 0;
 
     const lines = [];
-    lines.push("فاتورة طلب");
+    lines.push("تفاصيل الطلب");
     lines.push(line2);
     lines.push(`رقم الطلب: ${orderId}`);
-    lines.push(`التاريخ: ${dt}`);
+    lines.push(`التاريخ: ${dOnly}`);
+    lines.push(`الوقت: ${tOnly}`);
     lines.push(`نوع الطلب: ${type}`);
     lines.push(line);
     lines.push("تفاصيل الأصناف:");
@@ -441,8 +445,7 @@
       const safe = pr || {
         id: it.id,
         name: "منتج غير متاح (تم تحديث الكتالوج)",
-        category: "—",
-        availability: "Unknown"
+        category: "—"
       };
 
       const qty = Number(it.qty)||1;
@@ -452,7 +455,6 @@
       lines.push(`${i+1}) ${safe.name}`);
       lines.push(`كود: ${safe.id}`);
       lines.push(`كمية: ${qty}`);
-      lines.push(`حالة: ${safe.availability}`);
       lines.push(`فئة: ${safe.category}`);
     });
 
@@ -466,10 +468,10 @@
     lines.push(`العنوان: ${address}`);
     lines.push(line2);
 
-    // ✅ آخر سطر (زي ما اتفقنا)
+    // ✅ آخر سطر (قطاعي: ثابت زي ما طلبت / جملة: نفس المعنى بدون إيموجي)
     lines.push(
       type === "جملة"
-      ? "✅ *تم إرسال طلب الجملة.* سيتم مراجعة الطلب وتحديد السعر النهائي والتواصل معكم."
+      ? "تم إرسال طلب الجملة. سيتم مراجعة الطلب وتحديد السعر النهائي والتواصل معكم."
       : "تم إرسال الطلب. سيتم التواصل لتأكيد الطلب وإرسال الفاتورة."
     );
 
@@ -544,4 +546,3 @@
 </script>
 </body>
 </html>
-```0
