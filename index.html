@@ -4,7 +4,6 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>كتالوج المنتجات</title>
-
   <style>
     :root{
       --bg1:#0b1020; --bg2:#0f172a;
@@ -13,8 +12,6 @@
       --radius:18px;
       --accent:#60a5fa; --accent2:#a78bfa;
       --ok:#22c55e; --warn:#facc15; --bad:#ef4444;
-      --container-max:1100px;
-      --gap:12px;
     }
     *{box-sizing:border-box}
     html,body{height:100%}
@@ -28,7 +25,6 @@
         linear-gradient(180deg, var(--bg1), var(--bg2));
       min-height:100vh;
       -webkit-font-smoothing:antialiased;
-      -moz-osx-font-smoothing:grayscale;
     }
     a{color:inherit;text-decoration:none}
     .topbar{
@@ -40,852 +36,300 @@
       backdrop-filter: blur(12px);
     }
     .brand{display:flex; align-items:center; gap:12px}
-
-    .logo{
-      width:44px; height:44px;
-      border-radius:999px;
-      display:grid; place-items:center;
+    .logo{ width:44px; height:44px; border-radius:999px; display:grid; place-items:center;
       background: linear-gradient(135deg, rgba(96,165,250,.35), rgba(167,139,250,.25));
-      border:1px solid var(--stroke);
-      box-shadow: var(--shadow);
-      overflow:hidden;
-      padding:5px;
-      flex:0 0 auto;
-    }
-    .logo img{
-      width:100%;
-      height:100%;
-      object-fit:contain;
-      display:block;
-    }
-
+      border:1px solid var(--stroke); box-shadow: var(--shadow); overflow:hidden; padding:5px; }
+    .logo img{ width:100%; height:100%; object-fit:contain; display:block; }
     .brand-title{font-size:16px;font-weight:900}
     .brand-sub{font-size:12px;color:var(--muted)}
     .actions{display:flex; gap:10px; align-items:center; flex-wrap:wrap; justify-content:flex-end}
-    .input{
-      width:220px; max-width:85vw;
-      padding:12px 12px;
-      border-radius:14px;
-      border:1px solid var(--stroke);
-      background: rgba(255,255,255,.06);
-      color:var(--text);
-      outline:none;
-      font-size:14px;
-    }
-    .input::placeholder{color:#9ca3af}
-
-    .cartBtn{
-      display:inline-flex; align-items:center; gap:10px;
-      padding:11px 12px;
-      border-radius:14px;
-      border:1px solid rgba(96,165,250,.35);
-      background: linear-gradient(135deg, rgba(96,165,250,.20), rgba(167,139,250,.12));
-      font-weight:900; cursor:pointer;
-      user-select:none;
-    }
-    .badge{
-      min-width:26px; height:22px;
-      padding:0 8px;
-      border-radius:999px;
-      display:grid; place-items:center;
-      border:1px solid var(--stroke);
-      background: rgba(0,0,0,.25);
-      font-size:12px;
-    }
-
-    .container{max-width:var(--container-max); margin:18px auto; padding:0 16px}
-    .grid{
-      display:grid;
-      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-      gap:var(--gap);
-    }
-    .card{
-      border-radius: var(--radius);
-      overflow:hidden;
-      border:1px solid var(--stroke);
+    .input{ width:220px; max-width:85vw; padding:12px; border-radius:14px; border:1px solid var(--stroke);
+      background: rgba(255,255,255,.06); color:var(--text); outline:none; font-size:14px; }
+    .container{max-width:1100px; margin:18px auto; padding:0 16px}
+    .grid{ display:grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap:12px; }
+    .card{ border-radius: var(--radius); overflow:hidden; border:1px solid var(--stroke);
       background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
-      box-shadow: var(--shadow);
-      transition: transform .18s ease, border-color .18s ease;
-      display:flex; flex-direction:column;
-      min-height:220px;
-    }
-    .card:hover{transform: translateY(-2px); border-color: rgba(96,165,250,.45)}
+      box-shadow: var(--shadow); transition: transform .18s ease, border-color .18s ease; display:flex; flex-direction:column; min-height:220px;}
     .media{position:relative; background: rgba(255,255,255,.03); aspect-ratio: 3 / 2; width:100%}
     .media img{width:100%; height:100%; object-fit:cover; display:block}
-    .chip{
-      position:absolute; bottom:8px; right:8px;
-      padding:5px 9px;
-      border-radius:999px;
-      background: rgba(15,23,42,.75);
-      border:1px solid var(--stroke);
-      font-size:11px;
-    }
+    .chip{position:absolute; bottom:8px; right:8px; padding:5px 9px; border-radius:999px; background: rgba(15,23,42,.75);
+      border:1px solid var(--stroke); font-size:11px;}
     .body{padding:10px; display:flex; flex-direction:column; gap:8px; flex:1}
-    .title{font-weight:900; font-size:13px; line-height:1.3; min-height:36px}
+    .title{font-weight:900; font-size:13px; line-height:1.3; min-height:38px}
     .meta{font-size:11px; color:var(--muted); display:flex; gap:8px; flex-wrap:wrap; align-items:center}
-    .status{
-      font-weight:900;
-      padding:3px 7px;
-      border-radius:999px;
-      border:1px solid var(--stroke);
-      background: rgba(255,255,255,.04);
-      font-size:11px;
-    }
-    .st-available{color:var(--ok)}
-    .st-low{color:var(--warn)}
-    .st-out{color:var(--bad)}
-
-    /* qty and add controls */
-    .addBtn{
-      width:100%;
-      padding:10px 10px;
-      border-radius:14px;
-      border:1px solid rgba(96,165,250,.35);
-      background: linear-gradient(135deg, rgba(96,165,250,.22), rgba(167,139,250,.15));
-      font-weight:900; font-size:12px; cursor:pointer;
-      color:var(--text);
-    }
-    .addBtn:disabled{
-      opacity:.45; cursor:not-allowed;
-      border-color: var(--stroke);
-      background: rgba(255,255,255,.06);
-    }
-
-    .buyRow{
-      margin-top:9px;
-      display:flex;
-      gap:8px;
-      align-items:stretch;
-      width:100%;
-    }
-    .qtyMini{
-      display:flex;
-      align-items:center;
-      gap:6px;
-      padding:6px;
-      border-radius:14px;
-      border:1px solid var(--stroke);
-      background: rgba(255,255,255,.06);
-      flex:0 0 auto;
-    }
-    .qMiniBtn{
-      width:34px; height:34px;
-      border-radius:10px;
-      border:1px solid var(--stroke);
-      background: rgba(255,255,255,.06);
-      color:var(--text);
-      cursor:pointer;
-      font-weight:900;
-      line-height:1;
-      display:grid; place-items:center;
-    }
-    .qMiniVal{
-      min-width:40px;
-      text-align:center;
-      border:1px solid var(--stroke);
-      background: rgba(255,255,255,.04);
-      border-radius:12px;
-      padding:6px;
-      font-weight:900;
-      font-size:13px;
-    }
-    .buyRow .addBtn{flex:1; margin-top:0}
-
-    /* Drawer */
-    .overlay{
-      position:fixed; inset:0;
-      background: rgba(0,0,0,.55);
-      backdrop-filter: blur(4px);
-      display:none;
-      z-index:50;
-    }
-    .drawer{
-      position:fixed; top:0; bottom:0; right:0; left:auto;
-      width:min(420px, 92vw);
-      background: linear-gradient(180deg, rgba(15,23,42,.95), rgba(2,6,23,.95));
-      border-left:1px solid var(--stroke);
-      box-shadow: var(--shadow);
-      transform: translateX(110%);
-      transition: transform .2s ease;
-      z-index:60;
-      display:flex; flex-direction:column;
-    }
-    .drawer.open{transform: translateX(0)}
-    .overlay.show{display:block}
-    .dHead{
-      padding:14px 14px;
-      display:flex; justify-content:space-between; align-items:center;
-      border-bottom:1px solid var(--stroke);
-    }
-    .dTitle{font-weight:900}
-    .xBtn{
-      padding:8px 10px; border-radius:12px;
-      border:1px solid var(--stroke); background: rgba(255,255,255,.06);
-      cursor:pointer;
-    }
-    .dBody{padding:12px; overflow:auto; flex:1}
-    .item{
-      border:1px solid var(--stroke);
-      background: rgba(255,255,255,.05);
-      border-radius:16px;
-      padding:10px;
-      display:flex; gap:10px; align-items:center;
-      margin-bottom:10px;
-    }
-    .thumb{
-      width:56px; height:56px; border-radius:14px;
-      border:1px solid var(--stroke);
-      object-fit:cover; background: rgba(255,255,255,.04);
-      flex:0 0 auto;
-    }
-    .iInfo{flex:1; min-width:0}
-    .iName{font-weight:900; font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
-    .iMeta{font-size:11px; color:var(--muted); margin-top:3px}
-    .qtyBox{display:flex; align-items:center; gap:6px; flex:0 0 auto;}
-    .qBtn{
-      width:32px; height:32px;
-      border-radius:12px;
-      border:1px solid var(--stroke);
-      background: rgba(255,255,255,.06);
-      color:var(--text);
-      cursor:pointer;
-      font-weight:900;
-    }
-    .qVal{
-      width:40px; text-align:center;
-      border:1px solid var(--stroke);
-      background: rgba(255,255,255,.04);
-      border-radius:12px;
-      padding:7px 6px;
-      font-weight:900; font-size:12px;
-    }
-    .rmBtn{
-      margin-top:6px;
-      font-size:11px;
-      color: #fca5a5;
-      cursor:pointer;
-      user-select:none;
-    }
-    .dFoot{
-      padding:12px;
-      border-top:1px solid var(--stroke);
-      display:flex; gap:10px; flex-wrap:wrap;
-      background: rgba(255,255,255,.03);
-    }
-    .footBtn{
-      flex:1;
-      padding:12px 12px;
-      border-radius:16px;
-      border:1px solid var(--stroke);
-      background: rgba(255,255,255,.06);
-      color:var(--text);
-      font-weight:900;
-      cursor:pointer;
-      text-align:center;
-    }
-    .primary{
-      border-color: rgba(96,165,250,.45);
-      background: linear-gradient(135deg, rgba(96,165,250,.28), rgba(167,139,250,.18));
-    }
-    .empty{
-      padding:14px;
-      border:1px dashed var(--stroke);
-      border-radius: var(--radius);
-      color:var(--muted);
-      text-align:center;
-      width:100%;
-    }
-    .toast{
-      position:fixed; bottom:16px; left:16px;
-      padding:10px 12px;
-      border-radius:14px;
-      border:1px solid var(--stroke);
-      background: rgba(15,23,42,.85);
-      box-shadow: var(--shadow);
-      display:none;
-      z-index:80;
-      font-weight:900; font-size:12px;
-    }
-
-    /* Skeleton */
-    .skeleton{position:relative; overflow:hidden}
-    .skeleton::after{
-      content:"";
-      position:absolute; inset:0;
-      transform:translateX(-100%);
-      background: linear-gradient(90deg, transparent, rgba(255,255,255,.08), transparent);
-      animation: shimmer 1.1s infinite;
-    }
-    @keyframes shimmer{100%{transform:translateX(100%)}}
-
-    /* Responsive tweaks */
-    @media (max-width: 920px){
-      :root{ --container-max:920px }
-      .grid{ grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)) }
-    }
-    @media (max-width: 720px){
-      .topbar{
-        flex-direction:column;
-        align-items:stretch;
-        gap:10px;
-      }
-      .brand{width:100%; justify-content:space-between}
-      .actions{
-        width:100%;
-        justify-content:space-between;
-      }
-      .input{ width:100%; max-width:100%;}
-      .grid{ grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap:10px }
-      .drawer{ width:100%; max-width:480px; }
-      .toast{ left:12px; right:auto; bottom:12px }
-    }
-
-    /* Ensure focus styles */
-    :focus{ outline:3px solid rgba(96,165,250,.2); outline-offset:3px; }
+    .buyRow{ margin-top:9px; display:flex; gap:8px; align-items:stretch; width:100% }
+    .qtyMini{ display:flex; align-items:center; gap:6px; padding:6px; border-radius:14px; border:1px solid var(--stroke); background: rgba(255,255,255,.06); flex:0 0 auto; }
+    .qMiniBtn{ width:34px; height:34px; border-radius:10px; border:1px solid var(--stroke); background: rgba(255,255,255,.06); color:var(--text); cursor:pointer; font-weight:900; display:grid; place-items:center; }
+    .qMiniVal{ min-width:40px; text-align:center; border:1px solid var(--stroke); background: rgba(255,255,255,.04); border-radius:12px; padding:6px; font-weight:900; font-size:13px; }
+    .addBtn{ width:100%; padding:10px 10px; border-radius:14px; border:1px solid rgba(96,165,250,.35); background: linear-gradient(135deg, rgba(96,165,250,.22), rgba(167,139,250,.15)); font-weight:900; font-size:12px; cursor:pointer; color:var(--text); }
+    .empty{ padding:24px; border:1px dashed var(--stroke); border-radius: var(--radius); color:var(--muted); text-align:center; }
+    .loader{ display:flex; gap:10px; align-items:center; justify-content:center; padding:20px; color:var(--muted) }
+    .errorBox{ padding:18px; border-radius:12px; background:rgba(244,63,94,.06); border:1px solid rgba(244,63,94,.12); color:#fecaca; text-align:center }
+    .retryBtn{ margin-top:12px; padding:8px 12px; border-radius:12px; background:linear-gradient(135deg,var(--accent),var(--accent2)); border:none; color:#061426; font-weight:900; cursor:pointer }
+    @media (max-width:920px){ .grid{ grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)) } }
+    @media (max-width:720px){ .topbar{ flex-direction:column; align-items:stretch; gap:10px; } .input{ width:100%; max-width:100%; } .grid{ grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap:10px } }
   </style>
 </head>
-
 <body>
   <header class="topbar">
     <div class="brand">
-      <div class="logo">
-        <img src="images/bslogo.webp" alt="BS Logo"
-             onerror="this.onerror=null;this.style.display='none';this.parentElement.style.padding='0';this.parentElement.textContent='BS'">
-      </div>
-      <div>
-        <div class="brand-title">كتالوج منتجات BS 📦</div>
-        <div class="brand-sub">أضف للسلة ثم أكمل الطلب</div>
-      </div>
+      <div class="logo"><img id="siteLogo" src="images/bslogo.webp" alt="BS Logo" onerror="this.onerror=null;this.style.display='none';this.parentElement.textContent='BS'"></div>
+      <div><div class="brand-title">كتالوج منتجات BS 📦</div><div class="brand-sub">أضف للسلة ثم أكمل الطلب</div></div>
     </div>
 
     <div class="actions">
       <input id="q" class="input" placeholder="ابحث عن منتج..." aria-label="ابحث عن منتج" />
-      <select id="cat" class="input" aria-label="اختر فئة">
-        <option value="">كل الفئات</option>
-      </select>
-      <button id="cartBtn" class="cartBtn" aria-haspopup="dialog" aria-expanded="false" aria-controls="drawer">
-        🛒 السلة
-        <span id="cartCount" class="badge" aria-live="polite">0</span>
-      </button>
+      <select id="cat" class="input" aria-label="اختر فئة"><option value="">كل الفئات</option></select>
+      <button id="cartBtn" class="addBtn" aria-haspopup="dialog" aria-expanded="false" aria-controls="drawer">🛒 السلة <span id="cartCount" class="qMiniVal">0</span></button>
     </div>
   </header>
 
-  <main class="container" id="main">
+  <main class="container">
+    <div id="statusArea"></div>
     <div id="grid" class="grid" role="list"></div>
   </main>
 
-  <!-- Drawer -->
-  <div id="overlay" class="overlay" tabindex="-1"></div>
-  <aside id="drawer" class="drawer" aria-hidden="true" role="dialog" aria-label="سلة المشتريات">
-    <div class="dHead">
-      <div class="dTitle">🛒 السلة</div>
-      <button id="closeDrawer" class="xBtn" aria-label="إغلاق السلة">إغلاق</button>
-    </div>
-    <div class="dBody" id="cartList"></div>
-    <div class="dFoot">
-      <button id="clearCart" class="footBtn">تفريغ السلة</button>
-      <a id="checkout" class="footBtn primary" href="order.html">إتمام الطلب</a>
-    </div>
-  </aside>
+  <div id="overlay" style="display:none"></div>
+  <div id="toast" style="display:none;position:fixed;bottom:16px;left:16px;padding:10px 12px;border-radius:12px;background:rgba(0,0,0,.6);color:#fff;"></div>
 
-  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+<script>
+/* CONFIG */
+const API_URL = "https://script.google.com/macros/s/AKfycbwsPPw3UiW6TBngBcbFxY4E8rB7JYgK1W2LRn0WaS9C7OitA1FgZ1vAz9Qr1u_ojlZ8/exec";
+const PROD_CACHE_KEY = "AX_PRODUCTS_CACHE_V1";
+const PROD_CACHE_TS  = "AX_PRODUCTS_CACHE_TS_V1";
+const CACHE_TTL_MS   = 10 * 60 * 1000;
+const IMG_PLACEHOLDER = "https://via.placeholder.com/600x400?text=No+Image";
 
-  <script>
-    const API_URL = "https://script.google.com/macros/s/AKfycbwsPPw3UiW6TBngBcbFxY4E8rB7JYgK1W2LRn0WaS9C7OitA1FgZ1vAz9Qr1u_ojlZ8/exec";
+let products = [];
+const state = { q:"", cat:"" };
 
-    const LS_KEY = "AX_CART_V1";
-    const CART_VER_KEY = "AX_CART_SCHEMA_VER";
-    const CART_SCHEMA_VER = "2";
+const elGrid = document.getElementById("grid");
+const statusArea = document.getElementById("statusArea");
+const elQ = document.getElementById("q");
+const elCat = document.getElementById("cat");
+const toastEl = document.getElementById("toast");
+const cartCountEl = document.getElementById("cartCount");
 
-    const PROD_CACHE_KEY = "AX_PRODUCTS_CACHE_V1";
-    const PROD_CACHE_TS  = "AX_PRODUCTS_CACHE_TS_V1";
-    const CACHE_TTL_MS   = 10 * 60 * 1000;
+function showToast(msg, time=1600){
+  toastEl.textContent = msg; toastEl.style.display='block';
+  clearTimeout(showToast._t);
+  showToast._t = setTimeout(()=> toastEl.style.display='none', time);
+}
 
-    const IMG_PLACEHOLDER = "https://via.placeholder.com/600x400?text=No+Image";
+/* debounce helper */
+function debounce(fn, wait=250){ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn.apply(this,a), wait); }; }
 
-    let products = [];
-    const state = { q:"", cat:"" };
-
-    const elGrid = document.getElementById("grid");
-    const elQ = document.getElementById("q");
-    const elCat = document.getElementById("cat");
-
-    const cartBtn = document.getElementById("cartBtn");
-    const cartCount = document.getElementById("cartCount");
-    const overlay = document.getElementById("overlay");
-    const drawer = document.getElementById("drawer");
-    const closeDrawer = document.getElementById("closeDrawer");
-    const cartList = document.getElementById("cartList");
-    const clearCart = document.getElementById("clearCart");
-    const toast = document.getElementById("toast");
-    const checkout = document.getElementById("checkout");
-
-    const draftQty = Object.create(null);
-    let _lastFocusedBeforeDrawer = null;
-
-    function norm(s=""){ return String(s).toLowerCase().trim(); }
-
-    function statusClass(av){
-      if(av === "Low stock") return "st-low";
-      if(av === "Out of stock") return "st-out";
-      return "st-available";
-    }
-
-    function resolveImage(p){
-      const apiImg = (p && p.image) ? String(p.image).trim() : "";
-      if(apiImg && apiImg !== "images/placeholder.jpg" && apiImg !== "placeholder.jpg"){
-        return apiImg;
+/* IMAGE lazy loader + once-loaded guard */
+const imgObserver = new IntersectionObserver((entries)=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting){
+      const img = e.target;
+      const src = img.dataset.src;
+      if(src && !img.dataset.loaded){
+        img.src = src;
+        img.onload = ()=> { img.dataset.loaded = "1"; img.classList.remove('loading'); };
+        img.onerror = ()=> { img.src = IMG_PLACEHOLDER; img.dataset.loaded = "1"; };
       }
-      return `images/${p.id}.webp`;
+      imgObserver.unobserve(img);
     }
+  });
+}, { rootMargin: "200px 0px", threshold: 0.01 });
 
-    function initCartSchema(){
-      const v = localStorage.getItem(CART_VER_KEY);
-      if(v !== CART_SCHEMA_VER){
-        localStorage.setItem(CART_VER_KEY, CART_SCHEMA_VER);
-        localStorage.setItem(LS_KEY, JSON.stringify([]));
-      } else {
-        try{
-          const raw = localStorage.getItem(LS_KEY);
-          const arr = raw ? JSON.parse(raw) : [];
-          const ok = Array.isArray(arr) && arr.every(x => x && typeof x.id === "string" && Number(x.qty) > 0);
-          if(!ok) localStorage.setItem(LS_KEY, JSON.stringify([]));
-        }catch(e){
-          localStorage.setItem(LS_KEY, JSON.stringify([]));
-        }
+/* caching helpers */
+function saveProductsCache(list){ localStorage.setItem(PROD_CACHE_KEY, JSON.stringify(list)); localStorage.setItem(PROD_CACHE_TS, String(Date.now())); }
+function loadProductsFromCache(){ try{ const raw=localStorage.getItem(PROD_CACHE_KEY); const ts=Number(localStorage.getItem(PROD_CACHE_TS)||0); if(!raw) return null; const list=JSON.parse(raw); if(!Array.isArray(list)) return null; return {list,ts}; }catch(e){ return null; } }
+
+/* fetch */
+async function fetchProductsFromApi(){
+  const res = await fetch(API_URL, { cache:"no-store" });
+  if(!res.ok) throw new Error("HTTP " + res.status);
+  const data = await res.json();
+  return Array.isArray(data) ? data : [];
+}
+
+/* CART (simple) */
+const LS_KEY = "AX_CART_V1";
+function getCart(){ try{ const r=localStorage.getItem(LS_KEY); return r?JSON.parse(r):[]; }catch(e){ return []; } }
+function setCart(items){ localStorage.setItem(LS_KEY, JSON.stringify(items)); updateCartBadge(); }
+function updateCartBadge(){ const total = getCart().reduce((s,it)=>s+(Number(it.qty)||0),0); cartCountEl.textContent = total; }
+
+/* RENDER: efficient, reuses existing cards when possible */
+function renderCatalog(){
+  const q = String(state.q||"").toLowerCase().trim();
+  const cat = state.cat;
+  const filtered = products.filter(p=>{
+    const okQ = !q || (p.name && p.name.toLowerCase().includes(q)) || (p.id && p.id.toLowerCase().includes(q));
+    const okC = !cat || p.category === cat;
+    return okQ && okC;
+  });
+
+  // Mark existing items; we'll remove ones not in filtered
+  const keepSet = new Set(filtered.map(p=>p.id));
+  Array.from(elGrid.children).forEach(child=>{
+    const pid = child.dataset.pid;
+    if(pid && !keepSet.has(pid)) child.remove();
+  });
+
+  // For each product in filtered, either update existing card or create it
+  filtered.forEach(p=>{
+    let card = elGrid.querySelector(`[data-pid="${CSS.escape(p.id)}"]`);
+    const inCartQty = (getCart().find(x=>x.id===p.id)?.qty) || 0;
+    const draftVal = draftQty[p.id] ?? inCartQty ?? 0;
+
+    if(card){
+      // update text parts, but DO NOT reset <img.src> if already loaded
+      const titleEl = card.querySelector(".title");
+      const metaEl = card.querySelector(".meta .pid");
+      const statusEl = card.querySelector(".meta .st");
+      const qValEl = card.querySelector("[data-mini-val]");
+      if(titleEl) titleEl.textContent = p.name || "-";
+      if(metaEl) metaEl.textContent = p.id || "";
+      if(statusEl){
+        statusEl.textContent = p.availability;
+        statusEl.className = "st " + statusClass(p.availability);
       }
+      if(qValEl) qValEl.textContent = draftVal;
+      return;
     }
 
-    function getCart(){
-      try{
-        const raw = localStorage.getItem(LS_KEY);
-        const arr = raw ? JSON.parse(raw) : [];
-        return Array.isArray(arr) ? arr : [];
-      }catch(e){
-        return [];
-      }
-    }
-    function setCart(items){
-      localStorage.setItem(LS_KEY, JSON.stringify(items));
-    }
-    function cartTotalCount(){
-      const c = getCart();
-      return c.reduce((sum,it)=>sum + (Number(it.qty)||0), 0);
-    }
+    // create new card
+    card = document.createElement("div");
+    card.className = "card";
+    card.dataset.pid = p.id;
 
-    function getQtyInCart(pid){
-      const it = getCart().find(x => x.id === pid);
-      return Number(it?.qty) || 0;
-    }
+    card.innerHTML = `
+      <div class="media">
+        <img class="js-img loading" alt="${escapeHtml(p.name||'')}" />
+        <div class="chip">${escapeHtml(p.category||'')}</div>
+      </div>
+      <div class="body">
+        <div class="title">${escapeHtml(p.name||'-')}</div>
+        <div class="meta"><span class="st ${statusClass(p.availability)}">${escapeHtml(p.availability)}</span> <span class="pid" style="opacity:.85;margin-inline-start:8px">${escapeHtml(p.id||'')}</span></div>
 
-    function getDraftQty(pid){
-      const inCart = getQtyInCart(pid);
-      if(inCart > 0) return inCart;
-      return Math.max(0, Number(draftQty[pid]) || 0);
-    }
-
-    function setDraft(pid, qty){
-      const q = Math.max(0, Number(qty) || 0);
-      draftQty[pid] = q;
-      renderCatalog();
-    }
-
-    function showToast(msg){
-      toast.textContent = msg;
-      toast.style.display = "block";
-      clearTimeout(showToast._t);
-      showToast._t = setTimeout(()=> toast.style.display="none", 2000);
-    }
-
-    function openDrawer(){
-      _lastFocusedBeforeDrawer = document.activeElement;
-      overlay.classList.add("show");
-      drawer.classList.add("open");
-      drawer.setAttribute("aria-hidden","false");
-      cartBtn.setAttribute("aria-expanded", "true");
-      renderCart();
-      closeDrawer.focus();
-      document.documentElement.style.overflow = "hidden";
-    }
-    function closeDrawerFn(){
-      overlay.classList.remove("show");
-      drawer.classList.remove("open");
-      drawer.setAttribute("aria-hidden","true");
-      cartBtn.setAttribute("aria-expanded", "false");
-      if(_lastFocusedBeforeDrawer && typeof _lastFocusedBeforeDrawer.focus === "function"){
-        try { _lastFocusedBeforeDrawer.focus(); } catch(e){}
-      }
-      document.documentElement.style.overflow = "";
-    }
-
-    function setQtyFromCatalog(pid, qty){
-      const p = products.find(x=>x.id===pid);
-      if(!p) return;
-
-      if(p.availability === "Out of stock"){
-        showToast("هذا المنتج غير متاح حاليًا.");
-        return;
-      }
-
-      const cart = getCart();
-      const idx = cart.findIndex(x=>x.id===pid);
-      const q = Math.max(0, Number(qty)||0);
-
-      if(q === 0){
-        if(idx >= 0) cart.splice(idx, 1);
-      } else {
-        if(idx >= 0) cart[idx].qty = q;
-        else cart.push({ id: pid, qty: q });
-      }
-
-      setCart(cart);
-      updateCartBadge();
-      renderCatalog();
-    }
-
-    function addToCart(pid){
-      const p = products.find(x=>x.id===pid);
-      if(!p) return;
-
-      if(p.availability === "Out of stock"){
-        showToast("هذا المنتج غير متاح حاليًا.");
-        return;
-      }
-
-      const inCart = getQtyInCart(pid);
-      if(inCart > 0){
-        showToast("المنتج موجود في السلة. استخدم العداد للتعديل ✅");
-        return;
-      }
-
-      const q = getDraftQty(pid);
-      const firstQty = q > 0 ? q : 1;
-
-      setQtyFromCatalog(pid, firstQty);
-      draftQty[pid] = firstQty;
-
-      showToast("تمت الإضافة للسلة ✅");
-    }
-
-    function setQty(pid, qty){
-      const cart = getCart();
-      const idx = cart.findIndex(x=>x.id===pid);
-      if(idx < 0) return;
-
-      cart[idx].qty = Math.max(1, Number(qty)||1);
-      setCart(cart);
-      updateCartBadge();
-      renderCart();
-      renderCatalog();
-    }
-
-    function removeItem(pid){
-      setCart(getCart().filter(x=>x.id!==pid));
-      updateCartBadge();
-      renderCart();
-      renderCatalog();
-    }
-
-    function renderCart(){
-      const cart = getCart();
-      cartList.innerHTML = "";
-
-      checkout.style.pointerEvents = cart.length ? "auto" : "none";
-      checkout.style.opacity = cart.length ? "1" : ".45";
-
-      if(cart.length === 0){
-        cartList.innerHTML = `<div class="empty">السلة فارغة. أضف منتجات من الكتالوج.</div>`;
-        return;
-      }
-
-      cart.forEach(it=>{
-        const p = products.find(x=>x.id===it.id);
-        if(!p) return;
-
-        const row = document.createElement("div");
-        row.className = "item";
-
-        const img = document.createElement("img");
-        img.className = "thumb";
-        img.loading = "lazy";
-        img.decoding = "async";
-        img.src = resolveImage(p);
-        img.alt = p.name || "product";
-        img.onerror = ()=> img.src = IMG_PLACEHOLDER;
-
-        const info = document.createElement("div");
-        info.className = "iInfo";
-        info.innerHTML = `
-          <div class="iName">${p.name}</div>
-          <div class="iMeta">${p.category} • <span class="${statusClass(p.availability)}" style="font-weight:900">${p.availability}</span> • ${p.id}</div>
-          <div class="rmBtn" data-rm="${p.id}" role="button" tabindex="0">حذف من السلة</div>
-        `;
-
-        const qtyBox = document.createElement("div");
-        qtyBox.className = "qtyBox";
-        qtyBox.innerHTML = `
-          <button class="qBtn" data-minus="${p.id}" aria-label="إنقاص الكمية">−</button>
-          <div class="qVal" aria-live="polite">${Number(it.qty)||1}</div>
-          <button class="qBtn" data-plus="${p.id}" aria-label="زيادة الكمية">+</button>
-        `;
-
-        row.appendChild(img);
-        row.appendChild(info);
-        row.appendChild(qtyBox);
-        cartList.appendChild(row);
-      });
-
-      cartList.querySelectorAll("[data-plus]").forEach(b=>{
-        b.onclick = ()=> {
-          const id = b.getAttribute("data-plus");
-          const it = getCart().find(x=>x.id===id);
-          setQty(id, (Number(it?.qty)||1) + 1);
-        };
-      });
-
-      cartList.querySelectorAll("[data-minus]").forEach(b=>{
-        b.onclick = ()=> {
-          const id = b.getAttribute("data-minus");
-          const it = getCart().find(x=>x.id===id);
-          setQty(id, Math.max(1, (Number(it?.qty)||1) - 1));
-        };
-      });
-
-      cartList.querySelectorAll("[data-rm]").forEach(b=>{
-        b.onclick = ()=> removeItem(b.getAttribute("data-rm"));
-        b.onkeydown = (ev) => { if(ev.key === 'Enter' || ev.key === ' ') removeItem(b.getAttribute("data-rm")); };
-      });
-    }
-
-    function updateCartBadge(){
-      cartCount.textContent = String(cartTotalCount());
-    }
-
-    function renderCats(){
-      const cats = Array.from(new Set(products.map(p=>p.category))).filter(Boolean).sort();
-      elCat.innerHTML = `<option value="">كل الفئات</option>`;
-      cats.forEach(c=>{
-        const opt = document.createElement("option");
-        opt.value = c; opt.textContent = c;
-        elCat.appendChild(opt);
-      });
-    }
-
-    function renderCatalog(){
-      const q = norm(state.q);
-      const cat = state.cat;
-
-      const filtered = products.filter(p=>{
-        const okQ = !q || norm(p.name).includes(q) || norm(p.id).includes(q);
-        const okC = !cat || p.category === cat;
-        return okQ && okC;
-      });
-
-      elGrid.innerHTML = "";
-
-      if(filtered.length === 0){
-        elGrid.innerHTML = `<div class="empty">لا توجد نتائج مطابقة.</div>`;
-        return;
-      }
-
-      filtered.forEach(p=>{
-        const card = document.createElement("div");
-        card.className = "card";
-
-        const disabled = p.availability === "Out of stock";
-        const imgSrc = resolveImage(p);
-
-        const inCartQty = getQtyInCart(p.id);
-        const qtyShown = getDraftQty(p.id);
-
-        card.innerHTML = `
-          <div class="media">
-            <img src="${imgSrc}" alt="${p.name}" loading="lazy" decoding="async"
-              onerror="this.onerror=null;this.src='${IMG_PLACEHOLDER}'"/>
-            <div class="chip">${p.category}</div>
+        <div class="buyRow">
+          <div class="qtyMini" aria-label="كمية المنتج">
+            <button class="qMiniBtn" data-mini-minus="${escapeAttr(p.id)}" aria-label="إنقاص">−</button>
+            <div class="qMiniVal" data-mini-val="${escapeAttr(p.id)}">${draftVal}</div>
+            <button class="qMiniBtn" data-mini-plus="${escapeAttr(p.id)}" aria-label="زيادة">+</button>
           </div>
-          <div class="body">
-            <div class="title">${p.name}</div>
-            <div class="meta">
-              <span class="status ${statusClass(p.availability)}">${p.availability}</span>
-              <span>${p.id}</span>
-            </div>
+          <button class="addBtn" data-add="${escapeAttr(p.id)}">${p.availability === "Out of stock" ? "غير متاح" : "➕ أضف للسلة"}</button>
+        </div>
+      </div>
+    `;
 
-            <div class="buyRow">
-              <div class="qtyMini" aria-label="كمية المنتج">
-                <button class="qMiniBtn" ${disabled ? "disabled" : ""} data-mini-minus="${p.id}" aria-label="إنقاص">−</button>
-                <div class="qMiniVal" data-mini-val="${p.id}">${qtyShown}</div>
-                <button class="qMiniBtn" ${disabled ? "disabled" : ""} data-mini-plus="${p.id}" aria-label="زيادة">+</button>
-              </div>
+    // set data-src for lazy loading; do NOT set src now
+    const imgEl = card.querySelector("img.js-img");
+    imgEl.dataset.src = (p.image && !p.image.includes("placeholder")) ? p.image : `images/${p.id}.webp`;
+    // If image was previously loaded and cached in browser, dataset.loaded could be set — but since this is a new element, we rely on observer
+    imgObserver.observe(imgEl);
 
-              <button class="addBtn" ${disabled ? "disabled" : ""} data-add="${p.id}">
-                ${disabled ? "غير متاح" : "➕ أضف للسلة"}
-              </button>
-            </div>
-          </div>
-        `;
+    // append to grid
+    elGrid.appendChild(card);
+  });
 
-        elGrid.appendChild(card);
+  // delegate events (we rely on event delegation below)
+}
 
-        if(inCartQty > 0) draftQty[p.id] = inCartQty;
-      });
+/* UTIL */
+function escapeHtml(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function escapeAttr(s){ return String(s||'').replace(/"/g,'&quot;'); }
+function statusClass(av){ if(av==="Low stock") return "st-low"; if(av==="Out of stock") return "st-out"; return "st-available"; }
 
-      elGrid.querySelectorAll("[data-add]").forEach(btn=>{
-        btn.addEventListener("click", ()=>{
-          addToCart(btn.getAttribute("data-add"));
-        });
-      });
+/* handle delegated clicks for add / mini plus/minus */
+elGrid.addEventListener('click', (ev)=>{
+  const addBtn = ev.target.closest('[data-add]');
+  if(addBtn){
+    const pid = addBtn.getAttribute('data-add');
+    addToCart(pid);
+    return;
+  }
+  const plus = ev.target.closest('[data-mini-plus]');
+  if(plus){
+    const pid = plus.getAttribute('data-mini-plus');
+    const inCart = getCart().find(x=>x.id===pid)?.qty || 0;
+    if(inCart>0) setQtyFromCatalog(pid, inCart+1);
+    else { draftQty[pid] = (draftQty[pid]||0) + 1; renderCatalog(); }
+    return;
+  }
+  const minus = ev.target.closest('[data-mini-minus]');
+  if(minus){
+    const pid = minus.getAttribute('data-mini-minus');
+    const inCart = getCart().find(x=>x.id===pid)?.qty || 0;
+    if(inCart>0) setQtyFromCatalog(pid, Math.max(1,inCart-1));
+    else { draftQty[pid] = Math.max(0,(draftQty[pid]||0)-1); renderCatalog(); }
+    return;
+  }
+});
 
-      elGrid.querySelectorAll("[data-mini-plus]").forEach(b=>{
-        b.onclick = ()=>{
-          const id = b.getAttribute("data-mini-plus");
-          const inCart = getQtyInCart(id);
+/* --- cart functions (reuse from previous) --- */
+const CART_VER_KEY = "AX_CART_SCHEMA_VER"; const CART_SCHEMA_VER = "2";
+function initCartSchema(){ const v = localStorage.getItem(CART_VER_KEY); if(v!==CART_SCHEMA_VER){ localStorage.setItem(CART_VER_KEY, CART_SCHEMA_VER); localStorage.setItem(LS_KEY, JSON.stringify([])); } }
+function setQtyFromCatalog(pid, qty){
+  const p = products.find(x=>x.id===pid);
+  if(!p) return;
+  if(p.availability === "Out of stock"){ showToast("هذا المنتج غير متاح حاليًا."); return; }
+  const cart = getCart(); const idx = cart.findIndex(x=>x.id===pid); const q = Math.max(0, Number(qty)||0);
+  if(q===0){ if(idx>=0) cart.splice(idx,1); } else { if(idx>=0) cart[idx].qty = q; else cart.push({id:pid,qty:q}); }
+  setCart(cart); renderCatalog();
+  showToast("تم تحديث السلة");
+}
+function addToCart(pid){
+  const p = products.find(x=>x.id===pid); if(!p) return;
+  if(p.availability === "Out of stock"){ showToast("هذا المنتج غير متاح حاليًا."); return; }
+  const inCart = getCart().find(x=>x.id===pid)?.qty || 0;
+  if(inCart>0){ showToast("المنتج موجود في السلة. استخدم العداد للتعديل ✅"); return; }
+  const q = draftQty[pid]||1; setQtyFromCatalog(pid, q); draftQty[pid]=q; showToast("تمت الإضافة للسلة ✅");
+}
+function setQty(pid, qty){ const cart = getCart(); const idx = cart.findIndex(x=>x.id===pid); if(idx<0) return; cart[idx].qty = Math.max(1, Number(qty)||1); setCart(cart); renderCatalog(); }
+function removeItem(pid){ setCart(getCart().filter(x=>x.id!==pid)); renderCatalog(); }
 
-          if(inCart > 0){
-            setQtyFromCatalog(id, inCart + 1);
-          } else {
-            setDraft(id, getDraftQty(id) + 1);
-          }
-        };
-      });
+/* DATALOAD & INIT */
+const draftQty = Object.create(null);
 
-      elGrid.querySelectorAll("[data-mini-minus]").forEach(b=>{
-        b.onclick = ()=>{
-          const id = b.getAttribute("data-mini-minus");
-          const inCart = getQtyInCart(id);
+async function hydrateProducts(){
+  statusArea.innerHTML = '';
+  const cached = loadProductsFromCache();
+  const now = Date.now();
+  const hasCache = cached && cached.list && cached.list.length;
+  if(hasCache){ products = cached.list; renderCatalog(); }
+  else { elGrid.innerHTML = '<div class="loader">جارٍ تحميل المنتجات...</div>'; }
 
-          if(inCart > 0){
-            setQtyFromCatalog(id, inCart - 1);
-          } else {
-            setDraft(id, Math.max(0, getDraftQty(id) - 1));
-          }
-        };
-      });
-    }
+  try{
+    const fresh = await fetchProductsFromApi();
+    const changed = !hasCache || JSON.stringify(fresh)!==JSON.stringify(products);
+    products = fresh;
+    saveProductsCache(fresh);
+    if(changed) renderCatalog();
+    renderCatalog();
+  }catch(err){
+    console.error(err);
+    statusArea.innerHTML = `<div class="errorBox">حدث خطأ في تحميل المنتجات. تأكد من نشر الـ API. <button id="retryFetch" class="retryBtn">إعادة المحاولة</button></div>`;
+    document.getElementById('retryFetch')?.addEventListener('click', ()=>{ statusArea.innerHTML=''; hydrateProducts(); });
+    if(!hasCache) elGrid.innerHTML = `<div class="empty">لا توجد بيانات للعرض حالياً.</div>`;
+    else showToast("عرض النسخة المخزنة محلياً.");
+  }
+  updateCartBadge();
+}
 
-    function renderSkeleton(count=12){
-      elGrid.innerHTML = "";
-      for(let i=0;i<count;i++){
-        const sk = document.createElement("div");
-        sk.className = "card skeleton";
-        sk.innerHTML = `
-          <div class="media"></div>
-          <div class="body">
-            <div class="title" style="height:14px; background:rgba(255,255,255,.06); border-radius:10px"></div>
-            <div class="meta" style="margin-top:10px">
-              <span class="status" style="height:14px; width:70px; background:rgba(255,255,255,.06)"></span>
-              <span style="height:14px; width:55px; background:rgba(255,255,255,.06); border-radius:10px; display:inline-block"></span>
-            </div>
-            <div style="margin-top:12px; height:34px; background:rgba(255,255,255,.06); border-radius:14px"></div>
-          </div>
-        `;
-        elGrid.appendChild(sk);
-      }
-    }
+/* search debounce */
+const onSearch = debounce((val)=>{ state.q = val; renderCatalog(); }, 220);
+elQ.addEventListener('input', e=> onSearch(e.target.value));
+elCat.addEventListener('change', e=>{ state.cat = e.target.value; renderCatalog(); });
 
-    function saveProductsCache(list){
-      localStorage.setItem(PROD_CACHE_KEY, JSON.stringify(list));
-      localStorage.setItem(PROD_CACHE_TS, String(Date.now()));
-    }
+/* helper to populate categories */
+function renderCats(){
+  const cats = Array.from(new Set(products.map(p=>p.category))).filter(Boolean).sort();
+  elCat.innerHTML = `<option value="">كل الفئات</option>`; cats.forEach(c=>{ const opt=document.createElement('option'); opt.value=c; opt.textContent=c; elCat.appendChild(opt); });
+}
 
-    function loadProductsFromCache(){
-      try{
-        const raw = localStorage.getItem(PROD_CACHE_KEY);
-        const ts = Number(localStorage.getItem(PROD_CACHE_TS) || 0);
-        if(!raw) return null;
-        const list = JSON.parse(raw);
-        if(!Array.isArray(list)) return null;
-        return { list, ts };
-      }catch(e){
-        return null;
-      }
-    }
+/* setup */
+initCartSchema();
+hydrateProducts();
 
-    async function fetchProductsFromApi(){
-      const res = await fetch(API_URL, { cache: "no-store" });
-      if(!res.ok) throw new Error("HTTP " + res.status);
-      const data = await res.json();
-      return Array.isArray(data) ? data : [];
-    }
+/* expose debug helpers */
+window.__reloadProducts = hydrateProducts;
+window.__products = products;
 
-    function listFingerprint(list){
-      return list.slice(0,200).map(p => `${p.id}|${p.availability}|${p.name}`).join("~");
-    }
-
-    async function hydrateProducts(){
-      const cached = loadProductsFromCache();
-      const now = Date.now();
-      const hasCache = cached && cached.list && cached.list.length;
-
-      if(hasCache){
-        products = cached.list;
-        renderCats();
-        renderCatalog();
-        updateCartBadge();
-      } else {
-        renderSkeleton(12);
-      }
-
-      const cacheFresh = hasCache && (now - cached.ts) < CACHE_TTL_MS;
-      const doFetch = async () => {
-        try{
-          const freshList = await fetchProductsFromApi();
-
-          const changed = !hasCache || (listFingerprint(freshList) !== listFingerprint(products));
-          products = freshList;
-          saveProductsCache(freshList);
-
-          if(changed){
-            renderCats();
-            renderCatalog();
-          } else {
-            renderCatalog();
-          }
-          updateCartBadge();
-        }catch(err){
-          console.error(err);
-          if(!hasCache){
-            elGrid.innerHTML = `<div class="empty">حصل خطأ في تحميل المنتجات. تأكد من رابط الـ API والنشر.</div>`;
-          } else {
-            showToast("⚠️ تم عرض آخر نسخة محفوظة من المنتجات.");
-            renderCatalog();
-          }
-        }
-      };
-
-      if(cacheFresh){
-        setTimeout(doFetch, 2500);
-      } else {
-        await doFetch();
-      }
-    }
-
-    // Events
-    elQ.addEventListener("input", e=>{ state.q = e.target.value; renderCatalog(); });
-    elCat.addEventListener("change", e=>{ state.cat = e.target.value; renderCatalog(); });
-
-    cartBtn.addEventListener("click", openDrawer);
-    closeDrawer.addEventListener("click", closeDrawerFn);
-    overlay.addEventListener("click", closeDrawerFn);
-
-    document.addEventListener("keydown", (ev) => {
-      if(ev.key === "Escape"){
-        if(drawer.classList.contains("open")) closeDrawerFn();
-      }
-    });
-
-    clearCart.addEventListener("click", ()=>{
-      setCart([]);
-      updateCartBadge();
-      renderCart();
-      renderCatalog();
-      showToast("تم تفريغ السلة");
-    });
-
-    // Init
-    initCartSchema();
-    hydrateProducts();
-    updateCartBadge();
-  </script>
+</script>
 </body>
 </html>
