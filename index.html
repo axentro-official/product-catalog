@@ -35,20 +35,25 @@
       backdrop-filter: blur(12px);
     }
     .brand{display:flex; align-items:center; gap:12px}
+
+    /* ✅ Logo circle + show full logo */
     .logo{
-      width:44px; height:44px; border-radius:14px;
+      width:44px; height:44px;
+      border-radius:999px;
       display:grid; place-items:center;
       background: linear-gradient(135deg, rgba(96,165,250,.35), rgba(167,139,250,.25));
       border:1px solid var(--stroke);
       box-shadow: var(--shadow);
       overflow:hidden;
+      padding:5px;
     }
     .logo img{
       width:100%;
       height:100%;
-      object-fit:cover;
+      object-fit:contain;
       display:block;
     }
+
     .brand-title{font-size:16px;font-weight:900}
     .brand-sub{font-size:12px;color:var(--muted)}
     .actions{display:flex; gap:10px; align-items:center; flex-wrap:wrap; justify-content:flex-end}
@@ -98,8 +103,7 @@
     }
     .card:hover{transform: translateY(-2px); border-color: rgba(96,165,250,.45)}
     .media{position:relative; height:120px; background: rgba(255,255,255,.03)}
-    .media img{width:100%; height:100s
-      :100%; object-fit:cover; display:block}
+    .media img{width:100%; height:100%; object-fit:cover; display:block} /* ✅ fixed */
     .chip{
       position:absolute; bottom:8px; right:8px;
       padding:5px 9px;
@@ -311,7 +315,7 @@
     <div class="brand">
       <div class="logo">
         <img src="images/bslogo.webp" alt="BS Logo"
-             onerror="this.onerror=null;this.style.display='none';this.parentElement.textContent='BS'">
+             onerror="this.onerror=null;this.style.display='none';this.parentElement.style.padding='0';this.parentElement.textContent='BS'">
       </div>
       <div>
         <div class="brand-title">كتالوج منتجات BS 📦</div>
@@ -388,6 +392,9 @@
     const toast = document.getElementById("toast");
     const checkout = document.getElementById("checkout");
 
+    // ✅ Draft quantities قبل أول إضافة (للمنتجات اللي مش في السلة)
+    const draftQty = Object.create(null);
+
     function norm(s=""){ return String(s).toLowerCase().trim(); }
 
     function statusClass(av){
@@ -447,30 +454,15 @@
       return Number(it?.qty) || 0;
     }
 
-    // ✅ من الكتالوج: مسموح qty = 0 (يشيل المنتج)
-    function setQtyFromCatalog(pid, qty){
-      const p = products.find(x=>x.id===pid);
-      if(!p) return;
+    function getDraftQty(pid){
+      const inCart = getQtyInCart(pid);
+      if(inCart > 0) return inCart;
+      return Math.max(0, Number(draftQty[pid]) || 0);
+    }
 
-      if(p.availability === "Out of stock"){
-        showToast("هذا المنتج غير متاح حاليًا.");
-        return;
-      }
-
-      const cart = getCart();
-      const idx = cart.findIndex(x=>x.id===pid);
-      const q = Math.max(0, Number(qty)||0);
-
-      if(q === 0){
-        if(idx >= 0) cart.splice(idx, 1);
-      } else {
-        if(idx >= 0) cart[idx].qty = q;
-        else cart.push({ id: pid, qty: q });
-      }
-
-      setCart(cart);
-      updateCartBadge();
-      // تحديث سريع للكاتالوج عشان الرقم يبان فورًا
+    function setDraft(pid, qty){
+      const q = Math.max(0, Number(qty) || 0);
+      draftQty[pid] = q;
       renderCatalog();
     }
 
@@ -493,7 +485,35 @@
       drawer.setAttribute("aria-hidden","true");
     }
 
-    // ✅ زر إضافة: يزيد 1 فقط (بدون فتح السلة)
+    // ✅ من الكتالوج: التحكم في السلة بعد الإضافة (مسموح qty = 0 يشيل المنتج)
+    function setQtyFromCatalog(pid, qty){
+      const p = products.find(x=>x.id===pid);
+      if(!p) return;
+
+      if(p.availability === "Out of stock"){
+        showToast("هذا المنتج غير متاح حاليًا.");
+        return;
+      }
+
+      const cart = getCart();
+      const idx = cart.findIndex(x=>x.id===pid);
+      const q = Math.max(0, Number(qty)||0);
+
+      if(q === 0){
+        if(idx >= 0) cart.splice(idx, 1);
+      } else {
+        if(idx >= 0) cart[idx].qty = q;
+        else cart.push({ id: pid, qty: q });
+      }
+
+      setCart(cart);
+      updateCartBadge();
+      renderCatalog();
+    }
+
+    // ✅ زر “أضف للسلة”:
+    // - لو مش موجود: يضيفه بكمية العداد (ولو 0 يضيف 1)
+    // - لو موجود: لا يزوّد (العداد هو المتحكم)
     function addToCart(pid){
       const p = products.find(x=>x.id===pid);
       if(!p) return;
@@ -503,8 +523,18 @@
         return;
       }
 
-      const current = getQtyInCart(pid);
-      setQtyFromCatalog(pid, current + 1);
+      const inCart = getQtyInCart(pid);
+      if(inCart > 0){
+        showToast("المنتج موجود في السلة. استخدم العداد للتعديل ✅");
+        return;
+      }
+
+      const q = getDraftQty(pid);
+      const firstQty = q > 0 ? q : 1;
+
+      setQtyFromCatalog(pid, firstQty);
+      draftQty[pid] = firstQty;
+
       showToast("تمت الإضافة للسلة ✅");
     }
 
@@ -518,7 +548,6 @@
       setCart(cart);
       updateCartBadge();
       renderCart();
-      // عشان العداد في الكتالوج يفضل متزامن
       renderCatalog();
     }
 
@@ -635,7 +664,9 @@
 
         const disabled = p.availability === "Out of stock";
         const imgSrc = resolveImage(p);
-        const qty = getQtyInCart(p.id);
+
+        const inCartQty = getQtyInCart(p.id);
+        const qtyShown = getDraftQty(p.id);
 
         card.innerHTML = `
           <div class="media">
@@ -653,7 +684,7 @@
             <div class="buyRow">
               <div class="qtyMini" aria-label="كمية المنتج">
                 <button class="qMiniBtn" ${disabled ? "disabled" : ""} data-mini-minus="${p.id}">−</button>
-                <div class="qMiniVal" data-mini-val="${p.id}">${qty}</div>
+                <div class="qMiniVal" data-mini-val="${p.id}">${qtyShown}</div>
                 <button class="qMiniBtn" ${disabled ? "disabled" : ""} data-mini-plus="${p.id}">+</button>
               </div>
 
@@ -665,9 +696,12 @@
         `;
 
         elGrid.appendChild(card);
+
+        // ✅ لو المنتج في السلة: نخلي draft يفضل متزامن
+        if(inCartQty > 0) draftQty[p.id] = inCartQty;
       });
 
-      // ✅ زر إضافة بدون فتح السلة
+      // ✅ زر إضافة (لا يفتح السلة)
       elGrid.querySelectorAll("[data-add]").forEach(btn=>{
         btn.addEventListener("click", ()=>{
           addToCart(btn.getAttribute("data-add"));
@@ -678,16 +712,26 @@
       elGrid.querySelectorAll("[data-mini-plus]").forEach(b=>{
         b.onclick = ()=>{
           const id = b.getAttribute("data-mini-plus");
-          const cur = getQtyInCart(id);
-          setQtyFromCatalog(id, cur + 1);
+          const inCart = getQtyInCart(id);
+
+          if(inCart > 0){
+            setQtyFromCatalog(id, inCart + 1); // بعد الإضافة: يتحكم في السلة
+          } else {
+            setDraft(id, getDraftQty(id) + 1); // قبل الإضافة: تحضير فقط
+          }
         };
       });
 
       elGrid.querySelectorAll("[data-mini-minus]").forEach(b=>{
         b.onclick = ()=>{
           const id = b.getAttribute("data-mini-minus");
-          const cur = getQtyInCart(id);
-          setQtyFromCatalog(id, cur - 1);
+          const inCart = getQtyInCart(id);
+
+          if(inCart > 0){
+            setQtyFromCatalog(id, inCart - 1); // لو وصلت 0 يتشال
+          } else {
+            setDraft(id, Math.max(0, getDraftQty(id) - 1));
+          }
         };
       });
     }
@@ -768,7 +812,6 @@
             renderCats();
             renderCatalog();
           } else {
-            // حتى لو مفيش تغيير، نعمل رندر عشان عدادات الكتالوج تبقى مظبوطة
             renderCatalog();
           }
           updateCartBadge();
