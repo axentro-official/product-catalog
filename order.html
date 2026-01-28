@@ -12,8 +12,10 @@
       --shadow:0 18px 50px rgba(0,0,0,.45);
       --radius:18px;
       --ok:#22c55e; --warn:#facc15; --bad:#ef4444;
+      --container-max:980px;
     }
     *{box-sizing:border-box}
+    html,body{height:100%}
     body{
       margin:0;
       font-family: system-ui, -apple-system, "Segoe UI", Tahoma, Arial;
@@ -24,18 +26,21 @@
         linear-gradient(180deg, var(--bg1), var(--bg2));
       padding:18px;
       min-height:100vh;
+      -webkit-font-smoothing:antialiased;
     }
     a{color:inherit;text-decoration:none}
-    .wrap{max-width:980px;margin:0 auto}
+    .wrap{max-width:var(--container-max);margin:0 auto}
     .top{
       display:flex;justify-content:space-between;align-items:center;gap:12px;
       padding:12px 14px;border:1px solid var(--stroke);
       border-radius:18px;background:rgba(255,255,255,.06);
       box-shadow:var(--shadow);backdrop-filter:blur(10px);
+      flex-wrap:wrap;
     }
     .back{
       padding:10px 12px;border-radius:14px;
-      border:1px solid var(--stroke);background:rgba(255,255,255,.06)
+      border:1px solid var(--stroke);background:rgba(255,255,255,.06);
+      display:inline-flex;align-items:center;gap:8px;
     }
     .title{font-weight:900}
 
@@ -61,11 +66,11 @@
     }
 
     label{display:block;font-size:12px;color:var(--muted);margin:10px 0 6px}
-    input{
+    input, select, textarea{
       width:100%;padding:12px;border-radius:14px;
       border:1px solid var(--stroke);
       background:rgba(255,255,255,.06);color:var(--text);
-      outline:none;
+      outline:none;font-size:14px;
     }
     .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
     @media(max-width:720px){.row2{grid-template-columns:1fr}}
@@ -80,6 +85,8 @@
       border-radius:16px;
       padding:10px;
       display:flex; gap:10px; align-items:center;
+      justify-content:space-between;
+      flex-wrap:wrap;
     }
     .thumb{
       width:56px;height:56px;border-radius:14px;
@@ -98,26 +105,28 @@
 
     .qtyBox{display:flex; align-items:center; gap:6px}
     .qBtn{
-      width:32px;height:32px;border-radius:12px;
+      width:40px;height:40px;border-radius:12px;
       border:1px solid var(--stroke);
       background:rgba(255,255,255,.06);
       color:var(--text);
       cursor:pointer;font-weight:900;
+      display:inline-flex;align-items:center;justify-content:center;
     }
     .qVal{
-      width:42px;text-align:center;
+      min-width:46px;text-align:center;
       border:1px solid var(--stroke);
       background:rgba(255,255,255,.04);
       border-radius:12px;
       padding:7px 6px;
-      font-weight:900;font-size:12px;
+      font-weight:900;font-size:14px;
     }
     .rmBtn{
       margin-top:6px;
-      font-size:11px;
+      font-size:13px;
       color:#fca5a5;
       cursor:pointer;
       user-select:none;
+      background:transparent;border:none;
     }
 
     .btns{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
@@ -154,22 +163,30 @@
       color:var(--muted);
       text-align:center;
     }
+
+    /* toast */
+    .toast{
+      position:fixed; bottom:16px; left:16px;
+      padding:10px 12px;border-radius:12px;border:1px solid var(--stroke);
+      background:rgba(15,23,42,.9); color:var(--text); z-index:999;
+      display:none; font-weight:900;
+    }
   </style>
 </head>
 
 <body>
 <div class="wrap">
   <div class="top">
-    <a class="back" href="./">← رجوع للكتالوج</a>
+    <a class="back" href="./" aria-label="رجوع للكتالوج">← رجوع للكتالوج</a>
     <div class="title">إتمام الطلب</div>
     <div></div>
   </div>
 
-  <div class="card">
+  <div class="card" aria-live="polite">
     <div style="font-weight:900">محتويات السلة</div>
     <div id="cartBox" class="items"></div>
 
-    <div class="note" id="note"></div>
+    <div class="note" id="note" role="status"></div>
 
     <div style="margin-top:10px;font-weight:900">نوع الطلب</div>
     <div class="seg">
@@ -183,26 +200,28 @@
 
     <div class="row2">
       <div>
-        <label>الاسم</label>
-        <input id="name" placeholder="اكتب اسمك" />
+        <label for="name">الاسم</label>
+        <input id="name" placeholder="اكتب اسمك" autocomplete="name" />
       </div>
       <div>
-        <label>رقم الموبايل</label>
-        <input id="phone" placeholder="مثال: 01xxxxxxxxx" />
+        <label for="phone">رقم الموبايل</label>
+        <input id="phone" placeholder="مثال: 01xxxxxxxxx أو +201xxxxxxxxx" inputmode="tel" />
       </div>
     </div>
 
-    <label>العنوان</label>
-    <input id="address" placeholder="المحافظة / المنطقة / تفاصيل" />
+    <label for="address">العنوان</label>
+    <textarea id="address" placeholder="المحافظة / المنطقة / تفاصيل" rows="2"></textarea>
 
     <div class="btns">
       <button class="primary" id="sendOrder">إرسال الطلب (واتساب)</button>
       <button id="clear">تفريغ السلة</button>
     </div>
 
-    <div id="ok" class="success"></div>
+    <div id="ok" class="success" role="status"></div>
   </div>
 </div>
+
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
 
 <script>
   /* ====== بياناتك ====== */
@@ -216,19 +235,17 @@
   const note = document.getElementById("note");
   const ok = document.getElementById("ok");
   const sendBtn = document.getElementById("sendOrder");
+  const toastEl = document.getElementById("toast");
 
-  // ✅ صور WebP من فولدر images/ (images/ITM01.webp) — زي index
   const IMG_PLACEHOLDER = "https://via.placeholder.com/600x400?text=No+Image";
   function resolveImageById(id){
     return `images/${id}.webp`;
   }
 
-  // ✅ كاش المنتجات (نفس مفاتيح index)
   const PROD_CACHE_KEY = "AX_PRODUCTS_CACHE_V1";
   const PROD_CACHE_TS  = "AX_PRODUCTS_CACHE_TS_V1";
-  const CACHE_TTL_MS   = 10 * 60 * 1000; // 10 دقائق
+  const CACHE_TTL_MS   = 10 * 60 * 1000;
 
-  // ✅ المنتجات هتتحمل من الشيت
   let products = [];
 
   function statusClass(av){
@@ -247,6 +264,13 @@
       getType()==="جملة"
       ? "✅ تم استلام طلب الجملة. سيتم مراجعة الطلب وتحديد السعر النهائي والتواصل معك."
       : "✅ تم استلام طلبك بنجاح. سيتم التواصل معك لتأكيد الطلب وإرسال الفاتورة.";
+  }
+
+  function showToast(msg){
+    toastEl.textContent = msg;
+    toastEl.style.display = "block";
+    clearTimeout(showToast._t);
+    showToast._t = setTimeout(()=> toastEl.style.display="none", 2200);
   }
 
   function getCart(){
@@ -278,6 +302,7 @@
   function removeItem(pid){
     setCart(getCart().filter(x=>x.id!==pid));
     renderCart();
+    showToast("تم حذف الصنف");
   }
 
   function findProduct(pid){
@@ -307,23 +332,26 @@
       row.className = "item";
 
       row.innerHTML = `
-        <img class="thumb" loading="lazy" decoding="async" src="${resolveImageById(safe.id)}"
-          onerror="this.onerror=null;this.src='${IMG_PLACEHOLDER}'">
-
-        <div class="iInfo">
-          <div class="iName">${safe.name}</div>
-          <div class="iMeta">
-            ${safe.category} •
-            <span class="status ${statusClass(safe.availability)}">${safe.availability}</span> •
-            ${safe.id}
+        <div style="display:flex;align-items:center;gap:12px;flex:1;min-width:0">
+          <img class="thumb" loading="lazy" decoding="async" src="${resolveImageById(safe.id)}"
+            onerror="this.onerror=null;this.src='${IMG_PLACEHOLDER}'" alt="${safe.name}">
+          <div class="iInfo">
+            <div class="iName">${safe.name}</div>
+            <div class="iMeta">
+              ${safe.category} •
+              <span class="status ${statusClass(safe.availability)}">${safe.availability}</span> •
+              ${safe.id}
+            </div>
           </div>
-          <div class="rmBtn" data-rm="${safe.id}">حذف من السلة</div>
         </div>
 
-        <div class="qtyBox">
-          <button class="qBtn" data-minus="${safe.id}">−</button>
-          <div class="qVal">${Number(it.qty)||1}</div>
-          <button class="qBtn" data-plus="${safe.id}">+</button>
+        <div style="display:flex;align-items:center;gap:12px;">
+          <div class="qtyBox" aria-label="كمية المنتج">
+            <button class="qBtn" data-minus="${safe.id}" aria-label="إنقاص">−</button>
+            <div class="qVal" aria-live="polite">${Number(it.qty)||1}</div>
+            <button class="qBtn" data-plus="${safe.id}" aria-label="زيادة">+</button>
+          </div>
+          <button class="rmBtn" data-rm="${safe.id}" aria-label="حذف من السلة">حذف</button>
         </div>
       `;
 
@@ -350,6 +378,7 @@
 
     cartBox.querySelectorAll("[data-rm]").forEach(b=>{
       b.onclick = ()=> removeItem(b.getAttribute("data-rm"));
+      b.onkeydown = (ev)=> { if(ev.key === 'Enter' || ev.key === ' ') removeItem(b.getAttribute("data-rm")); };
     });
   }
 
@@ -404,18 +433,17 @@
 
     const p = phone.replace(/\s+/g,"");
     const okPhone = /^01\d{9}$/.test(p) || /^(\+?20)1\d{9}$/.test(p);
-    if(!okPhone) return "رقم الموبايل غير صحيح. مثال: 01xxxxxxxxx";
+    if(!okPhone) return "رقم الموبايل غير صحيح. مثال: 01xxxxxxxxx أو +201xxxxxxxxx";
 
     const hasOut = cart.some(it=>{
       const pr = findProduct(it.id);
       return pr && pr.availability === "Out of stock";
     });
-    if(hasOut) return "فيه صنف غير متاح (Out of stock) داخل السلة. احذفه الأول.";
+    if(hasOut) return "فيه صنف غير متاح داخل السلة. احذفه أولاً.";
 
     return "";
   }
 
-  /* ====== رسالة واتساب (بنفس التنسيق اللي اخترته) ====== */
   function buildMsg(){
     const cart = getCart();
     const orderId = getStableOrderId();
@@ -495,7 +523,6 @@
   }
 
   async function hydrateProductsFast(){
-    // 1) اعرض فورًا من الكاش لو موجود
     const cached = loadProductsFromCache();
     const now = Date.now();
     const hasCache = cached && cached.list && cached.list.length;
@@ -511,7 +538,6 @@
       }
     }
 
-    // 2) تحديث من الـ API في الخلفية
     const cacheFresh = hasCache && (now - cached.ts) < CACHE_TTL_MS;
 
     const doFetch = async () => {
@@ -522,8 +548,11 @@
         renderCart();
       }catch(err){
         console.error(err);
+        // عرض ملاحظة واضحة عند فشل التحميل
         if(!hasCache && getCart().length){
-          note.textContent = "⚠️ ملاحظة: لم يتم تحميل بيانات المنتجات من الشيت الآن، لكن يمكنك إرسال الطلب وسيصل مع الـ IDs والكميات.";
+          note.textContent = "⚠️ ملاحظة: لم يتم تحميل بيانات المنتجات من الشيت الآن. يمكنك إرسال الطلب، لكن بعض أسماء/حالات الأصناف قد لا تكون محدثة.";
+        } else {
+          showToast("تعذر تحديث بيانات الكتالوج، يتم عرض النسخة المخزنة إن وُجدت.");
         }
       }
     };
@@ -543,11 +572,15 @@
     renderCart();
     ok.style.display="none";
     sessionStorage.removeItem("BS_ORDER_ID");
+    showToast("تم تفريغ السلة");
   });
 
   sendBtn.addEventListener("click", ()=>{
     const err = validate();
-    if(err) return alert(err);
+    if(err){
+      showToast(err);
+      return;
+    }
 
     const oldText = sendBtn.textContent;
     sendBtn.disabled = true;
