@@ -67,8 +67,33 @@
     .loader{ display:flex; gap:10px; align-items:center; justify-content:center; padding:20px; color:var(--muted) }
     .errorBox{ padding:18px; border-radius:12px; background:rgba(244,63,94,.06); border:1px solid rgba(244,63,94,.12); color:#fecaca; text-align:center }
     .retryBtn{ margin-top:12px; padding:8px 12px; border-radius:12px; background:linear-gradient(135deg,var(--accent),var(--accent2)); border:none; color:#061426; font-weight:900; cursor:pointer }
+
+    /* Drawer */
+    .overlay{ position:fixed; inset:0; background: rgba(0,0,0,.55); backdrop-filter: blur(4px); display:none; z-index:50; }
+    .overlay.show{ display:block; }
+    .drawer{ position:fixed; top:0; bottom:0; right:0; left:auto; width:min(420px,92vw); background: linear-gradient(180deg, rgba(15,23,42,.95), rgba(2,6,23,.95)); border-left:1px solid var(--stroke); box-shadow: var(--shadow); transform: translateX(110%); transition: transform .2s ease; z-index:60; display:flex; flex-direction:column; }
+    .drawer.open{ transform: translateX(0); }
+    .dHead{ padding:14px 14px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--stroke); }
+    .dTitle{ font-weight:900 }
+    .xBtn{ padding:8px 10px; border-radius:12px; border:1px solid var(--stroke); background: rgba(255,255,255,.06); cursor:pointer; }
+    .dBody{ padding:12px; overflow:auto; flex:1 }
+    .item{ border:1px solid var(--stroke); background: rgba(255,255,255,.05); border-radius:16px; padding:10px; display:flex; gap:10px; align-items:center; margin-bottom:10px; }
+    .thumb{ width:56px; height:56px; border-radius:14px; border:1px solid var(--stroke); object-fit:cover; background: rgba(255,255,255,.04); flex:0 0 auto; }
+    .iInfo{ flex:1; min-width:0 }
+    .iName{ font-weight:900; font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis }
+    .iMeta{ font-size:11px; color:var(--muted); margin-top:3px }
+    .qtyBox{ display:flex; align-items:center; gap:6px; flex:0 0 auto; }
+    .qBtn{ width:32px; height:32px; border-radius:12px; border:1px solid var(--stroke); background: rgba(255,255,255,.06); color:var(--text); cursor:pointer; font-weight:900; }
+    .qVal{ width:40px; text-align:center; border:1px solid var(--stroke); background: rgba(255,255,255,.04); border-radius:12px; padding:7px 6px; font-weight:900; font-size:12px; }
+    .rmBtn{ margin-top:6px; font-size:11px; color: #fca5a5; cursor:pointer; user-select:none; }
+    .dFoot{ padding:12px; border-top:1px solid var(--stroke); display:flex; gap:10px; flex-wrap:wrap; background: rgba(255,255,255,.03); }
+    .footBtn{ flex:1; padding:12px 12px; border-radius:16px; border:1px solid var(--stroke); background: rgba(255,255,255,.06); color:var(--text); font-weight:900; cursor:pointer; text-align:center; }
+    .primary{ border-color: rgba(96,165,250,.45); background: linear-gradient(135deg, rgba(96,165,250,.28), rgba(167,139,250,.18)); }
+
     @media (max-width:920px){ .grid{ grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)) } }
-    @media (max-width:720px){ .topbar{ flex-direction:column; align-items:stretch; gap:10px; } .input{ width:100%; max-width:100%; } .grid{ grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap:10px } }
+    @media (max-width:720px){ .topbar{ flex-direction:column; align-items:stretch; gap:10px; } .input{ width:100%; max-width:100%; } .grid{ grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap:10px } .drawer{ width:100%; max-width:480px; } }
+
+    :focus{ outline:3px solid rgba(96,165,250,.2); outline-offset:3px; }
   </style>
 </head>
 <body>
@@ -90,7 +115,20 @@
     <div id="grid" class="grid" role="list"></div>
   </main>
 
-  <div id="overlay" style="display:none"></div>
+  <!-- Drawer -->
+  <div id="overlay" class="overlay" tabindex="-1"></div>
+  <aside id="drawer" class="drawer" aria-hidden="true" role="dialog" aria-label="سلة المشتريات">
+    <div class="dHead">
+      <div class="dTitle">🛒 السلة</div>
+      <button id="closeDrawer" class="xBtn" aria-label="إغلاق السلة">إغلاق</button>
+    </div>
+    <div class="dBody" id="cartList"></div>
+    <div class="dFoot">
+      <button id="clearCart" class="footBtn">تفريغ السلة</button>
+      <a id="checkout" class="footBtn primary" href="order.html">إتمام الطلب</a>
+    </div>
+  </aside>
+
   <div id="toast" style="display:none;position:fixed;bottom:16px;left:16px;padding:10px 12px;border-radius:12px;background:rgba(0,0,0,.6);color:#fff;"></div>
 
 <script>
@@ -104,12 +142,21 @@ const IMG_PLACEHOLDER = "https://via.placeholder.com/600x400?text=No+Image";
 let products = [];
 const state = { q:"", cat:"" };
 
+/* DOM refs */
 const elGrid = document.getElementById("grid");
 const statusArea = document.getElementById("statusArea");
 const elQ = document.getElementById("q");
 const elCat = document.getElementById("cat");
 const toastEl = document.getElementById("toast");
 const cartCountEl = document.getElementById("cartCount");
+
+const overlay = document.getElementById("overlay");
+const drawer = document.getElementById("drawer");
+const closeDrawerBtn = document.getElementById("closeDrawer");
+const cartList = document.getElementById("cartList");
+const clearCartBtn = document.getElementById("clearCart");
+const checkout = document.getElementById("checkout");
+const cartBtn = document.getElementById("cartBtn");
 
 function showToast(msg, time=1600){
   toastEl.textContent = msg; toastEl.style.display='block';
@@ -152,18 +199,17 @@ async function fetchProductsFromApi(){
 const LS_KEY = "AX_CART_V1";
 function getCart(){ try{ const r=localStorage.getItem(LS_KEY); return r?JSON.parse(r):[]; }catch(e){ return []; } }
 
-/* setCart now synchronizes draftQty so mini counters update immediately */
+/* setCart synchronizes draftQty so mini counters update immediately */
 function setCart(items){
   localStorage.setItem(LS_KEY, JSON.stringify(items));
-  // sync draftQty with cart quantities
+  // sync draftQty
   const ids = items.map(it => it.id);
   Object.keys(draftQty).forEach(k => { if(!ids.includes(k)) delete draftQty[k]; });
   items.forEach(it => { draftQty[it.id] = Number(it.qty) || 0; });
   updateCartBadge();
 }
-
-/* other helpers */
 function updateCartBadge(){ const total = getCart().reduce((s,it)=>s+(Number(it.qty)||0),0); cartCountEl.textContent = total; }
+function cartTotalCount(){ return getCart().reduce((s,it)=>s + (Number(it.qty)||0), 0); }
 
 /* UTIL */
 function escapeHtml(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
@@ -172,6 +218,76 @@ function statusClass(av){ if(av==="Low stock") return "st-low"; if(av==="Out of 
 
 /* draft quantities for UI (mini counters) */
 const draftQty = Object.create(null);
+
+/* Drawer open-once flag (session) */
+const AUTO_OPEN_KEY = "AX_CART_AUTO_OPENED"; // sessionStorage flag
+
+/* Drawer functions */
+let _lastFocusedBeforeDrawer = null;
+function openDrawer(){
+  _lastFocusedBeforeDrawer = document.activeElement;
+  overlay.classList.add("show");
+  drawer.classList.add("open");
+  drawer.setAttribute("aria-hidden","false");
+  try { closeDrawerBtn.focus(); } catch(e){}
+  document.documentElement.style.overflow = "hidden";
+  renderCart();
+}
+function closeDrawerFn(){
+  overlay.classList.remove("show");
+  drawer.classList.remove("open");
+  drawer.setAttribute("aria-hidden","true");
+  document.documentElement.style.overflow = "";
+  if(_lastFocusedBeforeDrawer && typeof _lastFocusedBeforeDrawer.focus === "function"){
+    try { _lastFocusedBeforeDrawer.focus(); } catch(e){}
+  }
+}
+cartBtn?.addEventListener("click", openDrawer);
+closeDrawerBtn?.addEventListener("click", closeDrawerFn);
+overlay?.addEventListener("click", closeDrawerFn);
+document.addEventListener("keydown", (ev) => { if(ev.key === "Escape" && drawer.classList.contains("open")) closeDrawerFn(); });
+
+/* renderCart for drawer */
+function renderCart(){
+  const cart = getCart();
+  cartList.innerHTML = "";
+  checkout.style.pointerEvents = cart.length ? "auto" : "none";
+  checkout.style.opacity = cart.length ? "1" : ".45";
+
+  if(cart.length === 0){
+    cartList.innerHTML = `<div class="empty">السلة فارغة. أضف منتجات من الكتالوج.</div>`;
+    return;
+  }
+
+  cart.forEach(it=>{
+    const p = products.find(x=>x.id===it.id) || { id: it.id, name: "منتج غير متاح", category: "-", availability: "Unknown" };
+    const row = document.createElement("div");
+    row.className = "item";
+    row.innerHTML = `
+      <img class="thumb" loading="lazy" src="${p.image && !/placeholder/i.test(p.image) ? p.image : 'images/' + it.id + '.webp'}" onerror="this.onerror=null;this.src='${IMG_PLACEHOLDER}'" alt="${escapeHtml(p.name||'')}">
+      <div class="iInfo">
+        <div class="iName">${escapeHtml(p.name||it.id)}</div>
+        <div class="iMeta">${escapeHtml(p.category||'-')} • <span class="${statusClass(p.availability)}">${escapeHtml(p.availability)}</span> • ${escapeHtml(it.id)}</div>
+        <div class="rmBtn" data-rm="${escapeAttr(it.id)}" role="button" tabindex="0">حذف من السلة</div>
+      </div>
+      <div class="qtyBox">
+        <button class="qBtn" data-minus="${escapeAttr(it.id)}" aria-label="إنقاص الكمية">−</button>
+        <div class="qVal">${Number(it.qty)||1}</div>
+        <button class="qBtn" data-plus="${escapeAttr(it.id)}" aria-label="زيادة الكمية">+</button>
+      </div>
+    `;
+    cartList.appendChild(row);
+  });
+
+  // delegation inside the drawer for its buttons
+  cartList.querySelectorAll("[data-plus]").forEach(b=> b.onclick = ()=>{
+    const id = b.getAttribute("data-plus"); const it = getCart().find(x=>x.id===id); setQtyFromCatalog(id, (Number(it?.qty)||1)+1);
+  });
+  cartList.querySelectorAll("[data-minus]").forEach(b=> b.onclick = ()=>{
+    const id = b.getAttribute("data-minus"); const it = getCart().find(x=>x.id===id); setQtyFromCatalog(id, Math.max(1, (Number(it?.qty)||1)-1));
+  });
+  cartList.querySelectorAll("[data-rm]").forEach(b=> b.onclick = ()=> { removeItem(b.getAttribute("data-rm")); });
+}
 
 /* RENDER: reuse existing cards if present to avoid recreating <img> */
 function renderCatalog(){
@@ -305,9 +421,29 @@ function setQtyFromCatalog(pid, qty){
 function addToCart(pid){
   const p = products.find(x=>x.id===pid); if(!p) return;
   if(p.availability === "Out of stock"){ showToast("هذا المنتج غير متاح حاليًا."); return; }
+
+  // Determine if cart was empty before adding (for single auto-open)
+  const prevCount = cartTotalCount();
+
   const inCart = getCart().find(x=>x.id===pid)?.qty || 0;
-  if(inCart>0){ showToast("المنتج موجود في السلة. استخدم العداد للتعديل ✅"); return; }
-  const q = draftQty[pid] || 1; setQtyFromCatalog(pid, q); draftQty[pid]=q; showToast("تمت الإضافة للسلة ✅");
+  if(inCart>0){
+    showToast("المنتج موجود في السلة. استخدم العداد للتعديل ✅");
+    return;
+  }
+
+  const q = draftQty[pid] || 1;
+  setQtyFromCatalog(pid, q);
+  draftQty[pid]=q;
+  showToast("تمت الإضافة للسلة ✅");
+
+  // Open drawer automatically only once (first time adding an item) — session-scoped
+  const alreadyOpened = sessionStorage.getItem(AUTO_OPEN_KEY) === "1";
+  if(prevCount === 0 && !alreadyOpened){
+    sessionStorage.setItem(AUTO_OPEN_KEY, "1");
+    setTimeout(()=> {
+      try { openDrawer(); } catch(e){ /* ignore */ }
+    }, 220);
+  }
 }
 function setQty(pid, qty){ const cart = getCart(); const idx = cart.findIndex(x=>x.id===pid); if(idx<0) return; cart[idx].qty = Math.max(1, Number(qty)||1); setCart(cart); renderCatalog(); }
 function removeItem(pid){ setCart(getCart().filter(x=>x.id!==pid)); renderCatalog(); }
@@ -349,6 +485,14 @@ function renderCats(){
   const cats = Array.from(new Set(products.map(p=>p.category))).filter(Boolean).sort();
   elCat.innerHTML = `<option value="">كل الفئات</option>`; cats.forEach(c=>{ const opt=document.createElement('option'); opt.value=c; opt.textContent=c; elCat.appendChild(opt); });
 }
+
+/* clearCart button binding */
+clearCartBtn?.addEventListener('click', ()=>{
+  setCart([]);
+  renderCart();
+  renderCatalog();
+  showToast("تم تفريغ السلة");
+});
 
 /* setup */
 initCartSchema();
