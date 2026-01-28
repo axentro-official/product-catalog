@@ -50,6 +50,7 @@
     .card{ border-radius: var(--radius); overflow:hidden; border:1px solid var(--stroke);
       background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
       box-shadow: var(--shadow); transition: transform .18s ease, border-color .18s ease; display:flex; flex-direction:column; min-height:220px;}
+    .card:hover{transform: translateY(-2px); border-color: rgba(96,165,250,.45)}
     .media{position:relative; background: rgba(255,255,255,.03); aspect-ratio: 3 / 2; width:100%}
     .media img{width:100%; height:100%; object-fit:cover; display:block}
     .chip{position:absolute; bottom:8px; right:8px; padding:5px 9px; border-radius:999px; background: rgba(15,23,42,.75);
@@ -150,10 +151,29 @@ async function fetchProductsFromApi(){
 /* CART (simple) */
 const LS_KEY = "AX_CART_V1";
 function getCart(){ try{ const r=localStorage.getItem(LS_KEY); return r?JSON.parse(r):[]; }catch(e){ return []; } }
-function setCart(items){ localStorage.setItem(LS_KEY, JSON.stringify(items)); updateCartBadge(); }
+
+/* setCart now synchronizes draftQty so mini counters update immediately */
+function setCart(items){
+  localStorage.setItem(LS_KEY, JSON.stringify(items));
+  // sync draftQty with cart quantities
+  const ids = items.map(it => it.id);
+  Object.keys(draftQty).forEach(k => { if(!ids.includes(k)) delete draftQty[k]; });
+  items.forEach(it => { draftQty[it.id] = Number(it.qty) || 0; });
+  updateCartBadge();
+}
+
+/* other helpers */
 function updateCartBadge(){ const total = getCart().reduce((s,it)=>s+(Number(it.qty)||0),0); cartCountEl.textContent = total; }
 
-/* RENDER: efficient, reuses existing cards when possible */
+/* UTIL */
+function escapeHtml(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function escapeAttr(s){ return String(s||'').replace(/"/g,'&quot;'); }
+function statusClass(av){ if(av==="Low stock") return "st-low"; if(av==="Out of stock") return "st-out"; return "st-available"; }
+
+/* draft quantities for UI (mini counters) */
+const draftQty = Object.create(null);
+
+/* RENDER: reuse existing cards if present to avoid recreating <img> */
 function renderCatalog(){
   const q = String(state.q||"").toLowerCase().trim();
   const cat = state.cat;
@@ -163,32 +183,45 @@ function renderCatalog(){
     return okQ && okC;
   });
 
-  // Mark existing items; we'll remove ones not in filtered
+  // remove cards not in filtered
   const keepSet = new Set(filtered.map(p=>p.id));
   Array.from(elGrid.children).forEach(child=>{
     const pid = child.dataset.pid;
     if(pid && !keepSet.has(pid)) child.remove();
   });
 
-  // For each product in filtered, either update existing card or create it
+  // update or create cards
   filtered.forEach(p=>{
     let card = elGrid.querySelector(`[data-pid="${CSS.escape(p.id)}"]`);
     const inCartQty = (getCart().find(x=>x.id===p.id)?.qty) || 0;
     const draftVal = draftQty[p.id] ?? inCartQty ?? 0;
 
     if(card){
-      // update text parts, but DO NOT reset <img.src> if already loaded
+      // Update text parts but DO NOT reset loaded images
       const titleEl = card.querySelector(".title");
-      const metaEl = card.querySelector(".meta .pid");
+      const pidEl = card.querySelector(".meta .pid");
       const statusEl = card.querySelector(".meta .st");
       const qValEl = card.querySelector("[data-mini-val]");
+
       if(titleEl) titleEl.textContent = p.name || "-";
-      if(metaEl) metaEl.textContent = p.id || "";
+      if(pidEl) pidEl.textContent = p.id || "";
       if(statusEl){
         statusEl.textContent = p.availability;
         statusEl.className = "st " + statusClass(p.availability);
       }
       if(qValEl) qValEl.textContent = draftVal;
+
+      // ensure image only set if not already loaded
+      const existingImg = card.querySelector("img.js-img");
+      if(existingImg && !existingImg.dataset.loaded){
+        if(p.image && !/placeholder/i.test(p.image)){
+          existingImg.dataset.src = p.image;
+          imgObserver.observe(existingImg);
+        } else {
+          existingImg.src = IMG_PLACEHOLDER;
+          existingImg.dataset.loaded = "1";
+        }
+      }
       return;
     }
 
@@ -217,25 +250,22 @@ function renderCatalog(){
       </div>
     `;
 
-    // set data-src for lazy loading; do NOT set src now
+    // set image source logic: if product has a real image -> lazy load; otherwise set placeholder immediately and mark loaded
     const imgEl = card.querySelector("img.js-img");
-    imgEl.dataset.src = (p.image && !p.image.includes("placeholder")) ? p.image : `images/${p.id}.webp`;
-    // If image was previously loaded and cached in browser, dataset.loaded could be set — but since this is a new element, we rely on observer
-    imgObserver.observe(imgEl);
+    if (p.image && !/placeholder/i.test(p.image)) {
+      imgEl.dataset.src = p.image;
+      imgObserver.observe(imgEl);
+    } else {
+      imgEl.src = IMG_PLACEHOLDER;
+      imgEl.dataset.loaded = "1";
+      imgEl.classList.remove("loading");
+    }
 
-    // append to grid
     elGrid.appendChild(card);
   });
-
-  // delegate events (we rely on event delegation below)
 }
 
-/* UTIL */
-function escapeHtml(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-function escapeAttr(s){ return String(s||'').replace(/"/g,'&quot;'); }
-function statusClass(av){ if(av==="Low stock") return "st-low"; if(av==="Out of stock") return "st-out"; return "st-available"; }
-
-/* handle delegated clicks for add / mini plus/minus */
+/* delegated events on grid for add and mini buttons */
 elGrid.addEventListener('click', (ev)=>{
   const addBtn = ev.target.closest('[data-add]');
   if(addBtn){
@@ -261,7 +291,7 @@ elGrid.addEventListener('click', (ev)=>{
   }
 });
 
-/* --- cart functions (reuse from previous) --- */
+/* CART functions */
 const CART_VER_KEY = "AX_CART_SCHEMA_VER"; const CART_SCHEMA_VER = "2";
 function initCartSchema(){ const v = localStorage.getItem(CART_VER_KEY); if(v!==CART_SCHEMA_VER){ localStorage.setItem(CART_VER_KEY, CART_SCHEMA_VER); localStorage.setItem(LS_KEY, JSON.stringify([])); } }
 function setQtyFromCatalog(pid, qty){
@@ -270,22 +300,19 @@ function setQtyFromCatalog(pid, qty){
   if(p.availability === "Out of stock"){ showToast("هذا المنتج غير متاح حاليًا."); return; }
   const cart = getCart(); const idx = cart.findIndex(x=>x.id===pid); const q = Math.max(0, Number(qty)||0);
   if(q===0){ if(idx>=0) cart.splice(idx,1); } else { if(idx>=0) cart[idx].qty = q; else cart.push({id:pid,qty:q}); }
-  setCart(cart); renderCatalog();
-  showToast("تم تحديث السلة");
+  setCart(cart); renderCatalog(); showToast("تم تحديث السلة");
 }
 function addToCart(pid){
   const p = products.find(x=>x.id===pid); if(!p) return;
   if(p.availability === "Out of stock"){ showToast("هذا المنتج غير متاح حاليًا."); return; }
   const inCart = getCart().find(x=>x.id===pid)?.qty || 0;
   if(inCart>0){ showToast("المنتج موجود في السلة. استخدم العداد للتعديل ✅"); return; }
-  const q = draftQty[pid]||1; setQtyFromCatalog(pid, q); draftQty[pid]=q; showToast("تمت الإضافة للسلة ✅");
+  const q = draftQty[pid] || 1; setQtyFromCatalog(pid, q); draftQty[pid]=q; showToast("تمت الإضافة للسلة ✅");
 }
 function setQty(pid, qty){ const cart = getCart(); const idx = cart.findIndex(x=>x.id===pid); if(idx<0) return; cart[idx].qty = Math.max(1, Number(qty)||1); setCart(cart); renderCatalog(); }
 function removeItem(pid){ setCart(getCart().filter(x=>x.id!==pid)); renderCatalog(); }
 
-/* DATALOAD & INIT */
-const draftQty = Object.create(null);
-
+/* INIT & data load */
 async function hydrateProducts(){
   statusArea.innerHTML = '';
   const cached = loadProductsFromCache();
@@ -309,6 +336,7 @@ async function hydrateProducts(){
     else showToast("عرض النسخة المخزنة محلياً.");
   }
   updateCartBadge();
+  renderCats();
 }
 
 /* search debounce */
@@ -316,7 +344,7 @@ const onSearch = debounce((val)=>{ state.q = val; renderCatalog(); }, 220);
 elQ.addEventListener('input', e=> onSearch(e.target.value));
 elCat.addEventListener('change', e=>{ state.cat = e.target.value; renderCatalog(); });
 
-/* helper to populate categories */
+/* categories */
 function renderCats(){
   const cats = Array.from(new Set(products.map(p=>p.category))).filter(Boolean).sort();
   elCat.innerHTML = `<option value="">كل الفئات</option>`; cats.forEach(c=>{ const opt=document.createElement('option'); opt.value=c; opt.textContent=c; elCat.appendChild(opt); });
@@ -326,7 +354,7 @@ function renderCats(){
 initCartSchema();
 hydrateProducts();
 
-/* expose debug helpers */
+/* debug helpers */
 window.__reloadProducts = hydrateProducts;
 window.__products = products;
 
