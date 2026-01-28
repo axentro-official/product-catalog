@@ -223,6 +223,11 @@
     return `images/${id}.webp`;
   }
 
+  // ✅ كاش المنتجات (لتسريع فتح صفحة الطلب)
+  const PROD_CACHE_KEY = "AX_PRODUCTS_CACHE_V1";
+  const PROD_CACHE_TS  = "AX_PRODUCTS_CACHE_TS_V1";
+  const CACHE_TTL_MS   = 10 * 60 * 1000; // 10 دقائق
+
   // ✅ المنتجات هتتحمل من الشيت
   let products = [];
 
@@ -303,7 +308,7 @@
       row.className = "item";
 
       row.innerHTML = `
-        <img class="thumb" loading="lazy" src="${resolveImageById(safe.id)}"
+        <img class="thumb" loading="lazy" decoding="async" src="${resolveImageById(safe.id)}"
           onerror="this.onerror=null;this.src='${IMG_PLACEHOLDER}'">
 
         <div class="iInfo">
@@ -411,7 +416,7 @@
     return "";
   }
 
-  /* ====== رسالة واتساب (احترافية - بدون إيموجيز) ====== */
+  /* ====== رسالة واتساب (بنفس التنسيق اللي اخترته) ====== */
   function buildMsg(){
     const cart = getCart();
     const orderId = getStableOrderId();
@@ -425,50 +430,37 @@
     const dOnly = formatDateOnly(now);
     const tOnly = formatTimeOnly12(now);
 
-    const line = "------------------------------";
-    const line2 = "==============================";
-
     let totalQty = 0;
 
     const lines = [];
-    lines.push("تفاصيل الطلب");
-    lines.push(line2);
+    lines.push("طلب جديد – BS");
+    lines.push("------------------------------");
+    lines.push("");
     lines.push(`رقم الطلب: ${orderId}`);
     lines.push(`التاريخ: ${dOnly}`);
     lines.push(`الوقت: ${tOnly}`);
     lines.push(`نوع الطلب: ${type}`);
-    lines.push(line);
-    lines.push("تفاصيل الأصناف:");
+    lines.push("");
+    lines.push("الأصناف:");
 
-    cart.forEach((it, i)=>{
+    cart.forEach((it)=>{
       const pr = findProduct(it.id);
-      const safe = pr || {
-        id: it.id,
-        name: "منتج غير متاح (تم تحديث الكتالوج)",
-        category: "—"
-      };
-
+      const safeName = pr?.name ? String(pr.name).trim() : "اسم المنتج";
       const qty = Number(it.qty)||1;
       totalQty += qty;
 
-      lines.push("");
-      lines.push(`${i+1}) ${safe.name}`);
-      lines.push(`كود: ${safe.id}`);
-      lines.push(`كمية: ${qty}`);
-      lines.push(`فئة: ${safe.category}`);
+      lines.push(`- ${it.id} | ${safeName} | كمية: ${qty}`);
     });
 
     lines.push("");
-    lines.push(line);
     lines.push(`إجمالي القطع: ${totalQty}`);
-    lines.push(line);
-    lines.push("بيانات العميل:");
-    lines.push(`الاسم: ${name}`);
-    lines.push(`الموبايل: ${phone}`);
-    lines.push(`العنوان: ${address}`);
-    lines.push(line2);
+    lines.push("");
+    lines.push("العميل:");
+    lines.push(name);
+    lines.push(phone);
+    lines.push(address);
+    lines.push("-------------------------------------------------------");
 
-    // ✅ آخر سطر (قطاعي: ثابت زي ما طلبت / جملة: نفس المعنى بدون إيموجي)
     lines.push(
       type === "جملة"
       ? "تم إرسال طلب الجملة. سيتم مراجعة الطلب وتحديد السعر النهائي والتواصل معكم."
@@ -478,21 +470,74 @@
     return lines.join("\n");
   }
 
-  async function loadProducts(){
-    cartBox.innerHTML = `<div class="empty">جارٍ تحميل بيانات المنتجات...</div>`;
+  /* ====== كاش المنتجات لتسريع الظهور ====== */
+  function saveProductsCache(list){
+    localStorage.setItem(PROD_CACHE_KEY, JSON.stringify(list));
+    localStorage.setItem(PROD_CACHE_TS, String(Date.now()));
+  }
+
+  function loadProductsFromCache(){
     try{
-      const res = await fetch(API_URL, { cache: "no-store" });
-      if(!res.ok) throw new Error("HTTP " + res.status);
+      const raw = localStorage.getItem(PROD_CACHE_KEY);
+      const ts = Number(localStorage.getItem(PROD_CACHE_TS) || 0);
+      if(!raw) return null;
+      const list = JSON.parse(raw);
+      if(!Array.isArray(list)) return null;
+      return { list, ts };
+    }catch(e){
+      return null;
+    }
+  }
 
-      const data = await res.json();
-      products = Array.isArray(data) ? data : [];
+  async function fetchProductsFromApi(){
+    const res = await fetch(API_URL, { cache: "no-store" });
+    if(!res.ok) throw new Error("HTTP " + res.status);
+    const data = await res.json();
+    return Array.isArray(data) ? data : [];
+  }
 
+  async function hydrateProductsFast(){
+    // 1) اعرض فورًا من الكاش لو موجود (أسرع فتح)
+    const cached = loadProductsFromCache();
+    const now = Date.now();
+    const hasCache = cached && cached.list && cached.list.length;
+
+    if(hasCache){
+      products = cached.list;
       renderCart();
-    }catch(err){
-      console.error(err);
+    } else {
+      // بدل ما نستنى التحميل: اعرض السلة فورًا حتى لو أسماء المنتجات مش جاهزة
+      // (هتتحدث تلقائيًا بعد ما المنتجات تتحمل)
       products = [];
       renderCart();
-      note.textContent = "⚠️ ملاحظة: لم يتم تحميل بيانات المنتجات من الشيت الآن، لكن يمكنك إرسال الطلب وسيصل مع الـ IDs والكميات.";
+      if(getCart().length){
+        // لو في سلة ولسه مفيش بيانات منتجات
+        cartBox.insertAdjacentHTML("afterbegin", `<div class="empty" style="margin-bottom:10px">جارٍ تحميل بيانات المنتجات...</div>`);
+      }
+    }
+
+    // 2) حدث من الـ API في الخلفية
+    const cacheFresh = hasCache && (now - cached.ts) < CACHE_TTL_MS;
+
+    const doFetch = async () => {
+      try{
+        const freshList = await fetchProductsFromApi();
+        products = freshList;
+        saveProductsCache(freshList);
+        renderCart();
+      }catch(err){
+        console.error(err);
+        // لو فشل، هنفضل على اللي ظاهر
+        if(!hasCache && getCart().length){
+          note.textContent = "⚠️ ملاحظة: لم يتم تحميل بيانات المنتجات من الشيت الآن، لكن يمكنك إرسال الطلب وسيصل مع الـ IDs والكميات.";
+        }
+      }
+    };
+
+    if(cacheFresh){
+      setTimeout(doFetch, 400); // تحديث سريع وهادئ
+    } else {
+      await doFetch();
     }
   }
 
@@ -515,7 +560,6 @@
     sendBtn.textContent = "جارٍ فتح واتساب...";
 
     const msg = buildMsg();
-
     const waUrl = `https://wa.me/${OWNER_WA}?text=${encodeURIComponent(msg)}`;
     window.open(waUrl, "_blank");
 
@@ -535,14 +579,14 @@
     // ✅ رجّع الزرار + ارجع للكتالوج تلقائيًا
     setTimeout(()=>{
       sendBtn.disabled = false;
-      sendBtn.textContent = oldText; // "إرسال الطلب (واتساب)"
-      window.location.href = "./";   // ✅ رجوع للكتالوج
+      sendBtn.textContent = oldText;
+      window.location.href = "./";
     }, 1200);
   });
 
   // Init
-  ensureCartInitialized(); // ✅ مهم للسلة الفاضية أول مرة
-  loadProducts();
+  ensureCartInitialized();
+  hydrateProductsFast();
 </script>
 </body>
 </html>
