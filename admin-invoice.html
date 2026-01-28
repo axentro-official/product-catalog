@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>إدارة الفواتير - BS</title>
+
+  <style>
+    :root{
+      --bg1:#0b1020; --bg2:#0f172a;
+      --stroke:#ffffff1a; --text:#e5e7eb; --muted:#94a3b8;
+      --shadow:0 18px 50px rgba(0,0,0,.45);
+      --radius:18px;
+      --accent:#60a5fa; --accent2:#a78bfa;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: system-ui, -apple-system, "Segoe UI", Tahoma, Arial;
+      color:var(--text);
+      background:
+        radial-gradient(900px 500px at 10% 10%, rgba(96,165,250,.25), transparent 55%),
+        radial-gradient(700px 500px at 90% 20%, rgba(167,139,250,.18), transparent 55%),
+        linear-gradient(180deg, var(--bg1), var(--bg2));
+      padding:18px;
+      min-height:100vh;
+    }
+
+    .wrap{max-width:1100px;margin:0 auto}
+    .card{
+      background:rgba(255,255,255,.06);
+      border:1px solid var(--stroke);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:16px;
+      margin-bottom:16px;
+    }
+
+    h2{margin:0 0 10px;font-weight:900}
+    label{font-size:12px;color:var(--muted)}
+    input, select{
+      width:100%;
+      padding:10px;
+      border-radius:12px;
+      border:1px solid var(--stroke);
+      background:rgba(255,255,255,.06);
+      color:var(--text);
+      outline:none;
+    }
+
+    .row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+    .row2{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+
+    table{
+      width:100%;
+      border-collapse:collapse;
+      margin-top:10px;
+      font-size:13px;
+    }
+    th, td{
+      border:1px solid var(--stroke);
+      padding:8px;
+      text-align:center;
+    }
+    th{
+      background:rgba(255,255,255,.08);
+      font-weight:900;
+    }
+
+    .btn{
+      padding:12px;
+      border-radius:14px;
+      border:1px solid rgba(96,165,250,.4);
+      background:linear-gradient(135deg, rgba(96,165,250,.3), rgba(167,139,250,.2));
+      color:var(--text);
+      font-weight:900;
+      cursor:pointer;
+    }
+
+    .total{
+      font-size:18px;
+      font-weight:900;
+      text-align:left;
+      margin-top:10px;
+    }
+
+    /* 🔐 Login */
+    #loginBox{
+      position:fixed; inset:0;
+      background:rgba(0,0,0,.85);
+      display:flex; align-items:center; justify-content:center;
+      z-index:999;
+    }
+    #loginBox .card{max-width:360px;width:100%}
+  </style>
+</head>
+
+<body>
+
+<!-- 🔐 Password Gate -->
+<div id="loginBox">
+  <div class="card">
+    <h2>دخول الإدارة</h2>
+    <label>كلمة المرور</label>
+    <input type="password" id="passInput" placeholder="••••••••" />
+    <button class="btn" style="margin-top:12px;width:100%" onclick="checkPass()">دخول</button>
+  </div>
+</div>
+
+<div class="wrap" id="app" style="display:none">
+
+  <!-- Header -->
+  <div class="card">
+    <h2>فاتورة جديدة</h2>
+    <div class="row">
+      <div>
+        <label>رقم الفاتورة</label>
+        <input id="invNo" readonly />
+      </div>
+      <div>
+        <label>التاريخ</label>
+        <input id="invDate" readonly />
+      </div>
+      <div>
+        <label>الوقت</label>
+        <input id="invTime" readonly />
+      </div>
+      <div>
+        <label>العميل</label>
+        <input id="custName" placeholder="اسم العميل" />
+      </div>
+    </div>
+  </div>
+
+  <!-- Items -->
+  <div class="card">
+    <h2>الأصناف</h2>
+    <table id="itemsTable">
+      <thead>
+        <tr>
+          <th>SKU / المنتج</th>
+          <th>الكمية</th>
+          <th>السعر</th>
+          <th>خصم (جنيه)</th>
+          <th>الإجمالي</th>
+          <th>حذف</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+
+    <button class="btn" style="margin-top:10px" onclick="addRow()">+ إضافة صنف</button>
+    <div class="total" id="grandTotal">الإجمالي: 0 جنيه</div>
+  </div>
+
+  <!-- Actions -->
+  <div class="card row2">
+    <button class="btn" onclick="exportPDF()">📄 تصدير PDF</button>
+    <button class="btn" onclick="resetInvoice()">🗑️ فاتورة جديدة</button>
+  </div>
+
+</div>
+<script>
+/* ================== CONFIG ================== */
+
+// 🔐 كلمة المرور (غيّرها براحتك)
+const ADMIN_PASSWORD = "1234";
+
+// 📄 مصدر البيانات (Catalog tab من نفس Google Sheet)
+const API_URL = "https://script.google.com/macros/s/AKfycbwsPPw3UiW6TBngBcbFxY4E8rB7JYgK1W2LRn0WaS9C7OitA1FgZ1vAz9Qr1u_ojlZ8/exec";
+
+// 🖼️ لوجو (Watermark)
+const LOGO_URL = "images/bslogo.webp";
+
+/* ================== STATE ================== */
+
+let PRODUCTS = [];
+let ROW_ID = 0;
+
+/* ================== LOGIN ================== */
+
+function checkPass(){
+  const v = document.getElementById("passInput").value;
+  if(v === ADMIN_PASSWORD){
+    document.getElementById("loginBox").style.display = "none";
+    document.getElementById("app").style.display = "block";
+    initInvoice();
+    loadProducts();
+  }else{
+    alert("كلمة المرور غير صحيحة");
+  }
+}
+
+/* ================== INIT ================== */
+
+function initInvoice(){
+  const now = new Date();
+  document.getElementById("invDate").value =
+    now.toLocaleDateString("ar-EG");
+  document.getElementById("invTime").value =
+    now.toLocaleTimeString("en-US",{hour:'2-digit',minute:'2-digit',hour12:true});
+
+  document.getElementById("invNo").value = generateInvoiceNo();
+}
+
+function generateInvoiceNo(){
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth()+1).padStart(2,"0");
+  const day = String(d.getDate()).padStart(2,"0");
+  const seq = String(Math.floor(Math.random()*900)+100);
+  return `INV-BS-${y}${m}${day}-${seq}`;
+}
+
+/* ================== LOAD PRODUCTS ================== */
+
+async function loadProducts(){
+  try{
+    const res = await fetch(API_URL,{cache:"no-store"});
+    const data = await res.json();
+    PRODUCTS = Array.isArray(data) ? data : [];
+  }catch(e){
+    alert("فشل تحميل الكتالوج");
+  }
+}
+
+/* ================== TABLE ================== */
+
+function addRow(){
+  ROW_ID++;
+  const tbody = document.querySelector("#itemsTable tbody");
+  const tr = document.createElement("tr");
+  tr.dataset.id = ROW_ID;
+
+  tr.innerHTML = `
+    <td>
+      <input list="productsList" placeholder="SKU أو اسم المنتج"
+        oninput="onProductSelect(this, ${ROW_ID})">
+    </td>
+    <td><input type="number" value="1" min="1" oninput="calcRow(${ROW_ID})"></td>
+    <td><input type="number" value="0" min="0" oninput="calcRow(${ROW_ID})"></td>
+    <td><input type="number" value="0" min="0" oninput="calcRow(${ROW_ID})"></td>
+    <td class="rowTotal">0</td>
+    <td><button onclick="removeRow(${ROW_ID})">✖</button></td>
+  `;
+
+  tbody.appendChild(tr);
+  updateProductsDatalist();
+}
+
+function removeRow(id){
+  document.querySelector(`tr[data-id="${id}"]`)?.remove();
+  calcGrand();
+}
+
+/* ================== PRODUCT SEARCH ================== */
+
+function updateProductsDatalist(){
+  let dl = document.getElementById("productsList");
+  if(!dl){
+    dl = document.createElement("datalist");
+    dl.id = "productsList";
+    document.body.appendChild(dl);
+  }
+  dl.innerHTML = "";
+  PRODUCTS.forEach(p=>{
+    const opt1 = document.createElement("option");
+    opt1.value = `${p.id} | ${p.name}`;
+    dl.appendChild(opt1);
+
+    const opt2 = document.createElement("option");
+    opt2.value = p.id;
+    dl.appendChild(opt2);
+
+    const opt3 = document.createElement("option");
+    opt3.value = p.name;
+    dl.appendChild(opt3);
+  });
+}
+
+function onProductSelect(inp, rowId){
+  const val = inp.value.toLowerCase();
+  const p = PRODUCTS.find(x =>
+    x.id.toLowerCase() === val ||
+    x.name.toLowerCase() === val ||
+    `${x.id} | ${x.name}`.toLowerCase() === val
+  );
+  if(p){
+    inp.value = `${p.id} | ${p.name}`;
+  }
+}
+
+/* ================== CALC ================== */
+
+function calcRow(id){
+  const tr = document.querySelector(`tr[data-id="${id}"]`);
+  if(!tr) return;
+
+  const qty = Number(tr.children[1].querySelector("input").value)||0;
+  const price = Number(tr.children[2].querySelector("input").value)||0;
+  const disc = Number(tr.children[3].querySelector("input").value)||0;
+
+  const total = Math.max(0,(qty*price)-disc);
+  tr.querySelector(".rowTotal").textContent = total.toFixed(2);
+
+  calcGrand();
+}
+
+function calcGrand(){
+  let sum = 0;
+  document.querySelectorAll(".rowTotal").forEach(td=>{
+    sum += Number(td.textContent)||0;
+  });
+  document.getElementById("grandTotal").textContent =
+    `الإجمالي: ${sum.toFixed(2)} جنيه`;
+}
+
+/* ================== PDF ================== */
+
+async function exportPDF(){
+  const html = document.documentElement.outerHTML;
+  const w = window.open("", "_blank");
+  w.document.write(html);
+  w.document.close();
+  w.print();
+}
+
+/* ================== RESET ================== */
+
+function resetInvoice(){
+  if(!confirm("بدء فاتورة جديدة؟")) return;
+  document.querySelector("#itemsTable tbody").innerHTML = "";
+  document.getElementById("custName").value = "";
+  initInvoice();
+  calcGrand();
+}
+</script>
+
+</body>
+</html>
