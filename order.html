@@ -217,13 +217,13 @@
   const ok = document.getElementById("ok");
   const sendBtn = document.getElementById("sendOrder");
 
-  // ✅ صور WebP من فولدر images/ (images/ITM01.webp)
+  // ✅ صور WebP من فولدر images/ (images/ITM01.webp) — زي index
   const IMG_PLACEHOLDER = "https://via.placeholder.com/600x400?text=No+Image";
   function resolveImageById(id){
     return `images/${id}.webp`;
   }
 
-  // ✅ كاش المنتجات (لتسريع فتح صفحة الطلب)
+  // ✅ كاش المنتجات (نفس مفاتيح index)
   const PROD_CACHE_KEY = "AX_PRODUCTS_CACHE_V1";
   const PROD_CACHE_TS  = "AX_PRODUCTS_CACHE_TS_V1";
   const CACHE_TTL_MS   = 10 * 60 * 1000; // 10 دقائق
@@ -260,7 +260,6 @@
     localStorage.setItem(LS_KEY, JSON.stringify(items));
   }
 
-  // ✅ مهم: أول مرة فقط لو مفيش سلة محفوظة → نخليها فاضية
   function ensureCartInitialized(){
     if(localStorage.getItem(LS_KEY) === null){
       setCart([]);
@@ -371,7 +370,7 @@
     return `${hh}:${min} ${ampm}`;
   }
 
-  /* ====== رقم طلب (BS-YYYYMMDD-XXX) بدون توقيت ====== */
+  /* ====== رقم طلب (BS-YYYYMMDD-XXX) ====== */
   function generateOrderId(){
     const d = new Date();
     const y = d.getFullYear();
@@ -448,7 +447,6 @@
       const safeName = pr?.name ? String(pr.name).trim() : "اسم المنتج";
       const qty = Number(it.qty)||1;
       totalQty += qty;
-
       lines.push(`- ${it.id} | ${safeName} | كمية: ${qty}`);
     });
 
@@ -497,7 +495,7 @@
   }
 
   async function hydrateProductsFast(){
-    // 1) اعرض فورًا من الكاش لو موجود (أسرع فتح)
+    // 1) اعرض فورًا من الكاش لو موجود
     const cached = loadProductsFromCache();
     const now = Date.now();
     const hasCache = cached && cached.list && cached.list.length;
@@ -506,17 +504,14 @@
       products = cached.list;
       renderCart();
     } else {
-      // بدل ما نستنى التحميل: اعرض السلة فورًا حتى لو أسماء المنتجات مش جاهزة
-      // (هتتحدث تلقائيًا بعد ما المنتجات تتحمل)
       products = [];
       renderCart();
       if(getCart().length){
-        // لو في سلة ولسه مفيش بيانات منتجات
         cartBox.insertAdjacentHTML("afterbegin", `<div class="empty" style="margin-bottom:10px">جارٍ تحميل بيانات المنتجات...</div>`);
       }
     }
 
-    // 2) حدث من الـ API في الخلفية
+    // 2) تحديث من الـ API في الخلفية
     const cacheFresh = hasCache && (now - cached.ts) < CACHE_TTL_MS;
 
     const doFetch = async () => {
@@ -527,7 +522,6 @@
         renderCart();
       }catch(err){
         console.error(err);
-        // لو فشل، هنفضل على اللي ظاهر
         if(!hasCache && getCart().length){
           note.textContent = "⚠️ ملاحظة: لم يتم تحميل بيانات المنتجات من الشيت الآن، لكن يمكنك إرسال الطلب وسيصل مع الـ IDs والكميات.";
         }
@@ -535,7 +529,7 @@
     };
 
     if(cacheFresh){
-      setTimeout(doFetch, 400); // تحديث سريع وهادئ
+      setTimeout(doFetch, 400);
     } else {
       await doFetch();
     }
@@ -569,14 +563,10 @@
       ? "✅ تم إرسال طلب الجملة بنجاح. سيتم مراجعة الطلب والتواصل معك."
       : "✅ تم إرسال الطلب بنجاح. سيتم التواصل لتأكيده وإرسال الفاتورة.";
 
-    // ✅ تفريغ السلة تلقائيًا بعد الإرسال
     setCart([]);
     renderCart();
-
-    // ✅ بعد الإرسال: امسح رقم الطلب الثابت
     sessionStorage.removeItem("BS_ORDER_ID");
 
-    // ✅ رجّع الزرار + ارجع للكتالوج تلقائيًا
     setTimeout(()=>{
       sendBtn.disabled = false;
       sendBtn.textContent = oldText;
