@@ -14,6 +14,7 @@
       --accent:#60a5fa; --accent2:#a78bfa;
     }
     *{box-sizing:border-box}
+    html,body{height:100%}
     body{
       margin:0;
       font-family: system-ui, -apple-system, "Segoe UI", Tahoma, Arial;
@@ -38,7 +39,7 @@
 
     h2{margin:0 0 10px;font-weight:900}
     label{font-size:12px;color:var(--muted)}
-    input, select{
+    input, select, textarea{
       width:100%;
       padding:10px;
       border-radius:12px;
@@ -51,11 +52,20 @@
     .row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
     .row2{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
 
+    @media (max-width:920px){
+      .row{grid-template-columns:repeat(2,1fr);}
+      .row2{grid-template-columns:repeat(1,1fr);}
+    }
+    @media (max-width:520px){
+      .row{grid-template-columns:repeat(1,1fr);}
+    }
+
+    .table-wrap{overflow:auto;margin-top:10px;border-radius:12px}
     table{
       width:100%;
       border-collapse:collapse;
-      margin-top:10px;
       font-size:13px;
+      min-width:800px;
     }
     th, td{
       border:1px solid var(--stroke);
@@ -84,7 +94,7 @@
       margin-top:10px;
     }
 
-    /* 🔐 Login */
+    /* Login */
     #loginBox{
       position:fixed; inset:0;
       background:rgba(0,0,0,.85);
@@ -97,13 +107,16 @@
 
 <body>
 
-<!-- 🔐 Password Gate -->
+<!-- Login -->
 <div id="loginBox">
-  <div class="card">
+  <div class="card" role="dialog" aria-modal="true" aria-label="دخول الإدارة">
     <h2>دخول الإدارة</h2>
-    <label>كلمة المرور</label>
-    <input type="password" id="passInput" placeholder="••••••••" />
-    <button class="btn" style="margin-top:12px;width:100%" onclick="checkPass()">دخول</button>
+    <label for="passInput">كلمة المرور</label>
+    <input type="password" id="passInput" placeholder="••••••••" aria-label="كلمة المرور"/>
+    <div style="margin-top:12px;display:flex;gap:8px">
+      <button id="loginBtn" class="btn" style="flex:1">دخول</button>
+      <button id="logoutBtn" class="btn" style="flex:1;opacity:.75">إغلاق</button>
+    </div>
   </div>
 </div>
 
@@ -112,21 +125,21 @@
   <!-- Header -->
   <div class="card">
     <h2>فاتورة جديدة</h2>
-    <div class="row">
+    <div class="row" role="region" aria-label="معلومات الفاتورة">
       <div>
-        <label>رقم الفاتورة</label>
+        <label for="invNo">رقم الفاتورة</label>
         <input id="invNo" readonly />
       </div>
       <div>
-        <label>التاريخ</label>
+        <label for="invDate">التاريخ</label>
         <input id="invDate" readonly />
       </div>
       <div>
-        <label>الوقت</label>
+        <label for="invTime">الوقت</label>
         <input id="invTime" readonly />
       </div>
       <div>
-        <label>العميل</label>
+        <label for="custName">العميل</label>
         <input id="custName" placeholder="اسم العميل" />
       </div>
     </div>
@@ -135,54 +148,59 @@
   <!-- Items -->
   <div class="card">
     <h2>الأصناف</h2>
-    <table id="itemsTable">
-      <thead>
-        <tr>
-          <th>SKU / المنتج</th>
-          <th>الكمية</th>
-          <th>السعر</th>
-          <th>خصم (جنيه)</th>
-          <th>الإجمالي</th>
-          <th>حذف</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
+    <div class="table-wrap" aria-live="polite">
+      <table id="itemsTable" role="table" aria-label="جدول الأصناف">
+        <thead>
+          <tr>
+            <th>SKU / المنتج</th>
+            <th>الكمية</th>
+            <th>السعر</th>
+            <th>خصم (جنيه)</th>
+            <th>الإجمالي</th>
+            <th>حذف</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
 
-    <button class="btn" style="margin-top:10px" onclick="addRow()">+ إضافة صنف</button>
-    <div class="total" id="grandTotal">الإجمالي: 0 جنيه</div>
+    <div style="display:flex;gap:12px;margin-top:12px;align-items:center;flex-wrap:wrap">
+      <button class="btn" id="addRowBtn">+ إضافة صنف</button>
+      <div class="total" id="grandTotal">الإجمالي: 0 جنيه</div>
+    </div>
   </div>
 
   <!-- Actions -->
   <div class="card row2">
-    <button class="btn" onclick="exportPDF()">📄 تصدير PDF</button>
-    <button class="btn" onclick="resetInvoice()">🗑️ فاتورة جديدة</button>
+    <button class="btn" id="pdfBtn">📄 تصدير PDF</button>
+    <button class="btn" id="resetBtn">🗑️ فاتورة جديدة</button>
   </div>
 
 </div>
+
 <script>
 /* ================== CONFIG ================== */
 
-// 🔐 كلمة المرور (غيّرها براحتك)
+// 🔐 كلمة المرور (يمكنك تخزينها في بيئة آمنة لاحقًا)
 const ADMIN_PASSWORD = "1234";
 
 // 📄 مصدر البيانات (Catalog tab من نفس Google Sheet)
 const API_URL = "https://script.google.com/macros/s/AKfycbwsPPw3UiW6TBngBcbFxY4E8rB7JYgK1W2LRn0WaS9C7OitA1FgZ1vAz9Qr1u_ojlZ8/exec";
-
-// 🖼️ لوجو (Watermark)
-const LOGO_URL = "images/bslogo.webp";
-
-/* ================== STATE ================== */
 
 let PRODUCTS = [];
 let ROW_ID = 0;
 
 /* ================== LOGIN ================== */
 
+const loginBox = document.getElementById('loginBox');
+const loginBtn = document.getElementById('loginBtn');
+const logoutBtn = document.getElementById('logoutBtn');
+const passInput = document.getElementById('passInput');
+
 function checkPass(){
-  const v = document.getElementById("passInput").value;
+  const v = passInput.value;
   if(v === ADMIN_PASSWORD){
-    document.getElementById("loginBox").style.display = "none";
+    loginBox.style.display = "none";
     document.getElementById("app").style.display = "block";
     initInvoice();
     loadProducts();
@@ -191,25 +209,17 @@ function checkPass(){
   }
 }
 
+loginBtn.addEventListener('click', checkPass);
+passInput.addEventListener('keydown', (e)=> { if(e.key === 'Enter') checkPass(); });
+logoutBtn.addEventListener('click', ()=> { window.close?.() || (loginBox.style.display='none'); });
+
 /* ================== INIT ================== */
 
 function initInvoice(){
   const now = new Date();
-  document.getElementById("invDate").value =
-    now.toLocaleDateString("ar-EG");
-  document.getElementById("invTime").value =
-    now.toLocaleTimeString("en-US",{hour:'2-digit',minute:'2-digit',hour12:true});
-
+  document.getElementById("invDate").value = now.toLocaleDateString("ar-EG");
+  document.getElementById("invTime").value = now.toLocaleTimeString("en-US",{hour:'2-digit',minute:'2-digit',hour12:true});
   document.getElementById("invNo").value = generateInvoiceNo();
-}
-
-function generateInvoiceNo(){
-  const d = new Date();
-  const y = d.getFullYear();
-  const m = String(d.getMonth()+1).padStart(2,"0");
-  const day = String(d.getDate()).padStart(2,"0");
-  const seq = String(Math.floor(Math.random()*900)+100);
-  return `INV-BS-${y}${m}${day}-${seq}`;
 }
 
 /* ================== LOAD PRODUCTS ================== */
@@ -220,7 +230,8 @@ async function loadProducts(){
     const data = await res.json();
     PRODUCTS = Array.isArray(data) ? data : [];
   }catch(e){
-    alert("فشل تحميل الكتالوج");
+    console.warn("فشل تحميل الكتالوج", e);
+    PRODUCTS = [];
   }
 }
 
@@ -234,18 +245,20 @@ function addRow(){
 
   tr.innerHTML = `
     <td>
-      <input list="productsList" placeholder="SKU أو اسم المنتج"
+      <input list="productsList" placeholder="SKU أو اسم المنتج" aria-label="SKU أو اسم المنتج"
         oninput="onProductSelect(this, ${ROW_ID})">
     </td>
-    <td><input type="number" value="1" min="1" oninput="calcRow(${ROW_ID})"></td>
-    <td><input type="number" value="0" min="0" oninput="calcRow(${ROW_ID})"></td>
-    <td><input type="number" value="0" min="0" oninput="calcRow(${ROW_ID})"></td>
+    <td><input type="number" value="1" min="1" oninput="calcRow(${ROW_ID})" aria-label="الكمية"></td>
+    <td><input type="number" value="0" min="0" oninput="calcRow(${ROW_ID})" aria-label="السعر"></td>
+    <td><input type="number" value="0" min="0" oninput="calcRow(${ROW_ID})" aria-label="الخصم"></td>
     <td class="rowTotal">0</td>
-    <td><button onclick="removeRow(${ROW_ID})">✖</button></td>
+    <td><button type="button" onclick="removeRow(${ROW_ID})" aria-label="حذف">✖</button></td>
   `;
 
   tbody.appendChild(tr);
   updateProductsDatalist();
+  // focus the product input for faster data entry
+  tr.querySelector('input[list="productsList"]').focus();
 }
 
 function removeRow(id){
@@ -279,10 +292,10 @@ function updateProductsDatalist(){
 }
 
 function onProductSelect(inp, rowId){
-  const val = inp.value.toLowerCase();
+  const val = (inp.value||"").toLowerCase();
   const p = PRODUCTS.find(x =>
-    x.id.toLowerCase() === val ||
-    x.name.toLowerCase() === val ||
+    (x.id||"").toLowerCase() === val ||
+    (x.name||"").toLowerCase() === val ||
     `${x.id} | ${x.name}`.toLowerCase() === val
   );
   if(p){
@@ -317,7 +330,8 @@ function calcGrand(){
 
 /* ================== PDF ================== */
 
-async function exportPDF(){
+function exportPDF(){
+  // simple print of current invoice — for more advanced export use a library (jsPDF / html2pdf)
   const html = document.documentElement.outerHTML;
   const w = window.open("", "_blank");
   w.document.write(html);
@@ -334,6 +348,27 @@ function resetInvoice(){
   initInvoice();
   calcGrand();
 }
+
+/* ================== UTILS ================== */
+
+function generateInvoiceNo(){
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth()+1).padStart(2,"0");
+  const day = String(d.getDate()).padStart(2,"0");
+  const seq = String(Math.floor(Math.random()*900)+100);
+  return `INV-BS-${y}${m}${day}-${seq}`;
+}
+
+/* ================== BIND UI ================== */
+
+document.getElementById('addRowBtn').addEventListener('click', addRow);
+document.getElementById('pdfBtn').addEventListener('click', exportPDF);
+document.getElementById('resetBtn').addEventListener('click', resetInvoice);
+
+/* Init single empty row for convenience */
+addRow();
+
 </script>
 
 </body>
