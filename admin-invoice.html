@@ -49,8 +49,12 @@
       outline:none;
     }
 
+    /* اجعل حقول الهيدر أوضح (بـ Bold) */
+    #invNo, #invDate, #invTime{ font-weight:900; }
+
     .row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
     .row2{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+    .row1{display:grid;grid-template-columns:1fr;gap:10px}
 
     @media (max-width:920px){
       .row{grid-template-columns:repeat(2,1fr);}
@@ -58,6 +62,7 @@
     }
     @media (max-width:520px){
       .row{grid-template-columns:repeat(1,1fr);}
+      input, textarea, select{ font-size:16px; } /* iOS zoom fix */
     }
 
     .table-wrap{overflow:auto;margin-top:10px;border-radius:12px}
@@ -65,12 +70,13 @@
       width:100%;
       border-collapse:collapse;
       font-size:13px;
-      min-width:800px;
+      min-width:900px;
     }
     th, td{
       border:1px solid var(--stroke);
       padding:8px;
       text-align:center;
+      vertical-align:middle;
     }
     th{
       background:rgba(255,255,255,.08);
@@ -87,11 +93,28 @@
       cursor:pointer;
     }
 
-    .total{
-      font-size:18px;
-      font-weight:900;
-      text-align:left;
+    /* Totals */
+    .totalBox{
       margin-top:10px;
+      width:100%;
+    }
+    .totalLine{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      padding:8px 10px;
+      border:1px solid var(--stroke);
+      border-radius:12px;
+      background:rgba(255,255,255,.04);
+      margin-top:8px;
+      font-weight:900;
+    }
+    .totalLine .k{color:var(--muted);font-weight:800}
+    .totalLine .v{font-weight:900}
+    .totalLine.primary{
+      border-color: rgba(96,165,250,.35);
+      background: linear-gradient(135deg, rgba(96,165,250,.18), rgba(167,139,250,.10));
     }
 
     /* Login */
@@ -103,11 +126,42 @@
     }
     #loginBox .card{max-width:360px;width:100%}
 
-    /* small helper styles */
-    .prod-cell { display:flex; gap:6px; align-items:stretch; }
-    .prod-cell input[list] { flex:1; }
-    .prod-cell select.prodSelect { width:44px; padding:0 6px; text-align:center; }
-    .amount-words { margin-top:8px; font-weight:800; color:var(--muted) }
+    /* product inputs */
+    .prod-cell{
+      display:flex;
+      gap:8px;
+      align-items:stretch;
+      justify-content:flex-start;
+      flex-wrap:nowrap;
+    }
+    .skuInput{
+      width:140px;
+      min-width:120px;
+      text-align:center;
+      font-weight:900;
+    }
+    .nameInput{
+      flex:1;
+      min-width:260px;
+    }
+    .amount-words {
+      margin-top:10px;
+      font-weight:900;
+      color:var(--muted);
+      border-top:1px dashed var(--stroke);
+      padding-top:10px;
+    }
+
+    /* delete button */
+    .delBtn{
+      padding:10px 12px;
+      border-radius:12px;
+      border:1px solid var(--stroke);
+      background:rgba(255,255,255,.06);
+      color:var(--text);
+      cursor:pointer;
+      font-weight:900;
+    }
   </style>
 </head>
 
@@ -130,7 +184,8 @@
 
   <!-- Header -->
   <div class="card">
-    <h2>فاتورة جديدة</h2>
+    <h2 id="pageTitle">BS-Invoice</h2>
+
     <div class="row" role="region" aria-label="معلومات الفاتورة">
       <div>
         <label for="invNo">رقم الفاتورة</label>
@@ -150,9 +205,9 @@
       </div>
     </div>
 
-    <!-- phone & address -->
+    <!-- ✅ phone & address تحت بعض (Full width) -->
     <div style="margin-top:12px;">
-      <div class="row" style="grid-template-columns: 1fr 2fr 1fr 1fr; gap:10px;">
+      <div class="row1">
         <div>
           <label for="custPhone">رقم الهاتف</label>
           <input id="custPhone" placeholder="مثال: 01xxxxxxxxx" inputmode="tel" />
@@ -161,8 +216,6 @@
           <label for="custAddress">العنوان</label>
           <input id="custAddress" placeholder="العنوان (المحافظة / المنطقة / تفاصيل)" />
         </div>
-        <div></div>
-        <div></div>
       </div>
     </div>
   </div>
@@ -170,6 +223,7 @@
   <!-- Items -->
   <div class="card">
     <h2>الأصناف</h2>
+
     <div class="table-wrap" aria-live="polite">
       <table id="itemsTable" role="table" aria-label="جدول الأصناف">
         <thead>
@@ -188,8 +242,12 @@
 
     <div style="display:flex;gap:12px;margin-top:12px;align-items:center;flex-wrap:wrap">
       <button class="btn" id="addRowBtn">+ إضافة صنف</button>
-      <div class="total" id="grandTotal">الإجمالي: 0 جنيه</div>
     </div>
+
+    <!-- ✅ Totals (قبل/خصم/بعد) أو إجمالي فقط -->
+    <div class="totalBox" id="totalsBox"></div>
+
+    <!-- ✅ المبلغ بالحروف (بعد الخصم) بدون "كتابة المبلغ:" -->
     <div class="amount-words" id="amountWords"></div>
   </div>
 
@@ -214,6 +272,7 @@ const loginBox = document.getElementById('loginBox');
 const loginBtn = document.getElementById('loginBtn');
 const logoutBtn = document.getElementById('logoutBtn');
 const passInput = document.getElementById('passInput');
+
 function checkPass(){
   const v = passInput.value;
   if(v === ADMIN_PASSWORD){
@@ -230,11 +289,16 @@ passInput.addEventListener('keydown', (e)=> { if(e.key === 'Enter') checkPass();
 logoutBtn.addEventListener('click', ()=> { window.close?.() || (loginBox.style.display='none'); });
 
 /* INIT */
+function formatDateEnglish(d){
+  // 29-01-2026 (EN digits)
+  return d.toLocaleDateString("en-GB").replaceAll("/", "-");
+}
 function initInvoice(){
   const now = new Date();
-  document.getElementById("invDate").value = now.toLocaleDateString("ar-EG");
+  document.getElementById("invDate").value = formatDateEnglish(now); // ✅ تاريخ EN
   document.getElementById("invTime").value = now.toLocaleTimeString("en-US",{hour:'2-digit',minute:'2-digit',hour12:true});
   document.getElementById("invNo").value = generateInvoiceNo();
+  calcGrand(); // reset totals view
 }
 
 /* LOAD PRODUCTS */
@@ -243,46 +307,86 @@ async function loadProducts(){
     const res = await fetch(API_URL,{cache:"no-store"});
     const data = await res.json();
     PRODUCTS = Array.isArray(data) ? data : [];
-    updateProductsOptions();
+    buildDataLists();
   }catch(e){
     console.warn("فشل تحميل الكتالوج", e);
     PRODUCTS = [];
-    updateProductsOptions();
+    buildDataLists();
   }
 }
 
-/* UPDATE datalist & global options (used by selects in rows) */
-function updateProductsOptions(){
-  // datalist
-  let dl = document.getElementById("productsList");
-  if(!dl){
-    dl = document.createElement("datalist");
-    dl.id = "productsList";
-    document.body.appendChild(dl);
+/* ✅ build 2 datalists: SKU + Names */
+function buildDataLists(){
+  // SKU list
+  let dlSku = document.getElementById("skuList");
+  if(!dlSku){
+    dlSku = document.createElement("datalist");
+    dlSku.id = "skuList";
+    document.body.appendChild(dlSku);
   }
-  dl.innerHTML = "";
+  dlSku.innerHTML = "";
+
+  // Name list
+  let dlName = document.getElementById("nameList");
+  if(!dlName){
+    dlName = document.createElement("datalist");
+    dlName.id = "nameList";
+    document.body.appendChild(dlName);
+  }
+  dlName.innerHTML = "";
+
   PRODUCTS.forEach(p=>{
-    const v = `${p.id} | ${p.name}`;
-    const opt = document.createElement("option");
-    opt.value = v;
-    dl.appendChild(opt);
+    const id = String(p.id || "").trim();
+    const name = String(p.name || "").trim();
+    if(id){
+      const o = document.createElement("option");
+      o.value = id;
+      dlSku.appendChild(o);
+    }
+    if(name){
+      const o2 = document.createElement("option");
+      o2.value = name;
+      dlName.appendChild(o2);
+    }
   });
-  // populate existing row selects
-  document.querySelectorAll("select.prodSelect").forEach(sel=>{
-    const current = sel.value;
-    sel.innerHTML = ''; 
-    const placeholderOpt = document.createElement("option");
-    placeholderOpt.value = "";
-    placeholderOpt.textContent = "▾";
-    sel.appendChild(placeholderOpt);
-    PRODUCTS.forEach(p=>{
-      const opt = document.createElement("option");
-      opt.value = `${p.id} | ${p.name}`;
-      opt.textContent = p.id;
-      sel.appendChild(opt);
-    });
-    sel.value = current || "";
-  });
+}
+
+/* Helpers: find product */
+function findBySku(sku){
+  const s = String(sku || "").trim().toLowerCase();
+  if(!s) return null;
+  return PRODUCTS.find(p => String(p.id || "").trim().toLowerCase() === s) || null;
+}
+function findByName(name){
+  const n = String(name || "").trim().toLowerCase();
+  if(!n) return null;
+  // exact first
+  let hit = PRODUCTS.find(p => String(p.name || "").trim().toLowerCase() === n);
+  if(hit) return hit;
+  // contains (fallback)
+  hit = PRODUCTS.find(p => String(p.name || "").trim().toLowerCase().includes(n));
+  return hit || null;
+}
+
+/* ✅ Parse pasted WhatsApp line */
+function parseWhatsAppText(text){
+  const t = String(text || "").trim();
+  if(!t) return { sku:"", name:"" };
+
+  // Try detect SKU like ITM01 / ABC123 etc
+  const skuMatch = t.match(/\b([A-Z]{2,}\d{1,})\b/i);
+  let sku = skuMatch ? skuMatch[1].toUpperCase() : "";
+
+  // Try get name between pipes: ITM01 | NAME | ...
+  let name = "";
+  const pipeParts = t.split("|").map(s => s.trim()).filter(Boolean);
+  if(pipeParts.length >= 2){
+    // could be "ITM01" then "شيت شفاف"
+    const maybeName = pipeParts.find(part => !/\b([A-Z]{2,}\d{1,})\b/i.test(part) && part.length >= 2);
+    if(maybeName) name = maybeName.replace(/^•\s*/,"").trim();
+  }
+
+  return { sku, name };
 }
 
 /* ROWS */
@@ -295,79 +399,181 @@ function addRow(){
   tr.innerHTML = `
     <td>
       <div class="prod-cell">
-        <input list="productsList" placeholder="SKU أو اسم المنتج" aria-label="SKU أو اسم المنتج" />
-        <select class="prodSelect" aria-label="قائمة المنتجات"><option value="">▾</option></select>
+        <input class="skuInput" list="skuList" placeholder="SKU" inputmode="latin" autocomplete="off"
+               data-field="sku" aria-label="SKU" />
+        <input class="nameInput" list="nameList" placeholder="اسم المنتج" autocomplete="off"
+               data-field="name" aria-label="اسم المنتج" />
       </div>
     </td>
-    <td><input type="number" value="" min="1" placeholder="" oninput="calcRow(${ROW_ID})" aria-label="الكمية"></td>
-    <td><input type="number" value="" min="0" placeholder="" oninput="calcRow(${ROW_ID})" aria-label="السعر"></td>
-    <td><input type="number" value="" min="0" placeholder="" oninput="calcRow(${ROW_ID})" aria-label="الخصم"></td>
-    <td class="rowTotal">0</td>
-    <td><button type="button" onclick="removeRow(${ROW_ID})" aria-label="حذف">✖</button></td>
+    <td><input type="number" value="" min="1" data-field="qty" placeholder="" aria-label="الكمية"></td>
+    <td><input type="number" value="" min="0" data-field="price" placeholder="" aria-label="السعر"></td>
+    <td><input type="number" value="" min="0" data-field="discount" placeholder="" aria-label="الخصم"></td>
+    <td class="rowTotal" data-field="rowTotal">0.00</td>
+    <td><button type="button" class="delBtn" data-act="remove" aria-label="حذف">✖</button></td>
   `;
 
   tbody.appendChild(tr);
 
-  // populate select for this row and wire events
-  const sel = tr.querySelector("select.prodSelect");
-  const inp = tr.querySelector("input[list='productsList']");
-  sel.innerHTML = '';
-  const placeholderOpt = document.createElement("option");
-  placeholderOpt.value = "";
-  placeholderOpt.textContent = "▾";
-  sel.appendChild(placeholderOpt);
-  PRODUCTS.forEach(p=>{
-    const opt = document.createElement("option");
-    opt.value = `${p.id} | ${p.name}`;
-    opt.textContent = p.id;
-    sel.appendChild(opt);
-  });
-  sel.addEventListener('change', ()=>{
-    if(sel.value) inp.value = sel.value;
-    sel.selectedIndex = 0; // reset dropdown to placeholder
-  });
+  // focus SKU for speed
+  tr.querySelector('[data-field="sku"]')?.focus();
 
-  // also when typing in input we can sync select (attempt to select matching)
-  inp.addEventListener('input', ()=>{
-    const v = (inp.value || "").toLowerCase();
-    const match = PRODUCTS.find(p => `${p.id} | ${p.name}`.toLowerCase() === v);
-    if(match){
-      // nothing extra needed; already input filled
-    }
-  });
-
-  // focus input for fast entry
-  inp.focus();
-
-  updateProductsOptions();
+  // immediately calc
+  calcRowByTr(tr);
 }
-function removeRow(id){
-  document.querySelector(`tr[data-id="${id}"]`)?.remove();
+
+function removeRowByTr(tr){
+  tr?.remove();
   calcGrand();
 }
+
+/* ✅ Delegation for all row actions (fast + reliable) */
+const itemsTbody = document.querySelector("#itemsTable tbody");
+itemsTbody.addEventListener("click", (ev)=>{
+  const btn = ev.target.closest("[data-act='remove']");
+  if(!btn) return;
+  const tr = btn.closest("tr");
+  removeRowByTr(tr);
+});
+
+itemsTbody.addEventListener("input", (ev)=>{
+  const el = ev.target;
+  const tr = el.closest("tr");
+  if(!tr) return;
+
+  const field = el.getAttribute("data-field");
+
+  // qty/price/discount => recalc
+  if(field === "qty" || field === "price" || field === "discount"){
+    calcRowByTr(tr);
+    return;
+  }
+
+  // SKU/Name syncing
+  if(field === "sku"){
+    const p = findBySku(el.value);
+    if(p){
+      tr.querySelector('[data-field="name"]').value = String(p.name || "").trim();
+    }
+    calcRowByTr(tr);
+    return;
+  }
+
+  if(field === "name"){
+    const p = findByName(el.value);
+    if(p){
+      tr.querySelector('[data-field="sku"]').value = String(p.id || "").trim();
+    }
+    calcRowByTr(tr);
+    return;
+  }
+});
+
+/* ✅ Paste support from WhatsApp */
+itemsTbody.addEventListener("paste", (ev)=>{
+  const el = ev.target;
+  if(!el) return;
+  const tr = el.closest("tr");
+  if(!tr) return;
+
+  const field = el.getAttribute("data-field");
+  if(field !== "sku" && field !== "name") return;
+
+  const txt = (ev.clipboardData || window.clipboardData)?.getData("text") || "";
+  if(!txt) return;
+
+  // Let paste happen then parse
+  setTimeout(()=>{
+    const val = el.value || txt;
+    const parsed = parseWhatsAppText(val);
+
+    if(parsed.sku){
+      const p = findBySku(parsed.sku) || null;
+      tr.querySelector('[data-field="sku"]').value = parsed.sku;
+      if(p){
+        tr.querySelector('[data-field="name"]').value = String(p.name || "").trim();
+      }
+    }
+
+    if(!parsed.sku && parsed.name){
+      const p2 = findByName(parsed.name);
+      tr.querySelector('[data-field="name"]').value = parsed.name;
+      if(p2){
+        tr.querySelector('[data-field="sku"]').value = String(p2.id || "").trim();
+      }
+    }
+
+    // if paste contains only name and matches product by contains
+    if(!parsed.sku && !parsed.name){
+      const p3 = findByName(val);
+      if(p3){
+        tr.querySelector('[data-field="sku"]').value = String(p3.id || "").trim();
+        tr.querySelector('[data-field="name"]').value = String(p3.name || "").trim();
+      }
+    }
+
+    calcRowByTr(tr);
+  }, 0);
+});
 
 /* CALCS */
-function calcRow(id){
-  const tr = document.querySelector(`tr[data-id="${id}"]`);
-  if(!tr) return;
-  const qty = Number(tr.children[1].querySelector("input").value) || 0;
-  const price = Number(tr.children[2].querySelector("input").value) || 0;
-  const disc = Number(tr.children[3].querySelector("input").value) || 0;
-  const total = Math.max(0, (qty * price) - disc);
-  tr.querySelector(".rowTotal").textContent = total.toFixed(2);
+function calcRowByTr(tr){
+  const qty = Number(tr.querySelector('[data-field="qty"]')?.value) || 0;
+  const price = Number(tr.querySelector('[data-field="price"]')?.value) || 0;
+  const discIn = Number(tr.querySelector('[data-field="discount"]')?.value) || 0;
+
+  // ✅ إجمالي الصف ثابت قبل الخصم
+  const sub = Math.max(0, qty * price);
+
+  // خصم الصف لا يتجاوز subtotal
+  const disc = Math.max(0, Math.min(discIn, sub));
+
+  // عرض الإجمالي في الصف = قبل الخصم
+  tr.querySelector('[data-field="rowTotal"]').textContent = sub.toFixed(2);
+
   calcGrand();
 }
+
 function calcGrand(){
-  let sum = 0;
-  document.querySelectorAll(".rowTotal").forEach(td=>{
-    sum += Number(td.textContent) || 0;
+  const rows = Array.from(document.querySelectorAll("#itemsTable tbody tr"));
+
+  let totalBefore = 0;
+  let totalDiscount = 0;
+
+  rows.forEach(tr=>{
+    const qty = Number(tr.querySelector('[data-field="qty"]')?.value) || 0;
+    const price = Number(tr.querySelector('[data-field="price"]')?.value) || 0;
+    const discIn = Number(tr.querySelector('[data-field="discount"]')?.value) || 0;
+
+    const sub = Math.max(0, qty * price);
+    const disc = Math.max(0, Math.min(discIn, sub));
+
+    totalBefore += sub;
+    totalDiscount += disc;
   });
-  document.getElementById("grandTotal").textContent = `الإجمالي: ${sum.toFixed(2)} جنيه`;
-  // write amount in words under total
-  document.getElementById("amountWords").textContent = numberToArabicWords(Math.round(sum));
+
+  const totalAfter = Math.max(0, totalBefore - totalDiscount);
+
+  // ✅ عرض الإجماليات (لو مفيش خصم يظهر الإجمالي فقط)
+  const box = document.getElementById("totalsBox");
+  box.innerHTML = "";
+
+  if(totalDiscount > 0.00001){
+    box.innerHTML = `
+      <div class="totalLine"><span class="k">الإجمالي قبل الخصم</span><span class="v">${totalBefore.toFixed(2)} جنيه</span></div>
+      <div class="totalLine"><span class="k">إجمالي الخصم</span><span class="v">${totalDiscount.toFixed(2)} جنيه</span></div>
+      <div class="totalLine primary"><span class="k">الإجمالي بعد الخصم</span><span class="v">${totalAfter.toFixed(2)} جنيه</span></div>
+    `;
+  } else {
+    box.innerHTML = `
+      <div class="totalLine primary"><span class="k">الإجمالي</span><span class="v">${totalAfter.toFixed(2)} جنيه</span></div>
+    `;
+  }
+
+  // ✅ المبلغ بالحروف = بعد الخصم
+  document.getElementById("amountWords").textContent = numberToArabicWords(Math.round(totalAfter));
 }
 
-/* EXPORT PDF: include amount in words */
+/* EXPORT PDF */
 function exportPDF(){
   const invNo = document.getElementById("invNo").value || "";
   const invDate = document.getElementById("invDate").value || "";
@@ -378,15 +584,30 @@ function exportPDF(){
 
   const rows = Array.from(document.querySelectorAll("#itemsTable tbody tr"));
   const items = rows.map(tr=>{
-    const sku = (tr.children[0].querySelector("input")?.value || "").trim();
-    const qty = Number(tr.children[1].querySelector("input")?.value) || 0;
-    const price = Number(tr.children[2].querySelector("input")?.value) || 0;
-    const disc = Number(tr.children[3].querySelector("input")?.value) || 0;
-    const total = Number((qty*price) - disc) || 0;
-    return { sku, qty, price, disc, total };
-  }).filter(i => i.sku || i.qty);
+    const sku = (tr.querySelector('[data-field="sku"]')?.value || "").trim();
+    const name = (tr.querySelector('[data-field="name"]')?.value || "").trim();
+    const qty = Number(tr.querySelector('[data-field="qty"]')?.value) || 0;
+    const price = Number(tr.querySelector('[data-field="price"]')?.value) || 0;
+    const discIn = Number(tr.querySelector('[data-field="discount"]')?.value) || 0;
+
+    const sub = Math.max(0, qty * price); // قبل الخصم
+    const disc = Math.max(0, Math.min(discIn, sub));
+    const net = Math.max(0, sub - disc);
+
+    const skuName = (sku && name) ? `${sku} | ${name}` : (sku || name);
+
+    return { skuName, qty, price, disc, sub, net };
+  }).filter(i => i.skuName || i.qty || i.price || i.disc);
 
   const logoUrl = "images/bslogo.webp";
+
+  // totals
+  const totalBefore = items.reduce((s,i)=> s + (Number(i.sub)||0), 0);
+  const totalDiscount = items.reduce((s,i)=> s + (Number(i.disc)||0), 0);
+  const totalAfter = Math.max(0, totalBefore - totalDiscount);
+
+  const words = numberToArabicWords(Math.round(totalAfter));
+
   const style = `
     <style>
       :root{ --text:#111827; --muted:#6b7280 }
@@ -397,14 +618,16 @@ function exportPDF(){
       .brand{display:flex;align-items:center;gap:12px}
       .brand img{width:64px;height:64px;object-fit:contain}
       h1{margin:0;font-weight:900;color:#111827}
-      .meta{font-size:14px;color:var(--muted)}
+      .meta{font-size:14px;color:var(--muted); line-height:1.7}
+      .meta strong{color:#111827}
       table{width:100%;border-collapse:collapse;margin-top:12px;font-size:14px}
       th,td{border:1px solid #e5e7eb;padding:8px;text-align:center}
       th{background:#f8fafc}
-      .right{text-align:left}
-      .totalRow{display:flex;justify-content:flex-end;margin-top:12px;gap:8px;align-items:center;flex-direction:row-reverse}
-      .totalBadge{background:#f3f4f6;padding:10px 14px;border-radius:8px;font-weight:900}
-      .amountWords{margin-top:8px;font-weight:900;color:#374151}
+      .totals{margin-top:12px;display:flex;flex-direction:column;gap:8px}
+      .tline{display:flex;justify-content:space-between;gap:10px;border:1px solid #e5e7eb;border-radius:8px;padding:10px 12px;background:#f9fafb;font-weight:900}
+      .tline span:first-child{color:#6b7280;font-weight:800}
+      .tline.primary{background:#eef2ff;border-color:#c7d2fe}
+      .amountWords{margin-top:10px;font-weight:900;color:#374151}
       @media print{
         body{margin:6mm}
         .sheet{max-width:100%}
@@ -416,19 +639,35 @@ function exportPDF(){
   if(items.length === 0){
     itemsHtml = `<tr><td colspan="5" style="padding:18px;text-align:center;color:var(--muted)">لا توجد أصناف</td></tr>`;
   } else {
+    // ✅ عمود الإجمالي في الصف = قبل الخصم (sub)
     itemsHtml = items.map(it => `
       <tr>
-        <td>${escapeHtml(it.sku)}</td>
+        <td>${escapeHtml(it.skuName)}</td>
         <td>${it.qty}</td>
-        <td>${it.price.toFixed(2)}</td>
-        <td>${it.disc.toFixed(2)}</td>
-        <td>${it.total.toFixed(2)}</td>
+        <td>${Number(it.price||0).toFixed(2)}</td>
+        <td>${Number(it.disc||0).toFixed(2)}</td>
+        <td>${Number(it.sub||0).toFixed(2)}</td>
       </tr>
     `).join("");
   }
 
-  const grand = items.reduce((s,i) => s + i.total, 0);
-  const words = numberToArabicWords(Math.round(grand));
+  // totals html (conditional if discount = 0)
+  let totalsHtml = "";
+  if(totalDiscount > 0.00001){
+    totalsHtml = `
+      <div class="totals">
+        <div class="tline"><span>الإجمالي قبل الخصم</span><span>${totalBefore.toFixed(2)} جنيه</span></div>
+        <div class="tline"><span>إجمالي الخصم</span><span>${totalDiscount.toFixed(2)} جنيه</span></div>
+        <div class="tline primary"><span>الإجمالي بعد الخصم</span><span>${totalAfter.toFixed(2)} جنيه</span></div>
+      </div>
+    `;
+  } else {
+    totalsHtml = `
+      <div class="totals">
+        <div class="tline primary"><span>الإجمالي</span><span>${totalAfter.toFixed(2)} جنيه</span></div>
+      </div>
+    `;
+  }
 
   const html = `
     <!doctype html>
@@ -437,7 +676,7 @@ function exportPDF(){
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       ${style}
-      <title>فاتورة ${invNo}</title>
+      <title>فاتورة ${escapeHtml(invNo)}</title>
     </head>
     <body>
       <div class="sheet">
@@ -445,13 +684,15 @@ function exportPDF(){
           <div class="brand">
             <img src="${logoUrl}" onerror="this.style.display='none'">
             <div>
-              <h1>فاتورة جديدة</h1>
-              <div class="meta">رقم الفاتورة: ${escapeHtml(invNo)}</div>
+              <h1>BS-Invoice</h1>
+              <div class="meta">رقم الفاتورة: <strong>${escapeHtml(invNo)}</strong></div>
             </div>
           </div>
+
           <div class="meta" style="text-align:left">
-            <div>التاريخ: ${escapeHtml(invDate)}</div>
-            <div>الوقت: ${escapeHtml(invTime)}</div>
+            <!-- ✅ كلمة التاريخ عربي + القيمة EN وبولد -->
+            <div>التاريخ: <strong>${escapeHtml(invDate)}</strong></div>
+            <div>الوقت: <strong>${escapeHtml(invTime)}</strong></div>
           </div>
         </div>
 
@@ -481,10 +722,10 @@ function exportPDF(){
             </tbody>
           </table>
 
-          <div class="totalRow">
-            <div class="totalBadge">الإجمالي: ${grand.toFixed(2)} جنيه</div>
-          </div>
-          <div class="amountWords">كتابة المبلغ: ${escapeHtml(words)}</div>
+          ${totalsHtml}
+
+          <!-- ✅ بدون "كتابة المبلغ:" -->
+          <div class="amountWords">${escapeHtml(words)}</div>
         </div>
 
         <div style="text-align:center;color:#9ca3af;font-size:12px">شكراً لاستخدامك نظام BS — تم إنشاء الفاتورة إلكترونياً</div>
@@ -513,7 +754,7 @@ function numberToArabicWords(number){
   number = Number(number) || 0;
   if(number === 0) return "صفر جنيه مصري فقط لا غير";
 
-  const ones = ["","واحد","اثنان","ثلاثة","أربعة","خمسة","ستة","سبعة","ثمانية","تسعة","عشرة","أحد عشر","اثنا عشر","ثلاثة عشر","أربعة عشر","خمسة عشر","ستة عشر","سبعة عش��","ثمانية عشر","تسعة عشر"];
+  const ones = ["","واحد","اثنان","ثلاثة","أربعة","خمسة","ستة","سبعة","ثمانية","تسعة","عشرة","أحد عشر","اثنا عشر","ثلاثة عشر","أربعة عشر","خمسة عشر","ستة عشر","سبعة عشر","ثمانية عشر","تسعة عشر"];
   const tens = ["","عشرة","عشرون","ثلاثون","أربعون","خمسون","ستون","سبعون","ثمانون","تسعون"];
   const hundreds = ["","مائة","مائتان","ثلاثمائة","أربعمائة","خمسمائة","ستمائة","سبعمائة","ثمانمائة","تسعمائة"];
 
@@ -568,7 +809,7 @@ function resetInvoice(){
   document.getElementById("custPhone").value = "";
   document.getElementById("custAddress").value = "";
   initInvoice();
-  calcGrand();
+  addRow();
 }
 function generateInvoiceNo(){
   const d = new Date();
@@ -586,7 +827,6 @@ document.getElementById('resetBtn').addEventListener('click', resetInvoice);
 
 /* Init row */
 addRow();
-
 </script>
 
 </body>
