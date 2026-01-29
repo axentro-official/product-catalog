@@ -72,6 +72,11 @@
       background:rgba(255,255,255,.06);color:var(--text);
       outline:none;font-size:14px;
     }
+    /* تحسين صغير للـ iOS: يقلل Zoom المفاجئ */
+    @media (max-width:720px){
+      input, textarea, select{ font-size:16px; }
+    }
+
     .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
     @media(max-width:720px){.row2{grid-template-columns:1fr}}
 
@@ -170,6 +175,7 @@
       padding:10px 12px;border-radius:12px;border:1px solid var(--stroke);
       background:rgba(15,23,42,.9); color:var(--text); z-index:999;
       display:none; font-weight:900;
+      max-width:min(92vw, 520px);
     }
   </style>
 </head>
@@ -205,12 +211,12 @@
       </div>
       <div>
         <label for="phone">رقم الموبايل</label>
-        <input id="phone" placeholder="مثال: 01xxxxxxxxx أو +201xxxxxxxxx" inputmode="tel" />
+        <input id="phone" placeholder="مثال: 01xxxxxxxxx أو +201xxxxxxxxx" inputmode="tel" autocomplete="tel" />
       </div>
     </div>
 
     <label for="address">العنوان</label>
-    <textarea id="address" placeholder="المحافظة / المنطقة / تفاصيل" rows="2"></textarea>
+    <textarea id="address" placeholder="المحافظة / المنطقة / تفاصيل" rows="2" autocomplete="street-address"></textarea>
 
     <div class="btns">
       <button class="primary" id="sendOrder">إرسال الطلب (واتساب)</button>
@@ -247,6 +253,14 @@
   const CACHE_TTL_MS   = 10 * 60 * 1000;
 
   let products = [];
+
+  function escapeHtml(s){
+    return String(s||"")
+      .replace(/&/g,"&amp;")
+      .replace(/</g,"&lt;")
+      .replace(/>/g,"&gt;")
+      .replace(/"/g,"&quot;");
+  }
 
   function statusClass(av){
     if(av === "Low stock") return "st-low";
@@ -292,7 +306,7 @@
 
   function setQty(pid, qty){
     const cart = getCart();
-    const idx = cart.findIndex(x=>x.id===pid);
+    const idx = cart.findIndex(x=>String(x.id)===String(pid));
     if(idx<0) return;
     cart[idx].qty = Math.max(1, Number(qty)||1);
     setCart(cart);
@@ -300,13 +314,13 @@
   }
 
   function removeItem(pid){
-    setCart(getCart().filter(x=>x.id!==pid));
+    setCart(getCart().filter(x=>String(x.id)!==String(pid)));
     renderCart();
     showToast("تم حذف الصنف");
   }
 
   function findProduct(pid){
-    return products.find(x=>x.id===pid) || null;
+    return products.find(x=>String(x.id)===String(pid)) || null;
   }
 
   function renderCart(){
@@ -333,54 +347,67 @@
 
       row.innerHTML = `
         <div style="display:flex;align-items:center;gap:12px;flex:1;min-width:0">
-          <img class="thumb" loading="lazy" decoding="async" src="${resolveImageById(safe.id)}"
-            onerror="this.onerror=null;this.src='${IMG_PLACEHOLDER}'" alt="${safe.name}">
+          <img class="thumb" loading="lazy" decoding="async" src="${resolveImageById(escapeHtml(safe.id))}"
+            onerror="this.onerror=null;this.src='${IMG_PLACEHOLDER}'" alt="${escapeHtml(safe.name)}">
           <div class="iInfo">
-            <div class="iName">${safe.name}</div>
+            <div class="iName">${escapeHtml(safe.name)}</div>
             <div class="iMeta">
-              ${safe.category} •
-              <span class="status ${statusClass(safe.availability)}">${safe.availability}</span> •
-              ${safe.id}
+              ${escapeHtml(safe.category)} •
+              <span class="status ${statusClass(safe.availability)}">${escapeHtml(safe.availability)}</span> •
+              ${escapeHtml(safe.id)}
             </div>
           </div>
         </div>
 
         <div style="display:flex;align-items:center;gap:12px;">
           <div class="qtyBox" aria-label="كمية المنتج">
-            <button class="qBtn" data-minus="${safe.id}" aria-label="إنقاص">−</button>
+            <button class="qBtn" data-act="minus" data-id="${escapeHtml(safe.id)}" aria-label="إنقاص">−</button>
             <div class="qVal" aria-live="polite">${Number(it.qty)||1}</div>
-            <button class="qBtn" data-plus="${safe.id}" aria-label="زيادة">+</button>
+            <button class="qBtn" data-act="plus" data-id="${escapeHtml(safe.id)}" aria-label="زيادة">+</button>
           </div>
-          <button class="rmBtn" data-rm="${safe.id}" aria-label="حذف من السلة">حذف</button>
+          <button class="rmBtn" data-act="rm" data-id="${escapeHtml(safe.id)}" aria-label="حذف من السلة">حذف</button>
         </div>
       `;
 
       cartBox.appendChild(row);
     });
-
-    cartBox.querySelectorAll("[data-plus]").forEach(b=>{
-      b.onclick = ()=> {
-        const id = b.getAttribute("data-plus");
-        const cart = getCart();
-        const it = cart.find(x=>x.id===id);
-        setQty(id, (Number(it?.qty)||1) + 1);
-      };
-    });
-
-    cartBox.querySelectorAll("[data-minus]").forEach(b=>{
-      b.onclick = ()=> {
-        const id = b.getAttribute("data-minus");
-        const cart = getCart();
-        const it = cart.find(x=>x.id===id);
-        setQty(id, Math.max(1, (Number(it?.qty)||1) - 1));
-      };
-    });
-
-    cartBox.querySelectorAll("[data-rm]").forEach(b=>{
-      b.onclick = ()=> removeItem(b.getAttribute("data-rm"));
-      b.onkeydown = (ev)=> { if(ev.key === 'Enter' || ev.key === ' ') removeItem(b.getAttribute("data-rm")); };
-    });
   }
+
+  /* ✅ تحسين كبير: Event Delegation بدل ربط أحداث لكل زر في كل render */
+  cartBox.addEventListener("click", (ev)=>{
+    const btn = ev.target.closest("[data-act]");
+    if(!btn) return;
+
+    const act = btn.getAttribute("data-act");
+    const id  = btn.getAttribute("data-id");
+    if(!id) return;
+
+    if(act === "rm"){
+      removeItem(id);
+      return;
+    }
+
+    const cart = getCart();
+    const it = cart.find(x=>String(x.id)===String(id));
+    const current = Number(it?.qty)||1;
+
+    if(act === "plus"){
+      setQty(id, current + 1);
+      return;
+    }
+    if(act === "minus"){
+      setQty(id, Math.max(1, current - 1));
+      return;
+    }
+  });
+
+  cartBox.addEventListener("keydown", (ev)=>{
+    const btn = ev.target.closest("[data-act]");
+    if(!btn) return;
+    if(ev.key !== "Enter" && ev.key !== " ") return;
+    ev.preventDefault();
+    btn.click();
+  });
 
   /* ====== التاريخ والوقت (12 ساعة) ====== */
   function formatDateOnly(d){
@@ -444,6 +471,7 @@
     return "";
   }
 
+  /* ✅ رسالة واتساب احترافية (قطاعي/جملة) بنفس الشكل اللي طلبته */
   function buildMsg(){
     const cart = getCart();
     const orderId = getStableOrderId();
@@ -460,38 +488,53 @@
     let totalQty = 0;
 
     const lines = [];
-    lines.push("طلب جديد – BS");
-    lines.push("------------------------------");
+    lines.push("🧾 طلب جديد — BS");
+    lines.push("━━━━━━━━━━━━━━━━━━━━━━");
     lines.push("");
-    lines.push(`رقم الطلب: ${orderId}`);
-    lines.push(`التاريخ: ${dOnly}`);
-    lines.push(`الوقت: ${tOnly}`);
-    lines.push(`نوع الطلب: ${type}`);
+    lines.push("🔖 رقم الطلب:");
+    lines.push(orderId);
     lines.push("");
-    lines.push("الأصناف:");
+    lines.push("📅 التاريخ:");
+    lines.push(dOnly);
+    lines.push("");
+    lines.push("⏰ الوقت:");
+    lines.push(tOnly);
+    lines.push("");
+    lines.push("📦 نوع الطلب:");
+    lines.push(type);
+    lines.push("");
+    lines.push("━━━━━━━━━━━━━━━━━━━━━━");
+    lines.push("📋 تفاصيل الأصناف:");
 
     cart.forEach((it)=>{
       const pr = findProduct(it.id);
       const safeName = pr?.name ? String(pr.name).trim() : "اسم المنتج";
       const qty = Number(it.qty)||1;
       totalQty += qty;
-      lines.push(`- ${it.id} | ${safeName} | كمية: ${qty}`);
+      lines.push(`• ${it.id} | ${safeName} | الكمية: ${qty}`);
     });
 
     lines.push("");
-    lines.push(`إجمالي القطع: ${totalQty}`);
+    lines.push("🔢 إجمالي القطع:");
+    lines.push(String(totalQty));
     lines.push("");
-    lines.push("العميل:");
-    lines.push(name);
-    lines.push(phone);
-    lines.push(address);
-    lines.push("-------------------------------------------------------");
+    lines.push("━━━━━━━━━━━━━━━━━━━━━━");
+    lines.push("👤 بيانات العميل:");
+    lines.push(`الاسم: ${name}`);
+    lines.push(`📞 ${phone}`);
+    lines.push(`📍 ${address}`);
+    lines.push("");
+    lines.push("━━━━━━━━━━━━━━━━━━━━━━");
 
-    lines.push(
-      type === "جملة"
-      ? "تم إرسال طلب الجملة. سيتم مراجعة الطلب وتحديد السعر النهائي والتواصل معكم."
-      : "تم إرسال الطلب. سيتم التواصل لتأكيد الطلب وإرسال الفاتورة."
-    );
+    if(type === "جملة"){
+      lines.push("✅ تم استلام طلب الجملة بنجاح");
+      lines.push("سيتم مراجعة الطلب وتحديد السعر النهائي");
+      lines.push("والتواصل معكم في أقرب وقت.");
+    }else{
+      lines.push("✅ تم استلام الطلب بنجاح");
+      lines.push("سيتم التواصل معكم لتأكيد الطلب");
+      lines.push("وإرسال الفاتورة النهائية.");
+    }
 
     return lines.join("\n");
   }
@@ -548,7 +591,6 @@
         renderCart();
       }catch(err){
         console.error(err);
-        // عرض ملاحظة واضحة عند فشل التحميل
         if(!hasCache && getCart().length){
           note.textContent = "⚠️ ملاحظة: لم يتم تحميل بيانات المنتجات من الشيت الآن. يمكنك إرسال الطلب، لكن بعض أسماء/حالات الأصناف قد لا تكون محدثة.";
         } else {
