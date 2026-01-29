@@ -27,9 +27,12 @@
       padding:18px;
       min-height:100vh;
       -webkit-font-smoothing:antialiased;
+      display:flex;
+      flex-direction:column;
     }
     a{color:inherit;text-decoration:none}
-    .wrap{max-width:var(--container-max);margin:0 auto}
+    .wrap{max-width:var(--container-max);margin:0 auto; width:100%}
+
     .top{
       display:flex;justify-content:space-between;align-items:center;gap:12px;
       padding:12px 14px;border:1px solid var(--stroke);
@@ -41,8 +44,10 @@
       padding:10px 12px;border-radius:14px;
       border:1px solid var(--stroke);background:rgba(255,255,255,.06);
       display:inline-flex;align-items:center;gap:8px;
+      font-weight:900;
     }
     .title{font-weight:900}
+    .brandName{ font-weight:900; color:#cbd5e1; font-size:13px; opacity:.95; }
 
     .card{
       margin-top:14px;padding:14px;
@@ -72,7 +77,6 @@
       background:rgba(255,255,255,.06);color:var(--text);
       outline:none;font-size:14px;
     }
-    /* تحسين صغير للـ iOS: يقلل Zoom المفاجئ */
     @media (max-width:720px){
       input, textarea, select{ font-size:16px; }
     }
@@ -132,6 +136,7 @@
       cursor:pointer;
       user-select:none;
       background:transparent;border:none;
+      font-weight:900;
     }
 
     .btns{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
@@ -169,7 +174,6 @@
       text-align:center;
     }
 
-    /* toast */
     .toast{
       position:fixed; bottom:16px; left:16px;
       padding:10px 12px;border-radius:12px;border:1px solid var(--stroke);
@@ -177,6 +181,18 @@
       display:none; font-weight:900;
       max-width:min(92vw, 520px);
     }
+
+    .site-footer{
+      margin-top:auto;
+      padding:16px 16px 22px;
+      text-align:center;
+      color:var(--muted);
+      border-top:1px solid var(--stroke);
+      background: rgba(2,6,23,.25);
+      backdrop-filter: blur(10px);
+    }
+    .site-footer .line1{ font-weight:900; color:#cbd5e1; }
+    .site-footer .line2{ margin-top:6px; font-weight:800; }
   </style>
 </head>
 
@@ -185,7 +201,7 @@
   <div class="top">
     <a class="back" href="./" aria-label="رجوع للكتالوج">← رجوع للكتالوج</a>
     <div class="title">إتمام الطلب</div>
-    <div></div>
+    <div class="brandName">B.S Medical &amp; Aesthetic</div>
   </div>
 
   <div class="card" aria-live="polite">
@@ -229,6 +245,11 @@
 
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
+<footer class="site-footer">
+  <div class="line1">Axentro – All Rights Reserved 2024 ©</div>
+  <div class="line2">By Ahmed Hamouda</div>
+</footer>
+
 <script>
   /* ====== بياناتك ====== */
   const OWNER_WA = "201146476993";
@@ -244,6 +265,8 @@
   const toastEl = document.getElementById("toast");
 
   const IMG_PLACEHOLDER = "https://via.placeholder.com/600x400?text=No+Image";
+
+  /* ✅ الصور من فولدر images باسم SKU */
   function resolveImageById(id){
     return `images/${id}.webp`;
   }
@@ -347,8 +370,10 @@
 
       row.innerHTML = `
         <div style="display:flex;align-items:center;gap:12px;flex:1;min-width:0">
-          <img class="thumb" loading="lazy" decoding="async" src="${resolveImageById(escapeHtml(safe.id))}"
-            onerror="this.onerror=null;this.src='${IMG_PLACEHOLDER}'" alt="${escapeHtml(safe.name)}">
+          <img class="thumb" loading="lazy" decoding="async"
+            src="${resolveImageById(safe.id)}"
+            onerror="this.onerror=null;this.src='${IMG_PLACEHOLDER}'"
+            alt="${escapeHtml(safe.name)}">
           <div class="iInfo">
             <div class="iName">${escapeHtml(safe.name)}</div>
             <div class="iMeta">
@@ -373,7 +398,6 @@
     });
   }
 
-  /* ✅ تحسين كبير: Event Delegation بدل ربط أحداث لكل زر في كل render */
   cartBox.addEventListener("click", (ev)=>{
     const btn = ev.target.closest("[data-act]");
     if(!btn) return;
@@ -409,7 +433,6 @@
     btn.click();
   });
 
-  /* ====== التاريخ والوقت (12 ساعة) ====== */
   function formatDateOnly(d){
     const dd = String(d.getDate()).padStart(2,"0");
     const mm = String(d.getMonth()+1).padStart(2,"0");
@@ -426,7 +449,6 @@
     return `${hh}:${min} ${ampm}`;
   }
 
-  /* ====== رقم طلب (BS-YYYYMMDD-XXX) ====== */
   function generateOrderId(){
     const d = new Date();
     const y = d.getFullYear();
@@ -445,7 +467,6 @@
     return id;
   }
 
-  /* ====== تحقق ====== */
   function validate(){
     const cart = getCart();
     if(!cart.length) return "السلة فارغة.";
@@ -471,7 +492,7 @@
     return "";
   }
 
-  /* ✅ رسالة واتساب احترافية (قطاعي/جملة) بنفس الشكل اللي طلبته */
+  /* ✅ رسالة واتساب الاحترافية (قطاعي + جملة) */
   function buildMsg(){
     const cart = getCart();
     const orderId = getStableOrderId();
@@ -488,7 +509,7 @@
     let totalQty = 0;
 
     const lines = [];
-    lines.push("🧾 طلب جديد — BS");
+    lines.push("🧾 طلب جديد — B.S Medical & Aesthetic");
     lines.push("━━━━━━━━━━━━━━━━━━━━━━");
     lines.push("");
     lines.push("🔖 رقم الطلب:");
@@ -539,7 +560,6 @@
     return lines.join("\n");
   }
 
-  /* ====== كاش المنتجات لتسريع الظهور ====== */
   function saveProductsCache(list){
     localStorage.setItem(PROD_CACHE_KEY, JSON.stringify(list));
     localStorage.setItem(PROD_CACHE_TS, String(Date.now()));
@@ -649,7 +669,6 @@
     }, 1200);
   });
 
-  // Init
   ensureCartInitialized();
   hydrateProductsFast();
 </script>
