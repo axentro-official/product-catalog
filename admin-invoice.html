@@ -32,7 +32,9 @@
     }
 
     a{color:inherit;text-decoration:none}
-    .wrap{max-width:var(--container-max);margin:0 auto;width:100%}
+
+    /* ✅ flex:1 علشان الفوتر يثبت تحت */
+    .wrap{max-width:var(--container-max);margin:0 auto;width:100%;flex:1}
 
     .topbar{
       display:flex;align-items:center;justify-content:space-between;gap:12px;
@@ -87,7 +89,6 @@
       outline:none;
     }
 
-    /* اجعل حقول الهيدر أوضح (بـ Bold) */
     #invNo, #invDate, #invTime{ font-weight:900; }
 
     .row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
@@ -100,7 +101,7 @@
     }
     @media (max-width:520px){
       .row{grid-template-columns:repeat(1,1fr);}
-      input, textarea, select{ font-size:16px; } /* iOS zoom fix */
+      input, textarea, select{ font-size:16px; }
     }
 
     .table-wrap{overflow:auto;margin-top:10px;border-radius:12px}
@@ -137,7 +138,6 @@
       opacity:.9;
     }
 
-    /* Totals */
     .totalBox{ margin-top:10px; width:100%; }
     .totalLine{
       display:flex;
@@ -184,7 +184,6 @@
       color:#cbd5e1;
     }
 
-    /* product inputs */
     .prod-cell{
       display:flex;
       gap:8px;
@@ -210,7 +209,6 @@
       flex:0 0 auto;
     }
 
-    /* delete button */
     .delBtn{
       padding:10px 12px;
       border-radius:12px;
@@ -221,7 +219,6 @@
       font-weight:900;
     }
 
-    /* Import box */
     .importBox{
       display:grid;
       grid-template-columns: 1fr;
@@ -233,7 +230,6 @@
       line-height:1.7;
     }
 
-    /* Footer */
     .site-footer{
       margin-top:auto;
       padding:16px 16px 22px;
@@ -246,6 +242,72 @@
     .site-footer .line1{ font-weight:900; color:#cbd5e1; }
     .site-footer .line2{ margin-top:6px; font-weight:800; }
     :focus{ outline:3px solid rgba(96,165,250,.2); outline-offset:3px; }
+
+    /* ✅ موبايل: الجدول كروت */
+    @media (max-width: 820px){
+      .table-wrap{ overflow:visible; }
+      table{ min-width:0; }
+      table, thead, tbody, th, td, tr{ display:block; width:100%; }
+      thead{ display:none; }
+      tbody tr{
+        border:1px solid var(--stroke);
+        background: rgba(255,255,255,.05);
+        border-radius: 16px;
+        padding:10px;
+        margin-bottom:10px;
+      }
+      tbody td{
+        border:none;
+        padding:8px 0;
+        text-align:right;
+      }
+      tbody td + td{
+        border-top:1px dashed rgba(255,255,255,.10);
+      }
+      tbody td[data-label]::before{
+        content: attr(data-label);
+        display:block;
+        font-size:12px;
+        color: var(--muted);
+        font-weight:800;
+        margin-bottom:6px;
+      }
+      .prod-cell{ flex-wrap:wrap; }
+      .skuInput{ width:140px; }
+      .nameInput{ min-width: 100%; }
+      .thumbMini{ width:52px; height:52px; }
+      tbody input{
+        width:100%;
+        font-size:16px;
+        text-align:center;
+        font-weight:900;
+      }
+      .delBtn{ width:100%; }
+    }
+
+    /* ✅ Floating Add Button للموبايل */
+    .fabAdd{
+      position:fixed;
+      right:16px;
+      bottom:16px;
+      z-index:998;
+      border:none;
+      padding:14px 16px;
+      border-radius:999px;
+      font-weight:900;
+      cursor:pointer;
+      color:var(--text);
+      background:linear-gradient(135deg, rgba(96,165,250,.35), rgba(167,139,250,.25));
+      border:1px solid rgba(255,255,255,.14);
+      box-shadow: 0 16px 40px rgba(0,0,0,.45);
+      display:none;
+      gap:10px;
+      align-items:center;
+    }
+    .fabAdd:active{ transform: translateY(1px); }
+    @media (max-width: 820px){
+      .fabAdd{ display:flex; }
+    }
   </style>
 </head>
 
@@ -302,9 +364,11 @@
     <div class="importBox">
       <textarea id="waImport" rows="5" placeholder="الصق رسالة الطلب كاملة هنا (كما وصلت من واتساب)..."></textarea>
       <div class="hint">
-        يدعم رسالة الطلب التي شكلها مثل:
-        <br>• ITM01 | اسم المنتج | الكمية: 2
-        <br>وكمان يدعم لصق SKU فقط أو اسم المنتج فقط.
+        ✅ يدعم تلقائيًا:
+        <br>• الاسم: أحمد
+        <br>• 📞 01xxxxxxxxx
+        <br>• 📍 العنوان...
+        <br>• • ITM01 | اسم المنتج | الكمية: 2
       </div>
       <div style="display:flex;gap:10px;flex-wrap:wrap">
         <button class="btn" id="importBtn">📥 استيراد إلى الجدول</button>
@@ -336,7 +400,6 @@
       </div>
     </div>
 
-    <!-- phone & address full width -->
     <div style="margin-top:12px;">
       <div class="row1">
         <div>
@@ -386,6 +449,11 @@
   </div>
 
 </div>
+
+<!-- ✅ Floating Add Button (Mobile) -->
+<button id="fabAdd" class="fabAdd" type="button" aria-label="إضافة صنف">
+  ➕ إضافة صنف
+</button>
 
 <footer class="site-footer">
   <div class="line1">Axentro – All Rights Reserved 2024 ©</div>
@@ -438,21 +506,24 @@ function checkPass(){
 }
 loginBtn.addEventListener('click', checkPass);
 passInput.addEventListener('keydown', (e)=> { if(e.key === 'Enter') checkPass(); });
-logoutBtn.addEventListener('click', ()=> setLoggedIn(false));
+
+logoutBtn.addEventListener('click', ()=>{
+  window.close?.();
+  setLoggedIn(false);
+});
 document.getElementById("logoutTop")?.addEventListener("click", ()=> setLoggedIn(false));
 
-/* auto session restore */
 if(sessionStorage.getItem("BS_ADMIN_OK") === "1"){
   setLoggedIn(true);
   initInvoice();
   loadProductsSmart();
 }else{
   setLoggedIn(false);
+  try{ passInput.focus(); }catch(e){}
 }
 
 /* ================= INIT ================= */
 function formatDateEnglish(d){
-  // 29-01-2026 (EN digits)
   return d.toLocaleDateString("en-GB").replaceAll("/", "-");
 }
 function initInvoice(){
@@ -476,9 +547,7 @@ function loadProductsFromCache(){
     const list = JSON.parse(raw);
     if(!Array.isArray(list)) return null;
     return { list, ts };
-  }catch(e){
-    return null;
-  }
+  }catch(e){ return null; }
 }
 async function fetchProductsFromApi(){
   const res = await fetch(API_URL,{cache:"no-store"});
@@ -486,20 +555,14 @@ async function fetchProductsFromApi(){
   const data = await res.json();
   return Array.isArray(data) ? data : [];
 }
-
 async function loadProductsSmart(){
   const cached = loadProductsFromCache();
   const now = Date.now();
   const hasCache = cached && cached.list && cached.list.length;
   const cacheFresh = hasCache && (now - cached.ts) < CACHE_TTL_MS;
 
-  if(hasCache){
-    PRODUCTS = cached.list;
-    buildDataLists();
-  }else{
-    PRODUCTS = [];
-    buildDataLists();
-  }
+  PRODUCTS = hasCache ? cached.list : [];
+  buildDataLists();
 
   const doFetch = async ()=>{
     try{
@@ -507,7 +570,6 @@ async function loadProductsSmart(){
       PRODUCTS = fresh;
       saveProductsCache(fresh);
       buildDataLists();
-      // بعد تحديث المنتجات، حاول تعمل sync للأسماء في الصفوف
       syncRowsWithProducts();
     }catch(e){
       console.warn("فشل تحميل الكتالوج", e);
@@ -566,21 +628,36 @@ function findByName(name){
   hit = PRODUCTS.find(p => String(p.name || "").trim().toLowerCase().includes(n));
   return hit || null;
 }
-
-/* ✅ images path: images/SKU.webp */
 function resolveImageBySku(sku){
   const s = String(sku || "").trim();
   if(!s) return IMG_PLACEHOLDER;
   return `images/${s}.webp`;
 }
 
-/* ================= WhatsApp import ================= */
-/*
-  يدعم:
-  • ITM01 | NAME | الكمية: 2
-  • ITM01 | NAME | الكمية: 2
-  أو أي سطر فيه SKU + (الكمية: رقم)
-*/
+/* ================= WhatsApp import (✅ includes customer data) ================= */
+
+/* يستخرج: الاسم + الهاتف + العنوان من رسالة order.html */
+function extractCustomerData(fullText){
+  const t = String(fullText || "");
+
+  // الاسم: ...
+  const nameMatch = t.match(/(?:^|\n)\s*الاسم\s*:\s*(.+)\s*(?:\n|$)/i);
+  const name = nameMatch ? nameMatch[1].trim() : "";
+
+  // الهاتف: غالبًا سطر فيه 📞
+  let phone = "";
+  const phoneMatch = t.match(/(?:📞|الهاتف\s*:?)\s*([+]?[\d\s-]{8,})/);
+  if(phoneMatch) phone = phoneMatch[1].trim();
+
+  // العنوان: غالبًا سطر فيه 📍
+  let address = "";
+  const addrMatch = t.match(/(?:📍|العنوان\s*:?)\s*(.+)\s*(?:\n|$)/);
+  if(addrMatch) address = addrMatch[1].trim();
+
+  return { name, phone, address };
+}
+
+/* أصناف كما هي */
 function parseWhatsAppLines(fullText){
   const text = String(fullText || "").trim();
   if(!text) return [];
@@ -589,30 +666,30 @@ function parseWhatsAppLines(fullText){
 
   const out = [];
   for(const line of lines){
-    // حاول نجيب الكمية من "الكمية: 2"
     const qtyMatch = line.match(/الكمية\s*:\s*(\d+)/i);
     const qty = qtyMatch ? Number(qtyMatch[1]) : 0;
 
-    // حاول نجيب SKU
-    // يلتقط ITM01 / ABC123 / BS-... (بس هنفضل الكود القصير)
     const skuMatch = line.match(/\b([A-Z]{2,}\d{1,})\b/i);
     const sku = skuMatch ? skuMatch[1].toUpperCase() : "";
 
-    // الاسم بين |
     let name = "";
     const pipeParts = line.split("|").map(s=>s.trim()).filter(Boolean);
     if(pipeParts.length >= 2){
-      // غالبًا [SKU] | [NAME]
       const maybeName = pipeParts[1];
       if(maybeName) name = maybeName.replace(/^•\s*/,"").trim();
     }else{
-      // fallback: لو فيه نص بعد SKU
       if(sku){
         name = line.replace(sku, "").replace(/^•\s*/,"").trim();
       }
     }
 
+    // فلتر: نتجاهل سطور العميل/التاريخ.. ونحتفظ بس لو فيه SKU أو اسم
     if(sku || name){
+      // لكن لو السطر شكله "الاسم:" أو "📞" أو "📍" تجاهله كـ item
+      if(/^\s*الاسم\s*:/i.test(line)) continue;
+      if(line.includes("📞") || line.includes("📍")) continue;
+      if(line.includes("رقم الطلب") || line.includes("التاريخ") || line.includes("الوقت")) continue;
+
       out.push({ sku, name, qty: qty || 0 });
     }
   }
@@ -627,21 +704,30 @@ function importFromWhatsApp(){
     return;
   }
 
+  // ✅ 1) املأ بيانات العميل
+  const cust = extractCustomerData(raw);
+  if(cust.name) document.getElementById("custName").value = cust.name;
+  if(cust.phone) document.getElementById("custPhone").value = cust.phone;
+  if(cust.address) document.getElementById("custAddress").value = cust.address;
+
+  // ✅ 2) استخرج الأصناف
   const items = parseWhatsAppLines(raw);
   if(!items.length){
-    alert("لم أستطع استخراج أصناف من الرسالة. تأكد أن الرسالة تحتوي على SKU أو اسم المنتج.");
+    alert("تم ملء بيانات العميل ✅ لكن لم أستطع استخراج أصناف. تأكد أن الرسالة تحتوي على SKU أو اسم المنتج وسطر (الكمية: رقم).");
     return;
   }
 
-  // امسح الجدول الحالي؟ (بدون إجبار)
   const tbody = document.querySelector("#itemsTable tbody");
   if(tbody.children.length){
     const ok = confirm("هل تريد استبدال الأصناف الحالية بما تم استيراده؟");
-    if(ok) tbody.innerHTML = "";
+    if(ok){
+      tbody.innerHTML = "";
+      ROW_ID = 0;
+    }
   }
 
   items.forEach(it=>{
-    const tr = addRow(true); // silent focus
+    const tr = addRow(true);
     const skuEl = tr.querySelector('[data-field="sku"]');
     const nameEl = tr.querySelector('[data-field="name"]');
     const qtyEl = tr.querySelector('[data-field="qty"]');
@@ -662,23 +748,27 @@ function importFromWhatsApp(){
       }
     }
 
-    if(it.qty){
-      qtyEl.value = String(it.qty);
-    }else{
-      // لو ملقيناش كمية، نخليها 1 افتراضياً
-      qtyEl.value = "1";
-    }
+    qtyEl.value = it.qty ? String(it.qty) : "1";
 
     syncRowThumb(tr);
     calcRowByTr(tr);
   });
 
   calcGrand();
-  alert("✅ تم الاستيراد بنجاح");
+  alert("✅ تم الاستيراد: بيانات العميل + الأصناف");
 }
 
 document.getElementById("importBtn")?.addEventListener("click", importFromWhatsApp);
 document.getElementById("clearImportBtn")?.addEventListener("click", ()=>{ document.getElementById("waImport").value = ""; });
+
+/* ✅ تحسين إضافي: لو المستخدم لَصَق الرسالة في مربع الاستيراد وخلاص */
+document.getElementById("waImport")?.addEventListener("paste", ()=>{
+  // شغّل الاستيراد بعد اللصق مباشرة (بدون ما تضغط زر)
+  setTimeout(()=>{
+    const raw = String(document.getElementById("waImport").value || "").trim();
+    if(raw.length >= 20) { try{ importFromWhatsApp(); }catch(e){} }
+  }, 0);
+});
 
 /* ================= ROWS ================= */
 function addRow(silentFocus=false){
@@ -688,7 +778,7 @@ function addRow(silentFocus=false){
   tr.dataset.id = ROW_ID;
 
   tr.innerHTML = `
-    <td>
+    <td data-label="SKU / المنتج">
       <div class="prod-cell">
         <img class="thumbMini" alt="صورة المنتج" src="${IMG_PLACEHOLDER}" onerror="this.onerror=null;this.src='${IMG_PLACEHOLDER}'">
         <input class="skuInput" list="skuList" placeholder="SKU" inputmode="latin" autocomplete="off"
@@ -697,11 +787,11 @@ function addRow(silentFocus=false){
                data-field="name" aria-label="اسم المنتج" />
       </div>
     </td>
-    <td><input type="number" value="" min="1" data-field="qty" placeholder="" aria-label="الكمية"></td>
-    <td><input type="number" value="" min="0" data-field="price" placeholder="" aria-label="السعر"></td>
-    <td><input type="number" value="" min="0" data-field="discount" placeholder="" aria-label="الخصم"></td>
-    <td class="rowTotal" data-field="rowTotal">0.00</td>
-    <td><button type="button" class="delBtn" data-act="remove" aria-label="حذف">✖</button></td>
+    <td data-label="الكمية"><input type="number" value="" min="1" data-field="qty" aria-label="الكمية"></td>
+    <td data-label="السعر"><input type="number" step="0.01" value="" min="0" data-field="price" aria-label="السعر"></td>
+    <td data-label="خصم (جنيه)"><input type="number" step="0.01" value="" min="0" data-field="discount" aria-label="الخصم"></td>
+    <td data-label="الإجمالي" class="rowTotal" data-field="rowTotal">0.00</td>
+    <td data-label="حذف"><button type="button" class="delBtn" data-act="remove" aria-label="حذف">✖ حذف الصنف</button></td>
   `;
 
   tbody.appendChild(tr);
@@ -777,7 +867,7 @@ itemsTbody.addEventListener("paste", (ev)=>{
 
   setTimeout(()=>{
     const val = el.value || txt;
-    // نفس parser المصغر
+
     const parsed = (function(text){
       const t = String(text || "").trim();
       if(!t) return { sku:"", name:"" };
@@ -924,11 +1014,9 @@ function exportPDF(){
 
     const sub = Math.max(0, qty * price);
     const disc = Math.max(0, Math.min(discIn, sub));
-    const net = Math.max(0, sub - disc);
 
     const skuName = (sku && name) ? `${sku} | ${name}` : (sku || name);
-
-    return { skuName, qty, price, disc, sub, net };
+    return { skuName, qty, price, disc, sub };
   }).filter(i => i.skuName || i.qty || i.price || i.disc);
 
   const logoUrl = "images/bslogo.webp";
@@ -936,7 +1024,6 @@ function exportPDF(){
   const totalBefore = items.reduce((s,i)=> s + (Number(i.sub)||0), 0);
   const totalDiscount = items.reduce((s,i)=> s + (Number(i.disc)||0), 0);
   const totalAfter = Math.max(0, totalBefore - totalDiscount);
-
   const words = numberToArabicWords(Math.round(totalAfter));
 
   const style = `
@@ -960,10 +1047,7 @@ function exportPDF(){
       .tline.primary{background:#eef2ff;border-color:#c7d2fe}
       .amountWords{margin-top:10px;font-weight:900;color:#374151}
       .footer{margin-top:14px;text-align:center;color:#9ca3af;font-size:12px}
-      @media print{
-        body{margin:6mm}
-        .sheet{max-width:100%}
-      }
+      @media print{ body{margin:6mm} .sheet{max-width:100%} }
     </style>
   `;
 
@@ -1046,9 +1130,7 @@ function exportPDF(){
                 <th>الإجمالي</th>
               </tr>
             </thead>
-            <tbody>
-              ${itemsHtml}
-            </tbody>
+            <tbody>${itemsHtml}</tbody>
           </table>
 
           ${totalsHtml}
@@ -1135,13 +1217,13 @@ function numberToArabicWords(number){
   return `${body} جنيه مصري فقط لا غير`;
 }
 
-/* RESET & UTILS */
 function resetInvoice(){
   if(!confirm("بدء فاتورة جديدة؟")) return;
   document.querySelector("#itemsTable tbody").innerHTML = "";
   document.getElementById("custName").value = "";
   document.getElementById("custPhone").value = "";
   document.getElementById("custAddress").value = "";
+  ROW_ID = 0;
   initInvoice();
   addRow();
 }
@@ -1160,6 +1242,12 @@ document.getElementById('addRowBtn').addEventListener('click', ()=> addRow(false
 document.getElementById('pdfBtn').addEventListener('click', exportPDF);
 document.getElementById('resetBtn').addEventListener('click', resetInvoice);
 document.getElementById('newInvoiceTop').addEventListener('click', resetInvoice);
+
+/* ✅ Floating add bind */
+document.getElementById("fabAdd").addEventListener("click", ()=>{
+  const tr = addRow(false);
+  try{ tr.scrollIntoView({behavior:"smooth", block:"center"}); }catch(e){}
+});
 
 /* Init row */
 addRow(true);
