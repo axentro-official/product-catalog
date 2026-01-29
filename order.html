@@ -129,6 +129,28 @@
       input, textarea, select{ font-size:16px; } /* iOS zoom fix */
     }
 
+    /* ✅ Errors (تنبيه على الحقول) */
+    .fieldError{
+      margin-top:6px;
+      font-size:12px;
+      color:#fecaca;
+      font-weight:900;
+      display:none;
+    }
+    .invalid{
+      border-color: rgba(239,68,68,.70) !important;
+      box-shadow: 0 0 0 3px rgba(239,68,68,.18);
+    }
+    @keyframes shakeX{
+      0%{transform:translateX(0)}
+      20%{transform:translateX(-6px)}
+      40%{transform:translateX(6px)}
+      60%{transform:translateX(-4px)}
+      80%{transform:translateX(4px)}
+      100%{transform:translateX(0)}
+    }
+    .shake{ animation: shakeX .28s ease; }
+
     .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
     @media(max-width:720px){.row2{grid-template-columns:1fr}}
 
@@ -316,15 +338,18 @@
       <div>
         <label for="name">الاسم</label>
         <input id="name" placeholder="اكتب اسمك" autocomplete="name" />
+        <div class="fieldError" id="err_name">⚠️ من فضلك اكتب الاسم</div>
       </div>
       <div>
         <label for="phone">رقم الموبايل</label>
         <input id="phone" placeholder="مثال: 01xxxxxxxxx أو +201xxxxxxxxx" inputmode="tel" autocomplete="tel" />
+        <div class="fieldError" id="err_phone">⚠️ من فضلك اكتب رقم موبايل صحيح</div>
       </div>
     </div>
 
     <label for="address">العنوان</label>
     <textarea id="address" placeholder="المحافظة / المنطقة / تفاصيل" rows="2" autocomplete="street-address"></textarea>
+    <div class="fieldError" id="err_address">⚠️ من فضلك اكتب العنوان</div>
 
     <!-- ✅ أزرار الديسكتوب/اللابتوب -->
     <div class="btns">
@@ -370,6 +395,16 @@
 
   const orderIdView = document.getElementById("orderIdView");
   const copyOrderId = document.getElementById("copyOrderId");
+
+  // ✅ Inputs
+  const nameEl    = document.getElementById("name");
+  const phoneEl   = document.getElementById("phone");
+  const addressEl = document.getElementById("address");
+
+  // ✅ Error helpers
+  const errName    = document.getElementById("err_name");
+  const errPhone   = document.getElementById("err_phone");
+  const errAddress = document.getElementById("err_address");
 
   const IMG_PLACEHOLDER = "https://via.placeholder.com/600x400?text=No+Image";
 
@@ -589,7 +624,6 @@
       await navigator.clipboard.writeText(id);
       showToast("✅ تم نسخ رقم الطلب");
     }catch(e){
-      // fallback
       const ta = document.createElement("textarea");
       ta.value = id;
       ta.style.position = "fixed";
@@ -602,29 +636,91 @@
     }
   });
 
-  function validate(){
+  /* =========================
+     ✅ Validation (تنبيه لكل حقل)
+     ========================= */
+  function clearFieldError(el, errEl){
+    if(!el) return;
+    el.classList.remove("invalid","shake");
+    if(errEl) errEl.style.display = "none";
+  }
+
+  function setFieldError(el, errEl, msg){
+    if(!el) return;
+    el.classList.add("invalid","shake");
+    // remove shake after animation so it can replay
+    setTimeout(()=> el.classList.remove("shake"), 320);
+
+    if(errEl){
+      errEl.textContent = msg || errEl.textContent;
+      errEl.style.display = "block";
+    }
+
+    try{
+      el.focus({preventScroll:true});
+    }catch(e){
+      try{ el.focus(); }catch(_){}
+    }
+
+    // scroll to field nicely
+    try{
+      el.scrollIntoView({behavior:"smooth", block:"center"});
+    }catch(e){}
+  }
+
+  // Clear error on typing
+  ["input","change","blur"].forEach(evt=>{
+    nameEl?.addEventListener(evt, ()=> clearFieldError(nameEl, errName));
+    phoneEl?.addEventListener(evt, ()=> clearFieldError(phoneEl, errPhone));
+    addressEl?.addEventListener(evt, ()=> clearFieldError(addressEl, errAddress));
+  });
+
+  function validateAndMark(){
     const cart = getCart();
-    if(!cart.length) return "السلة فارغة.";
+    if(!cart.length){
+      return { ok:false, msg:"السلة فارغة." };
+    }
 
-    const name = (document.getElementById("name").value||"").trim();
-    const phone = (document.getElementById("phone").value||"").trim();
-    const address = (document.getElementById("address").value||"").trim();
+    // clear previous errors (but keep any quick UX)
+    clearFieldError(nameEl, errName);
+    clearFieldError(phoneEl, errPhone);
+    clearFieldError(addressEl, errAddress);
 
-    if(!name) return "ادخل الاسم.";
-    if(!phone) return "ادخل رقم الموبايل.";
-    if(!address) return "ادخل العنوان.";
+    const name = (nameEl.value||"").trim();
+    const phone = (phoneEl.value||"").trim();
+    const address = (addressEl.value||"").trim();
+
+    if(!name){
+      setFieldError(nameEl, errName, "⚠️ من فضلك اكتب الاسم");
+      return { ok:false, msg:"لازم تدخل الاسم." };
+    }
+
+    if(!phone){
+      setFieldError(phoneEl, errPhone, "⚠️ من فضلك اكتب رقم الموبايل");
+      return { ok:false, msg:"لازم تدخل رقم الموبايل." };
+    }
 
     const p = phone.replace(/\s+/g,"");
     const okPhone = /^01\d{9}$/.test(p) || /^(\+?20)1\d{9}$/.test(p);
-    if(!okPhone) return "رقم الموبايل غير صحيح. مثال: 01xxxxxxxxx أو +201xxxxxxxxx";
+    if(!okPhone){
+      setFieldError(phoneEl, errPhone, "⚠️ رقم الموبايل غير صحيح (مثال: 01xxxxxxxxx أو +201xxxxxxxxx)");
+      return { ok:false, msg:"رقم الموبايل غير صحيح." };
+    }
+
+    if(!address){
+      setFieldError(addressEl, errAddress, "⚠️ من فضلك اكتب العنوان");
+      return { ok:false, msg:"لازم تدخل العنوان." };
+    }
 
     const hasOut = cart.some(it=>{
       const pr = findProduct(it.id);
       return pr && pr.availability === "Out of stock";
     });
-    if(hasOut) return "فيه صنف غير متاح داخل السلة. احذفه أولاً.";
+    if(hasOut){
+      return { ok:false, msg:"فيه صنف غير متاح داخل السلة. احذفه أولاً." };
+    }
 
-    return "";
+    return { ok:true, msg:"" };
   }
 
   function buildMsg(){
@@ -632,9 +728,9 @@
     const orderId = getStableOrderId();
     const type = getType();
 
-    const name = (document.getElementById("name").value||"").trim();
-    const phone = (document.getElementById("phone").value||"").trim();
-    const address = (document.getElementById("address").value||"").trim();
+    const name = (nameEl.value||"").trim();
+    const phone = (phoneEl.value||"").trim();
+    const address = (addressEl.value||"").trim();
 
     const now = new Date();
     const dOnly = formatDateOnly(now);
@@ -770,8 +866,11 @@
   }
 
   async function sendOrderFlow(btnRef){
-    const err = validate();
-    if(err){ showToast(err); return; }
+    const v = validateAndMark();
+    if(!v.ok){
+      showToast(v.msg);
+      return;
+    }
 
     const oldText = btnRef.textContent;
     btnRef.disabled = true;
@@ -787,7 +886,6 @@
       ? "✅ تم إرسال طلب الجملة بنجاح. سيتم مراجعة الطلب والتواصل معك."
       : "✅ تم إرسال الطلب بنجاح. سيتم التواصل لتأكيده وإرسال الفاتورة.";
 
-    // امسح السلة بعد الإرسال
     setCart([]);
     renderCart();
     sessionStorage.removeItem("BS_ORDER_ID");
