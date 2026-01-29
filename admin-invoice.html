@@ -284,30 +284,6 @@
       }
       .delBtn{ width:100%; }
     }
-
-    /* ✅ Floating Add Button للموبايل */
-    .fabAdd{
-      position:fixed;
-      right:16px;
-      bottom:16px;
-      z-index:998;
-      border:none;
-      padding:14px 16px;
-      border-radius:999px;
-      font-weight:900;
-      cursor:pointer;
-      color:var(--text);
-      background:linear-gradient(135deg, rgba(96,165,250,.35), rgba(167,139,250,.25));
-      border:1px solid rgba(255,255,255,.14);
-      box-shadow: 0 16px 40px rgba(0,0,0,.45);
-      display:none;
-      gap:10px;
-      align-items:center;
-    }
-    .fabAdd:active{ transform: translateY(1px); }
-    @media (max-width: 820px){
-      .fabAdd{ display:flex; }
-    }
   </style>
 </head>
 
@@ -349,7 +325,7 @@
       </div>
       <div>
         <div class="brandTitle">B.S Medical &amp; Aesthetic — فواتير</div>
-        <div class="brandSub">إدارة وإنشاء فواتير PDF (العربي كامل)</div>
+        <div class="brandSub">إدارة وإنشاء فواتير PDF</div>
       </div>
     </div>
     <div class="topActions">
@@ -363,13 +339,9 @@
     <h2>استيراد طلب من واتساب</h2>
     <div class="importBox">
       <textarea id="waImport" rows="5" placeholder="الصق رسالة الطلب كاملة هنا (كما وصلت من واتساب)..."></textarea>
-      <div class="hint">
-        ✅ يدعم تلقائيًا:
-        <br>• الاسم: أحمد
-        <br>• 📞 01xxxxxxxxx
-        <br>• 📍 العنوان...
-        <br>• • ITM01 | اسم المنتج | الكمية: 2
-      </div>
+
+      <!-- ✅ تم حذف صندوق الشرح (يدعم تلقائيًا) بناءً على طلبك -->
+
       <div style="display:flex;gap:10px;flex-wrap:wrap">
         <button class="btn" id="importBtn">📥 استيراد إلى الجدول</button>
         <button class="btn secondary" id="clearImportBtn">مسح</button>
@@ -449,11 +421,6 @@
   </div>
 
 </div>
-
-<!-- ✅ Floating Add Button (Mobile) -->
-<button id="fabAdd" class="fabAdd" type="button" aria-label="إضافة صنف">
-  ➕ إضافة صنف
-</button>
 
 <footer class="site-footer">
   <div class="line1">Axentro – All Rights Reserved 2024 ©</div>
@@ -685,7 +652,6 @@ function parseWhatsAppLines(fullText){
 
     // فلتر: نتجاهل سطور العميل/التاريخ.. ونحتفظ بس لو فيه SKU أو اسم
     if(sku || name){
-      // لكن لو السطر شكله "الاسم:" أو "📞" أو "📍" تجاهله كـ item
       if(/^\s*الاسم\s*:/i.test(line)) continue;
       if(line.includes("📞") || line.includes("📍")) continue;
       if(line.includes("رقم الطلب") || line.includes("التاريخ") || line.includes("الوقت")) continue;
@@ -763,7 +729,6 @@ document.getElementById("clearImportBtn")?.addEventListener("click", ()=>{ docum
 
 /* ✅ تحسين إضافي: لو المستخدم لَصَق الرسالة في مربع الاستيراد وخلاص */
 document.getElementById("waImport")?.addEventListener("paste", ()=>{
-  // شغّل الاستيراد بعد اللصق مباشرة (بدون ما تضغط زر)
   setTimeout(()=>{
     const raw = String(document.getElementById("waImport").value || "").trim();
     if(raw.length >= 20) { try{ importFromWhatsApp(); }catch(e){} }
@@ -1219,10 +1184,16 @@ function numberToArabicWords(number){
 
 function resetInvoice(){
   if(!confirm("بدء فاتورة جديدة؟")) return;
+
   document.querySelector("#itemsTable tbody").innerHTML = "";
   document.getElementById("custName").value = "";
   document.getElementById("custPhone").value = "";
   document.getElementById("custAddress").value = "";
+
+  /* ✅ مهم: مسح صندوق استيراد واتساب عند فاتورة جديدة */
+  const waTa = document.getElementById("waImport");
+  if(waTa) waTa.value = "";
+
   ROW_ID = 0;
   initInvoice();
   addRow();
@@ -1242,12 +1213,6 @@ document.getElementById('addRowBtn').addEventListener('click', ()=> addRow(false
 document.getElementById('pdfBtn').addEventListener('click', exportPDF);
 document.getElementById('resetBtn').addEventListener('click', resetInvoice);
 document.getElementById('newInvoiceTop').addEventListener('click', resetInvoice);
-
-/* ✅ Floating add bind */
-document.getElementById("fabAdd").addEventListener("click", ()=>{
-  const tr = addRow(false);
-  try{ tr.scrollIntoView({behavior:"smooth", block:"center"}); }catch(e){}
-});
 
 /* Init row */
 addRow(true);
