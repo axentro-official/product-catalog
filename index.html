@@ -2,7 +2,7 @@
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>B.S Medical & Aesthetic — كتالوج المنتجات</title>
   <style>
     :root{
@@ -32,11 +32,15 @@
     }
     a{color:inherit;text-decoration:none}
 
+    /* ✅ لمس أنعم على الموبايل */
+    button{ -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+    .qMiniBtn,.qBtn,.xBtn,.addBtn,.footBtn{ touch-action: manipulation; }
+
     .topbar{
       position:sticky; top:0; z-index:10;
       display:flex; gap:12px; align-items:center; justify-content:space-between;
       padding:14px 16px;
-      background: linear-gradient(180deg, rgba(15,23,42,.88), rgba(15,23,42,.55));
+      background: linear-gradient(180deg, rgba(15,23,42,.92), rgba(15,23,42,.55));
       border-bottom:1px solid var(--stroke);
       backdrop-filter: blur(12px);
     }
@@ -46,27 +50,44 @@
       background: linear-gradient(135deg, rgba(96,165,250,.35), rgba(167,139,250,.25));
       border:1px solid var(--stroke); box-shadow: var(--shadow);
       overflow:hidden; padding:5px;
+      flex:0 0 auto;
     }
     .logo img{ width:100%; height:100%; object-fit:contain; display:block; }
     .brand-title{font-size:16px;font-weight:900}
     .brand-sub{font-size:12px;color:var(--muted)}
     .actions{display:flex; gap:10px; align-items:center; flex-wrap:wrap; justify-content:flex-end}
+
     .input{
-      width:220px; max-width:85vw; padding:12px; border-radius:14px; border:1px solid var(--stroke);
-      background: rgba(255,255,255,.06); color:var(--text); outline:none; font-size:14px;
+      width:220px; max-width:85vw; padding:12px;
+      border-radius:14px; border:1px solid var(--stroke);
+      background: rgba(255,255,255,.06); color:var(--text);
+      outline:none; font-size:14px;
+    }
+
+    /* ✅ منع Zoom iOS + تحسين التجربة */
+    @media (max-width:720px){
+      .input{ font-size:16px; }
     }
 
     /* ✅ علشان المحتوى ياخد المساحة ويدفع الفوتر تحت */
     main.container{flex:1}
 
     .container{max-width:1100px; margin:18px auto; padding:0 16px}
-    .grid{ display:grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap:12px; }
+
+    /* ✅ GRID: موبايل = منتجين جنب بعض دايمًا */
+    .grid{
+      display:grid;
+      gap:12px;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); /* default (laptop/desktop) */
+    }
+
     .card{
       border-radius: var(--radius); overflow:hidden; border:1px solid var(--stroke);
       background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
       box-shadow: var(--shadow);
       transition: transform .18s ease, border-color .18s ease;
       display:flex; flex-direction:column; min-height:220px;
+      will-change: transform;
     }
     .card:hover{transform: translateY(-2px); border-color: rgba(96,165,250,.45)}
     .media{position:relative; background: rgba(255,255,255,.03); aspect-ratio: 3 / 2; width:100%}
@@ -79,6 +100,12 @@
     .body{padding:10px; display:flex; flex-direction:column; gap:8px; flex:1}
     .title{font-weight:900; font-size:13px; line-height:1.3; min-height:38px}
     .meta{font-size:11px; color:var(--muted); display:flex; gap:8px; flex-wrap:wrap; align-items:center}
+
+    /* ✅ status colors (كان ناقص عندك) */
+    .st-available{color:var(--ok); font-weight:900}
+    .st-low{color:var(--warn); font-weight:900}
+    .st-out{color:var(--bad); font-weight:900}
+
     .buyRow{ margin-top:9px; display:flex; gap:8px; align-items:stretch; width:100% }
     .qtyMini{
       display:flex; align-items:center; gap:6px; padding:6px;
@@ -127,6 +154,9 @@
       transition: transform .2s ease;
       z-index:60;
       display:flex; flex-direction:column;
+
+      /* ✅ Safe area للآيفون */
+      padding-bottom: env(safe-area-inset-bottom);
     }
     .drawer.open{ transform: translateX(0); }
     .dHead{ padding:14px 14px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--stroke); }
@@ -185,12 +215,30 @@
       background: linear-gradient(135deg, rgba(96,165,250,.28), rgba(167,139,250,.18));
     }
 
-    @media (max-width:920px){ .grid{ grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)) } }
+    /* ✅ لابتوب/تابلت: كروت أكبر شوية */
+    @media (max-width:920px){
+      .grid{ grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)) }
+    }
+
+    /* ✅ موبايل: منتجين جنب بعض 100% */
     @media (max-width:720px){
       .topbar{ flex-direction:column; align-items:stretch; gap:10px; }
       .input{ width:100%; max-width:100%; }
-      .grid{ grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap:10px }
+      .grid{
+        grid-template-columns: repeat(2, minmax(0, 1fr)); /* ✅ ده اللي انت طلبته */
+        gap:10px;
+      }
       .drawer{ width:100%; max-width:480px; }
+      /* ✅ على الموبايل نقلل hover effect */
+      .card:hover{ transform:none; }
+    }
+
+    /* ✅ شاشات صغيرة جدًا: برضه 2 جنب بعض */
+    @media (max-width:360px){
+      .grid{ grid-template-columns: repeat(2, minmax(0, 1fr)); gap:8px; }
+      .title{ font-size:12px; min-height:34px; }
+      .qMiniBtn{ width:32px; height:32px; }
+      .qMiniVal{ min-width:34px; }
     }
 
     :focus{ outline:3px solid rgba(96,165,250,.2); outline-offset:3px; }
@@ -204,6 +252,7 @@
       border-top:1px solid var(--stroke);
       background: rgba(2,6,23,.25);
       backdrop-filter: blur(10px);
+      padding-bottom: calc(22px + env(safe-area-inset-bottom));
     }
     .site-footer .line1{ font-weight:900; color:#cbd5e1; }
     .site-footer .line2{ margin-top:6px; font-weight:800; }
@@ -212,13 +261,10 @@
 <body>
   <header class="topbar">
     <div class="brand">
-      <!-- ✅ اللوجو ما اتشالش: موجود images/bslogo.webp -->
       <div class="logo">
         <img id="siteLogo" src="images/bslogo.webp" alt="BS Logo"
           onerror="this.onerror=null;this.style.display='none';this.parentElement.textContent='BS'">
       </div>
-
-      <!-- ✅ براند محترم -->
       <div>
         <div class="brand-title">B.S Medical &amp; Aesthetic</div>
         <div class="brand-sub">أضف للسلة ثم أكمل الطلب</div>
@@ -239,7 +285,6 @@
     <div id="grid" class="grid" role="list"></div>
   </main>
 
-  <!-- Drawer -->
   <div id="overlay" class="overlay" tabindex="-1"></div>
   <aside id="drawer" class="drawer" aria-hidden="true" role="dialog" aria-label="سلة المشتريات">
     <div class="dHead">
@@ -267,11 +312,8 @@ const PROD_CACHE_KEY = "AX_PRODUCTS_CACHE_V1";
 const PROD_CACHE_TS  = "AX_PRODUCTS_CACHE_TS_V1";
 const CACHE_TTL_MS   = 10 * 60 * 1000;
 
-/* ✅ مسار الصور الرسمي: images/SKU.webp */
 const IMG_PLACEHOLDER = "https://via.placeholder.com/600x400?text=No+Image";
-function resolveImageById(id){
-  return `images/${id}.webp`;
-}
+function resolveImageById(id){ return `images/${id}.webp`; }
 
 let products = [];
 const state = { q:"", cat:"" };
@@ -396,7 +438,7 @@ closeDrawerBtn?.addEventListener("click", closeDrawerFn);
 overlay?.addEventListener("click", closeDrawerFn);
 document.addEventListener("keydown", (ev) => { if(ev.key === "Escape" && drawer.classList.contains("open")) closeDrawerFn(); });
 
-/* renderCart (✅ Event Delegation زي order.html) */
+/* renderCart */
 function renderCart(){
   const cart = getCart();
   cartList.innerHTML = "";
@@ -433,7 +475,7 @@ function renderCart(){
   });
 }
 
-/* ✅ Delegation داخل drawer */
+/* Delegation داخل drawer */
 cartList.addEventListener("click", (ev)=>{
   const btn = ev.target.closest("[data-act]");
   if(!btn) return;
@@ -441,10 +483,7 @@ cartList.addEventListener("click", (ev)=>{
   const id  = btn.getAttribute("data-id");
   if(!id) return;
 
-  if(act === "rm"){
-    removeItem(id);
-    return;
-  }
+  if(act === "rm"){ removeItem(id); return; }
 
   const cart = getCart();
   const it = cart.find(x=>String(x.id)===String(id));
@@ -547,11 +586,8 @@ function renderCatalog(){
 /* delegated events on grid */
 elGrid.addEventListener('click', (ev)=>{
   const addBtn = ev.target.closest('[data-add]');
-  if(addBtn){
-    const pid = addBtn.getAttribute('data-add');
-    addToCart(pid);
-    return;
-  }
+  if(addBtn){ addToCart(addBtn.getAttribute('data-add')); return; }
+
   const plus = ev.target.closest('[data-mini-plus]');
   if(plus){
     const pid = plus.getAttribute('data-mini-plus');
@@ -560,6 +596,7 @@ elGrid.addEventListener('click', (ev)=>{
     else { draftQty[pid] = (draftQty[pid]||0) + 1; renderCatalog(); }
     return;
   }
+
   const minus = ev.target.closest('[data-mini-minus]');
   if(minus){
     const pid = minus.getAttribute('data-mini-minus');
@@ -621,7 +658,7 @@ function addToCart(pid){
 
   const alreadyOpened = sessionStorage.getItem(AUTO_OPEN_KEY) === "1";
   if(prevCount === 0 && !alreadyOpened){
-    sessionStorage.setItem(AUTO_OPEN_KEY, "1");
+    sessionStorage.setItem("AX_CART_AUTO_OPENED", "1");
     setTimeout(()=> { try { openDrawer(); } catch(e){} }, 220);
   }
 }
@@ -689,7 +726,6 @@ clearCartBtn?.addEventListener('click', ()=>{
 /* setup */
 initCartSchema();
 hydrateProducts();
-
 </script>
 </body>
 </html>
