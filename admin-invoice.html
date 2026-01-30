@@ -7,25 +7,14 @@
 
   <style>
     :root{
-      /* ✅ White + Gold Theme */
-      --bg:#ffffff;
-      --panel:#ffffff;
-      --panel2:#fbfbfd;
-      --stroke:#e6e6ee;
-      --text:#111827;
-      --muted:#6b7280;
-      --shadow:0 18px 45px rgba(17,24,39,.10);
+      --bg1:#0b1020; --bg2:#0f172a;
+      --stroke:#ffffff1a; --text:#e5e7eb; --muted:#94a3b8;
+      --shadow:0 18px 50px rgba(0,0,0,.45);
       --radius:18px;
-
-      --gold:#b88a2b;
-      --gold2:#e3c06b;
-      --goldSoft: rgba(184,138,43,.12);
-
-      --ok:#16a34a; --warn:#d97706; --bad:#dc2626;
-
+      --accent:#60a5fa; --accent2:#a78bfa;
+      --ok:#22c55e; --warn:#facc15; --bad:#ef4444;
       --container-max:1100px;
     }
-
     *{box-sizing:border-box}
     html,body{height:100%}
     body{
@@ -33,9 +22,9 @@
       font-family: system-ui, -apple-system, "Segoe UI", Tahoma, Arial;
       color:var(--text);
       background:
-        radial-gradient(900px 520px at 12% 10%, rgba(184,138,43,.10), transparent 55%),
-        radial-gradient(720px 520px at 92% 12%, rgba(227,192,107,.10), transparent 55%),
-        linear-gradient(180deg, #fff, #fbfbff);
+        radial-gradient(900px 500px at 10% 10%, rgba(96,165,250,.25), transparent 55%),
+        radial-gradient(700px 500px at 90% 20%, rgba(167,139,250,.18), transparent 55%),
+        linear-gradient(180deg, var(--bg1), var(--bg2));
       padding:18px;
       min-height:100vh;
       display:flex;
@@ -51,18 +40,20 @@
     .topbar{
       display:flex;align-items:center;justify-content:space-between;gap:12px;
       padding:12px 14px;border:1px solid var(--stroke);
-      border-radius:18px;background:rgba(255,255,255,.85);
+      border-radius:18px;background:rgba(255,255,255,.06);
       box-shadow:var(--shadow);backdrop-filter:blur(10px);
       flex-wrap:wrap;
       margin-bottom:16px;
     }
-    .brand{display:flex; align-items:center; gap:12px; min-width:220px;}
+    .brand{
+      display:flex; align-items:center; gap:12px; min-width:220px;
+    }
     .logo{
       width:44px;height:44px;border-radius:999px;
       display:grid;place-items:center;
-      background: radial-gradient(circle at 30% 20%, rgba(227,192,107,.35), rgba(184,138,43,.15));
-      border:1px solid rgba(184,138,43,.28);
-      box-shadow: 0 10px 22px rgba(184,138,43,.18);
+      background: linear-gradient(135deg, rgba(96,165,250,.35), rgba(167,139,250,.25));
+      border:1px solid var(--stroke);
+      box-shadow: var(--shadow);
       overflow:hidden;
       padding:6px;
       flex:0 0 auto;
@@ -70,21 +61,17 @@
     .logo img{width:100%;height:100%;object-fit:contain;display:block}
     .brandTitle{font-weight:900}
     .brandSub{font-size:12px;color:var(--muted);margin-top:2px}
-
     .topActions{display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
     .pill{
       padding:10px 12px;border-radius:14px;border:1px solid var(--stroke);
-      background:rgba(255,255,255,.85);
+      background:rgba(255,255,255,.06);
       font-weight:900;
       cursor:pointer;
-      user-select:none;
-      transition: transform .12s ease, opacity .12s ease, border-color .12s ease;
+      touch-action: manipulation;
     }
-    .pill:hover{ border-color: rgba(184,138,43,.35); }
-    .pill:active{ transform: translateY(1px); }
 
     .card{
-      background:rgba(255,255,255,.90);
+      background:rgba(255,255,255,.06);
       border:1px solid var(--stroke);
       border-radius:var(--radius);
       box-shadow:var(--shadow);
@@ -99,13 +86,12 @@
       padding:10px;
       border-radius:12px;
       border:1px solid var(--stroke);
-      background:#fff;
+      background:rgba(255,255,255,.06);
       color:var(--text);
       outline:none;
     }
-    input:focus, textarea:focus, select:focus{
-      border-color: rgba(184,138,43,.55);
-      box-shadow: 0 0 0 3px rgba(184,138,43,.14);
+    @media (max-width:520px){
+      input, textarea, select{ font-size:16px; } /* iOS zoom fix */
     }
 
     #invNo, #invDate, #invTime{ font-weight:900; }
@@ -120,7 +106,6 @@
     }
     @media (max-width:520px){
       .row{grid-template-columns:repeat(1,1fr);}
-      input, textarea, select{ font-size:16px; }
     }
 
     .table-wrap{overflow:auto;margin-top:10px;border-radius:12px}
@@ -129,7 +114,6 @@
       border-collapse:collapse;
       font-size:13px;
       min-width:980px;
-      background:#fff;
     }
     th, td{
       border:1px solid var(--stroke);
@@ -138,25 +122,24 @@
       vertical-align:middle;
     }
     th{
-      background: linear-gradient(180deg, #fff, #fafafa);
+      background:rgba(255,255,255,.08);
       font-weight:900;
     }
 
     .btn{
       padding:12px;
       border-radius:14px;
-      border:1px solid rgba(184,138,43,.38);
-      background: linear-gradient(135deg, rgba(184,138,43,.22), rgba(227,192,107,.16));
+      border:1px solid rgba(96,165,250,.4);
+      background:linear-gradient(135deg, rgba(96,165,250,.3), rgba(167,139,250,.2));
       color:var(--text);
       font-weight:900;
       cursor:pointer;
-      user-select:none;
-      transition: transform .12s ease, opacity .12s ease;
+      touch-action: manipulation;
     }
     .btn:active{transform: translateY(1px)}
     .btn.secondary{
       border-color: var(--stroke);
-      background:rgba(255,255,255,.85);
+      background:rgba(255,255,255,.06);
       opacity:.95;
     }
 
@@ -169,15 +152,15 @@
       padding:8px 10px;
       border:1px solid var(--stroke);
       border-radius:12px;
-      background:rgba(255,255,255,.85);
+      background:rgba(255,255,255,.04);
       margin-top:8px;
       font-weight:900;
     }
     .totalLine .k{color:var(--muted);font-weight:800}
     .totalLine .v{font-weight:900}
     .totalLine.primary{
-      border-color: rgba(184,138,43,.35);
-      background: linear-gradient(135deg, rgba(184,138,43,.12), rgba(227,192,107,.10));
+      border-color: rgba(96,165,250,.35);
+      background: linear-gradient(135deg, rgba(96,165,250,.18), rgba(167,139,250,.10));
     }
 
     .amount-words{
@@ -191,20 +174,20 @@
     /* Login */
     #loginBox{
       position:fixed; inset:0;
-      background:rgba(17,24,39,.78);
+      background:rgba(0,0,0,.85);
       display:flex; align-items:center; justify-content:center;
       z-index:999;
-      padding:14px;
+      padding:16px;
     }
     #loginBox .card{max-width:420px;width:min(92vw,420px)}
     .loginTitle{display:flex;align-items:center;gap:10px;margin-bottom:10px}
     .loginTitle .badge{
       padding:6px 10px;border-radius:999px;
-      border:1px solid rgba(184,138,43,.28);
-      background: rgba(184,138,43,.10);
+      border:1px solid var(--stroke);
+      background:rgba(255,255,255,.06);
       font-weight:900;
       font-size:12px;
-      color:#111827;
+      color:#cbd5e1;
     }
 
     .prod-cell{
@@ -228,7 +211,7 @@
     .thumbMini{
       width:44px;height:44px;border-radius:12px;
       border:1px solid var(--stroke);
-      object-fit:cover;background:#fff;
+      object-fit:cover;background:rgba(255,255,255,.04);
       flex:0 0 auto;
     }
 
@@ -236,11 +219,11 @@
       padding:10px 12px;
       border-radius:12px;
       border:1px solid var(--stroke);
-      background:rgba(255,255,255,.85);
+      background:rgba(255,255,255,.06);
       color:var(--text);
       cursor:pointer;
       font-weight:900;
-      user-select:none;
+      touch-action: manipulation;
     }
 
     .importBox{
@@ -254,19 +237,30 @@
       line-height:1.7;
     }
 
+    .printHint{
+      margin-top:10px;
+      padding:10px 12px;
+      border-radius:14px;
+      border:1px solid rgba(250,204,21,.25);
+      background: rgba(250,204,21,.08);
+      color:#fef9c3;
+      font-weight:900;
+      line-height:1.7;
+      font-size:12px;
+    }
+
     .site-footer{
       margin-top:auto;
       padding:16px 16px 22px;
       text-align:center;
       color:var(--muted);
       border-top:1px solid var(--stroke);
-      background: rgba(255,255,255,.75);
+      background: rgba(2,6,23,.25);
       backdrop-filter: blur(10px);
     }
-    .site-footer .line1{ font-weight:900; color:#374151; }
+    .site-footer .line1{ font-weight:900; color:#cbd5e1; }
     .site-footer .line2{ margin-top:6px; font-weight:800; }
-
-    :focus{ outline:3px solid rgba(184,138,43,.18); outline-offset:3px; }
+    :focus{ outline:3px solid rgba(96,165,250,.2); outline-offset:3px; }
 
     /* ✅ موبايل: الجدول كروت */
     @media (max-width: 820px){
@@ -276,11 +270,10 @@
       thead{ display:none; }
       tbody tr{
         border:1px solid var(--stroke);
-        background: rgba(255,255,255,.92);
+        background: rgba(255,255,255,.05);
         border-radius: 16px;
         padding:10px;
         margin-bottom:10px;
-        box-shadow: 0 10px 24px rgba(17,24,39,.06);
       }
       tbody td{
         border:none;
@@ -288,7 +281,7 @@
         text-align:right;
       }
       tbody td + td{
-        border-top:1px dashed rgba(17,24,39,.10);
+        border-top:1px dashed rgba(255,255,255,.10);
       }
       tbody td[data-label]::before{
         content: attr(data-label);
@@ -316,31 +309,32 @@
 <body>
 
 <!-- Login -->
-<div id="loginBox">
+<div id="loginBox" aria-live="polite">
   <div class="card" role="dialog" aria-modal="true" aria-label="تسجيل دخول الإدارة">
     <div class="loginTitle">
       <div class="logo" style="box-shadow:none">
         <img src="images/bslogo.webp" alt="BS Logo" onerror="this.style.display='none'">
       </div>
       <div>
-        <div style="font-weight:900;font-size:18px;color:#fff">لوحة إدارة الفواتير</div>
+        <div style="font-weight:900;font-size:18px">لوحة إدارة الفواتير</div>
         <div class="badge">B.S Medical &amp; Aesthetic</div>
       </div>
     </div>
 
-    <label for="passInput" style="color:#e5e7eb">رمز الدخول</label>
+    <label for="passInput">رمز الدخول</label>
     <input type="password" id="passInput" placeholder="••••••••" aria-label="رمز الدخول"/>
 
     <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
-      <button id="loginBtn" class="btn" style="flex:1">دخول</button>
-      <button id="logoutBtn" class="btn secondary" style="flex:1">خروج</button>
+      <button id="loginBtn" class="btn" style="flex:1" type="button">دخول</button>
+      <button id="logoutBtn" class="btn secondary" style="flex:1" type="button">خروج</button>
     </div>
 
-    <div class="hint" style="margin-top:10px;color:#d1d5db">
+    <div class="hint" style="margin-top:10px">
       ملاحظة: رمز الدخول موجود داخل الكود ويمكن تغييره من المتغير <strong>ADMIN_PASSWORD</strong>.
     </div>
-    <div class="hint" style="margin-top:8px;color:#d1d5db">
-      تنبيه طباعة: لإزالة التاريخ والرابط اللي فوق وتحت أثناء الطباعة، من نافذة Print افتح <strong>More settings</strong> ثم اغلق <strong>Headers and footers</strong>.
+
+    <div class="printHint">
+      ⚠️ لإزالة (التاريخ/الرابط) اللي فوق وتحت في Print Preview: افتح <b>More settings</b> ثم اقفل <b>Headers and footers</b>.
     </div>
   </div>
 </div>
@@ -358,8 +352,8 @@
       </div>
     </div>
     <div class="topActions">
-      <button id="newInvoiceTop" class="pill">➕ فاتورة جديدة</button>
-      <button id="logoutTop" class="pill">🚪 تسجيل خروج</button>
+      <button id="newInvoiceTop" class="pill" type="button">➕ فاتورة جديدة</button>
+      <button id="logoutTop" class="pill" type="button">🚪 تسجيل خروج</button>
     </div>
   </div>
 
@@ -370,13 +364,11 @@
       <textarea id="waImport" rows="5" placeholder="الصق رسالة الطلب كاملة هنا (كما وصلت من واتساب)..."></textarea>
 
       <div style="display:flex;gap:10px;flex-wrap:wrap">
-        <button class="btn" id="importBtn">📥 استيراد إلى الجدول</button>
-        <button class="btn secondary" id="clearImportBtn">مسح</button>
+        <button class="btn" id="importBtn" type="button">📥 استيراد إلى الجدول</button>
+        <button class="btn secondary" id="clearImportBtn" type="button">مسح</button>
       </div>
 
-      <div class="hint">
-        ✅ بعد الاستيراد هتلاقي بيانات العميل والأصناف اتملت تلقائيًا.
-      </div>
+      <div class="hint">✅ بعد الاستيراد هتلاقي بيانات العميل والأصناف اتملت تلقائيًا.</div>
     </div>
   </div>
 
@@ -438,7 +430,7 @@
     </div>
 
     <div style="display:flex;gap:12px;margin-top:12px;align-items:center;flex-wrap:wrap">
-      <button class="btn" id="addRowBtn">+ إضافة صنف</button>
+      <button class="btn" id="addRowBtn" type="button">+ إضافة صنف</button>
     </div>
 
     <div class="totalBox" id="totalsBox"></div>
@@ -448,18 +440,18 @@
   <!-- Actions -->
   <div class="card">
     <h2 style="margin-bottom:10px">تصدير / طباعة</h2>
-    <div class="row2">
-      <button class="btn" id="pdfBtn">📄 تصدير PDF (A4)</button>
-      <button class="btn" id="resetBtn">🗑️ فاتورة جديدة</button>
+    <div class="row2" style="margin-top:0">
+      <button class="btn" id="pdfBtn" type="button">📄 تصدير PDF (A4)</button>
+      <button class="btn secondary" id="resetBtn" type="button">🗑️ فاتورة جديدة</button>
     </div>
 
-    <div style="margin-top:10px;display:flex;gap:10px;flex-wrap:wrap">
-      <button class="btn secondary" id="thermal80Btn">🧾 طباعة حراري 80mm</button>
-      <button class="btn secondary" id="thermal58Btn">🧾 طباعة حراري 58mm</button>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px">
+      <button class="btn" id="thermal80Btn" type="button">🧾 طباعة حراري 80mm</button>
+      <button class="btn" id="thermal58Btn" type="button">🧾 طباعة حراري 58mm</button>
     </div>
 
-    <div class="hint" style="margin-top:10px">
-      ⚠️ لإزالة (التاريخ/الرابط) اللي فوق وتحت في Print Preview: افتح <strong>More settings</strong> ثم اغلق <strong>Headers and footers</strong>.
+    <div class="printHint">
+      ⚠️ لو ظهر عندك فوق/تحت (تاريخ + رابط about:blank): من نافذة الطباعة افتح <b>More settings</b> ثم اقفل <b>Headers and footers</b>.
     </div>
   </div>
 
@@ -476,9 +468,9 @@ const ADMIN_PASSWORD = "1407"; // ✅ غيّر الباسورد من هنا
 const API_URL = "https://script.google.com/macros/s/AKfycbwsPPw3UiW6TBngBcbFxY4E8rB7JYgK1W2LRn0WaS9C7OitA1FgZ1vAz9Qr1u_ojlZ8/exec";
 const IMG_PLACEHOLDER = "https://via.placeholder.com/600x400?text=No+Image";
 
-/* ✅ QR page (غيّرها لو عندك صفحة تواصل منفصلة) */
-const PROMO_URL = "https://axentro-official.github.io/product-catalog/";
-const PROMO_TEXT = "لعمل كتالوج + فواتير احترافية مثل هذا النظام، امسح QR للتواصل.";
+/* ✅ QR (ضع الملف بجانب admin-invoice.html أو داخل نفس فولدر product-catalog) */
+const QR_IMG = "qr-links.png";
+const QR_LINK = "https://axentro-official.github.io/axentro-website/links.html";
 
 /* ✅ Cache products مثل index/order */
 const PROD_CACHE_KEY = "AX_PRODUCTS_CACHE_V1";
@@ -495,13 +487,14 @@ const logoutBtn = document.getElementById('logoutBtn');
 const passInput = document.getElementById('passInput');
 
 function setLoggedIn(isOn){
+  const app = document.getElementById("app");
   if(isOn){
     sessionStorage.setItem("BS_ADMIN_OK", "1");
     loginBox.style.display = "none";
-    document.getElementById("app").style.display = "block";
+    app.style.display = "block";
   }else{
     sessionStorage.removeItem("BS_ADMIN_OK");
-    document.getElementById("app").style.display = "none";
+    app.style.display = "none";
     loginBox.style.display = "flex";
     passInput.value = "";
     try{ passInput.focus(); }catch(e){}
@@ -516,15 +509,13 @@ function checkPass(){
     loadProductsSmart();
   }else{
     alert("رمز الدخول غير صحيح");
+    try{ passInput.focus(); }catch(e){}
   }
 }
 loginBtn.addEventListener('click', checkPass);
 passInput.addEventListener('keydown', (e)=> { if(e.key === 'Enter') checkPass(); });
 
-logoutBtn.addEventListener('click', ()=>{
-  window.close?.();
-  setLoggedIn(false);
-});
+logoutBtn.addEventListener('click', ()=> setLoggedIn(false));
 document.getElementById("logoutTop")?.addEventListener("click", ()=> setLoggedIn(false));
 
 if(sessionStorage.getItem("BS_ADMIN_OK") === "1"){
@@ -533,7 +524,6 @@ if(sessionStorage.getItem("BS_ADMIN_OK") === "1"){
   loadProductsSmart();
 }else{
   setLoggedIn(false);
-  try{ passInput.focus(); }catch(e){}
 }
 
 /* ================= INIT ================= */
@@ -648,9 +638,10 @@ function resolveImageBySku(sku){
   return `images/${s}.webp`;
 }
 
-/* ================= WhatsApp import (✅ includes customer data) ================= */
+/* ================= WhatsApp import (includes customer data) ================= */
 function extractCustomerData(fullText){
   const t = String(fullText || "");
+
   const nameMatch = t.match(/(?:^|\n)\s*الاسم\s*:\s*(.+)\s*(?:\n|$)/i);
   const name = nameMatch ? nameMatch[1].trim() : "";
 
@@ -854,62 +845,6 @@ itemsTbody.addEventListener("input", (ev)=>{
   }
 });
 
-/* Paste support (SKU/Name) */
-itemsTbody.addEventListener("paste", (ev)=>{
-  const el = ev.target;
-  const tr = el.closest("tr");
-  if(!tr) return;
-
-  const field = el.getAttribute("data-field");
-  if(field !== "sku" && field !== "name") return;
-
-  const txt = (ev.clipboardData || window.clipboardData)?.getData("text") || "";
-  if(!txt) return;
-
-  setTimeout(()=>{
-    const val = el.value || txt;
-
-    const parsed = (function(text){
-      const t = String(text || "").trim();
-      if(!t) return { sku:"", name:"" };
-      const skuMatch = t.match(/\b([A-Z]{2,}\d{1,})\b/i);
-      let sku = skuMatch ? skuMatch[1].toUpperCase() : "";
-      let name = "";
-      const pipeParts = t.split("|").map(s => s.trim()).filter(Boolean);
-      if(pipeParts.length >= 2){
-        const maybeName = pipeParts.find(part => !/\b([A-Z]{2,}\d{1,})\b/i.test(part) && part.length >= 2);
-        if(maybeName) name = maybeName.replace(/^•\s*/,"").trim();
-      }
-      return { sku, name };
-    })(val);
-
-    if(parsed.sku){
-      const p = findBySku(parsed.sku) || null;
-      tr.querySelector('[data-field="sku"]').value = parsed.sku;
-      if(p){
-        tr.querySelector('[data-field="name"]').value = String(p.name || "").trim();
-      }else if(parsed.name){
-        tr.querySelector('[data-field="name"]').value = parsed.name;
-      }
-    }else if(parsed.name){
-      const p2 = findByName(parsed.name);
-      tr.querySelector('[data-field="name"]').value = parsed.name;
-      if(p2){
-        tr.querySelector('[data-field="sku"]').value = String(p2.id || "").trim();
-      }
-    }else{
-      const p3 = findByName(val);
-      if(p3){
-        tr.querySelector('[data-field="sku"]').value = String(p3.id || "").trim();
-        tr.querySelector('[data-field="name"]').value = String(p3.name || "").trim();
-      }
-    }
-
-    syncRowThumb(tr);
-    calcRowByTr(tr);
-  }, 0);
-});
-
 /* Thumb sync */
 function syncRowThumb(tr){
   const sku = String(tr.querySelector('[data-field="sku"]')?.value || "").trim();
@@ -1011,14 +946,14 @@ function collectInvoiceData(){
     const name = (tr.querySelector('[data-field="name"]')?.value || "").trim();
     const qty = Number(tr.querySelector('[data-field="qty"]')?.value) || 0;
     const price = Number(tr.querySelector('[data-field="price"]')?.value) || 0;
-    const discIn = Number(tr.querySelector('[data-field="discount"]')?.value) || 0;
+    const disc = Number(tr.querySelector('[data-field="discount"]')?.value) || 0;
 
     const sub = Math.max(0, qty * price);
-    const disc = Math.max(0, Math.min(discIn, sub));
+    const discClamped = Math.max(0, Math.min(disc, sub));
 
     const skuName = (sku && name) ? `${sku} | ${name}` : (sku || name);
-    return { sku, name, skuName, qty, price, disc, sub };
-  }).filter(i => i.skuName || i.qty || i.price || i.disc);
+    return { sku, name, skuName, qty, price, disc: discClamped, sub };
+  }).filter(i => (i.skuName || i.qty || i.price || i.disc));
 
   const totalBefore = items.reduce((s,i)=> s + (Number(i.sub)||0), 0);
   const totalDiscount = items.reduce((s,i)=> s + (Number(i.disc)||0), 0);
@@ -1032,345 +967,259 @@ function collectInvoiceData(){
   };
 }
 
-function exportOrPrint(mode){
-  // mode: "a4" | "80" | "58"
-  const data = collectInvoiceData();
-  const logoUrl = "images/bslogo.webp";
+function buildA4Html(data){
+  const {invNo,invDate,invTime,custName,custPhone,custAddress,items,totalBefore,totalDiscount,totalAfter,words} = data;
 
-  const itemsHtml = data.items.length
-    ? data.items.map(it => `
-      <tr>
-        <td>${escapeHtml(it.skuName)}</td>
-        <td>${it.qty}</td>
-        <td>${Number(it.price||0).toFixed(2)}</td>
-        <td>${Number(it.disc||0).toFixed(2)}</td>
-        <td>${Number(it.sub||0).toFixed(2)}</td>
-      </tr>
-    `).join("")
-    : `<tr><td colspan="5" style="padding:18px;text-align:center;color:#6b7280">لا توجد أصناف</td></tr>`;
+  const itemsHtml = items.length ? items.map(it=>`
+    <tr>
+      <td>${escapeHtml(it.skuName)}</td>
+      <td>${it.qty}</td>
+      <td>${Number(it.price||0).toFixed(2)}</td>
+      <td>${Number(it.disc||0).toFixed(2)}</td>
+      <td>${Number(it.sub||0).toFixed(2)}</td>
+    </tr>
+  `).join("") : `<tr><td colspan="5" style="padding:18px;text-align:center;color:#6b7280">لا توجد أصناف</td></tr>`;
 
-  let totalsHtml = "";
-  if(data.totalDiscount > 0.00001){
-    totalsHtml = `
-      <div class="totals">
-        <div class="tline"><span>الإجمالي قبل الخصم</span><span>${data.totalBefore.toFixed(2)} جنيه</span></div>
-        <div class="tline"><span>إجمالي الخصم</span><span>${data.totalDiscount.toFixed(2)} جنيه</span></div>
-        <div class="tline primary"><span>الإجمالي بعد الخصم</span><span>${data.totalAfter.toFixed(2)} جنيه</span></div>
-      </div>
-    `;
-  } else {
-    totalsHtml = `
-      <div class="totals">
-        <div class="tline primary"><span>الإجمالي</span><span>${data.totalAfter.toFixed(2)} جنيه</span></div>
-      </div>
-    `;
-  }
+  const totalsHtml = (totalDiscount > 0.00001) ? `
+    <div class="totals">
+      <div class="tline"><span>الإجمالي قبل الخصم</span><span>${totalBefore.toFixed(2)} جنيه</span></div>
+      <div class="tline"><span>إجمالي الخصم</span><span>${totalDiscount.toFixed(2)} جنيه</span></div>
+      <div class="tline primary"><span>الإجمالي بعد الخصم</span><span>${totalAfter.toFixed(2)} جنيه</span></div>
+    </div>
+  ` : `
+    <div class="totals">
+      <div class="tline primary"><span>الإجمالي</span><span>${totalAfter.toFixed(2)} جنيه</span></div>
+    </div>
+  `;
 
-  const bodyClass = (mode === "80") ? "receipt-80" : (mode === "58" ? "receipt-58" : "");
-  const title = `فاتورة ${data.invNo}`;
-
-  const style = `
+  return `
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>فاتورة ${escapeHtml(invNo)}</title>
   <style>
-    :root{
-      --text:#111827;
-      --muted:#6b7280;
-      --stroke:#e5e7eb;
-      --gold:#b88a2b;
-      --gold2:#e3c06b;
-      --shadow: 0 10px 26px rgba(17,24,39,.10);
-    }
-
-    *{
-      box-sizing:border-box;
-      -webkit-print-color-adjust: exact !important;
-      print-color-adjust: exact !important;
-    }
-
-    body{
-      font-family: Arial, Helvetica, sans-serif;
-      color:var(--text);
-      direction:rtl;
-      margin:0;
-      background:#fff;
-      padding:18px;
-    }
-
-    .wrap{
-      max-width: 920px;
-      margin: 0 auto;
-    }
-
-    .card{
-      background:#fff;
-      border:1px solid var(--stroke);
-      border-radius:14px;
-      padding:16px;
-      box-shadow: var(--shadow);
-      margin-bottom:14px;
-    }
-
-    .header{
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      gap:12px;
-    }
-
-    .brand{
-      display:flex;
-      align-items:center;
-      gap:12px;
-      min-width:0;
-    }
-
-    .brand img{
-      width:64px;height:64px;object-fit:contain;
-      border-radius:999px;
-      border:1px solid rgba(184,138,43,.25);
-      padding:6px;
-      background: radial-gradient(circle at 30% 20%, rgba(227,192,107,.25), rgba(184,138,43,.10));
-    }
-
-    .brand h1{
-      margin:0;
-      font-weight:900;
-      font-size:22px;
-      letter-spacing:.2px;
-    }
-
-    .meta{
-      font-size:13px;
-      color:var(--muted);
-      line-height:1.7;
-      text-align:left;
-    }
-    .meta strong{ color:var(--text); }
-
-    .sepGold{
-      height:2px;
-      border-radius:99px;
-      background: linear-gradient(90deg, rgba(184,138,43,.15), rgba(184,138,43,.65), rgba(227,192,107,.20));
-      margin:10px 0 0;
-    }
-
-    h3{ margin:0 0 10px; font-weight:900; }
-
-    table{
-      width:100%;
-      border-collapse:collapse;
-      margin-top:10px;
-      font-size:13px;
-    }
-    th,td{
-      border:1px solid var(--stroke);
-      padding:8px;
-      text-align:center;
-      vertical-align:middle;
-    }
-    th{
-      background: #fafafa;
-      font-weight:900;
-    }
-
-    .totals{
-      margin-top:12px;
-      display:flex;
-      flex-direction:column;
-      gap:8px;
-    }
-    .tline{
-      display:flex;
-      justify-content:space-between;
-      gap:10px;
-      border:1px solid var(--stroke);
-      border-radius:12px;
-      padding:10px 12px;
-      background:#fafafa;
-      font-weight:900;
-    }
-    .tline span:first-child{ color:var(--muted); font-weight:800; }
-    .tline.primary{
-      background: linear-gradient(135deg, rgba(184,138,43,.14), rgba(227,192,107,.10));
-      border-color: rgba(184,138,43,.25);
-    }
-
-    .amountWords{
-      margin-top:10px;
-      font-weight:900;
-      color:#374151;
-      border-top:1px dashed var(--stroke);
-      padding-top:10px;
-    }
-
+    :root{ --text:#111827; --muted:#6b7280 }
+    *{box-sizing:border-box}
+    body{font-family: Arial, Helvetica, sans-serif; color:var(--text); direction:rtl; margin:0; background:#f3f4f6;}
+    .sheet{max-width:900px;margin:18px auto; padding:0 12px;}
+    .card{background:#fff;border-radius:12px;padding:18px;margin-bottom:14px;box-shadow:0 6px 18px rgba(0,0,0,.08);}
+    .header{display:flex;justify-content:space-between;align-items:center;gap:12px; flex-wrap:wrap}
+    .brand{display:flex;align-items:center;gap:12px}
+    .brand img{width:64px;height:64px;object-fit:contain}
+    h1{margin:0;font-weight:900;color:#111827}
+    .meta{font-size:14px;color:var(--muted); line-height:1.7}
+    .meta strong{color:#111827}
+    table{width:100%;border-collapse:collapse;margin-top:12px;font-size:14px}
+    th,td{border:1px solid #e5e7eb;padding:8px;text-align:center}
+    th{background:#f8fafc}
+    .totals{margin-top:12px;display:flex;flex-direction:column;gap:8px}
+    .tline{display:flex;justify-content:space-between;gap:10px;border:1px solid #e5e7eb;border-radius:10px;padding:10px 12px;background:#f9fafb;font-weight:900}
+    .tline span:first-child{color:#6b7280;font-weight:800}
+    .tline.primary{background:#eef2ff;border-color:#c7d2fe}
+    .amountWords{margin-top:10px;font-weight:900;color:#374151}
     .qrBox{
-      margin-top:12px;
-      border:1px solid rgba(184,138,43,.22);
-      background: rgba(184,138,43,.06);
-      border-radius:14px;
-      padding:12px;
+      margin-top:14px;
+      padding-top:12px;
+      border-top:1px dashed #e5e7eb;
       display:flex;
       align-items:center;
-      gap:12px;
       justify-content:space-between;
-      break-inside: avoid-page;
-      page-break-inside: avoid;
+      gap:12px;
+      flex-wrap:wrap;
     }
-    .qrText{
-      font-weight:900;
-      line-height:1.6;
-      color:#374151;
-      min-width:0;
-    }
-    .qrHint{ margin-top:6px; color:var(--muted); font-weight:800; font-size:12px; }
-    .qrCanvasWrap{ text-align:center; flex:0 0 auto; }
-    #qrCanvas{ width:96px; height:96px; }
-
-    .footer{
-      margin-top:12px;
-      text-align:center;
-      color:#9ca3af;
-      font-size:12px;
-    }
-
-    /* ================= PRINT ================= */
-    @page{ size: A4; margin: 10mm; }
-
+    .qrBox img{width:120px;height:120px;object-fit:contain;border:1px solid #e5e7eb;border-radius:12px;padding:8px;background:#fff}
+    .qrText{color:#374151;font-weight:900;line-height:1.7}
+    .qrText small{display:block;color:#6b7280;font-weight:800}
+    .footer{margin-top:14px;text-align:center;color:#9ca3af;font-size:12px}
+    @page{ size:A4; margin:10mm; }
     @media print{
-      body{ padding:0; }
-      .wrap{ max-width:100%; margin:0; }
-      .card{ box-shadow:none; }
-      table, tr, td, th{
-        page-break-inside: avoid !important;
-        break-inside: avoid-page !important;
-      }
+      body{background:#fff}
+      .sheet{max-width:100%; margin:0; padding:0}
+      .card{box-shadow:none}
     }
-
-    /* ================= THERMAL ================= */
-    body.receipt-80 @page{ size: 80mm auto; margin: 3mm; }
-    body.receipt-80{ padding:0; font-size:12px; }
-    body.receipt-80 .wrap{ width:80mm; max-width:80mm; margin:0 auto; }
-    body.receipt-80 .brand h1{ font-size:16px; }
-    body.receipt-80 .brand img{ width:48px; height:48px; }
-    body.receipt-80 th, body.receipt-80 td{ padding:6px; font-size:11px; }
-    body.receipt-80 #qrCanvas{ width:86px; height:86px; }
-
-    body.receipt-58 @page{ size: 58mm auto; margin: 2.5mm; }
-    body.receipt-58{ padding:0; font-size:11px; }
-    body.receipt-58 .wrap{ width:58mm; max-width:58mm; margin:0 auto; }
-    body.receipt-58 .brand h1{ font-size:14px; }
-    body.receipt-58 .brand img{ width:44px; height:44px; }
-    body.receipt-58 th, body.receipt-58 td{ padding:5px; font-size:10px; }
-    body.receipt-58 #qrCanvas{ width:78px; height:78px; }
   </style>
-  `;
-
-  const html = `
-    <!doctype html>
-    <html lang="ar" dir="rtl">
-    <head>
-      <meta charset="utf-8">
-      <meta name="viewport" content="width=device-width,initial-scale=1">
-      <title>${escapeHtml(title)}</title>
-      ${style}
-    </head>
-    <body class="${bodyClass}">
-      <div class="wrap">
-        <div class="card">
-          <div class="header">
-            <div class="brand">
-              <img src="${logoUrl}" onerror="this.style.display='none'">
-              <div style="min-width:0">
-                <h1>B.S Medical &amp; Aesthetic</h1>
-                <div class="meta" style="text-align:right;color:#6b7280">
-                  رقم الفاتورة: <strong>${escapeHtml(data.invNo)}</strong>
-                </div>
-              </div>
-            </div>
-
-            <div class="meta">
-              <div>التاريخ: <strong>${escapeHtml(data.invDate)}</strong></div>
-              <div>الوقت: <strong>${escapeHtml(data.invTime)}</strong></div>
-            </div>
-          </div>
-
-          <div class="sepGold"></div>
-        </div>
-
-        <div class="card">
-          <h3>بيانات العميل</h3>
-          <div style="display:flex;gap:10px;flex-wrap:wrap;font-weight:900;color:#374151">
-            <div style="min-width:180px"><span style="color:#6b7280;font-weight:800">الاسم:</span> ${escapeHtml(data.custName)}</div>
-            <div style="min-width:160px"><span style="color:#6b7280;font-weight:800">الهاتف:</span> ${escapeHtml(data.custPhone)}</div>
-            <div style="flex:1;min-width:220px"><span style="color:#6b7280;font-weight:800">العنوان:</span> ${escapeHtml(data.custAddress)}</div>
-          </div>
-        </div>
-
-        <div class="card">
-          <h3>الأصناف</h3>
-          <table>
-            <thead>
-              <tr>
-                <th>SKU / المنتج</th>
-                <th>الكمية</th>
-                <th>السعر</th>
-                <th>خصم (جنيه)</th>
-                <th>الإجمالي</th>
-              </tr>
-            </thead>
-            <tbody>${itemsHtml}</tbody>
-          </table>
-
-          ${totalsHtml}
-          <div class="amountWords">${escapeHtml(data.words)}</div>
-
-          <div class="qrBox" id="qrBox">
-            <div class="qrText">
-              👑 ${escapeHtml(PROMO_TEXT)}
-              <div class="qrHint">${escapeHtml(PROMO_URL)}</div>
-            </div>
-            <div class="qrCanvasWrap">
-              <canvas id="qrCanvas" width="96" height="96"></canvas>
-              <div style="margin-top:6px;color:#6b7280;font-weight:900;font-size:11px">QR</div>
-            </div>
-          </div>
-
-          <div class="footer">
-            Axentro – All Rights Reserved 2024 ©<br>
-            By Ahmed Hamouda
-          </div>
+</head>
+<body>
+  <div class="sheet">
+    <div class="card header">
+      <div class="brand">
+        <img src="images/bslogo.webp" onerror="this.style.display='none'">
+        <div>
+          <h1>B.S Medical &amp; Aesthetic</h1>
+          <div class="meta">رقم الفاتورة: <strong>${escapeHtml(invNo)}</strong></div>
         </div>
       </div>
+      <div class="meta" style="text-align:left;min-width:180px">
+        <div>التاريخ: <strong>${escapeHtml(invDate)}</strong></div>
+        <div>الوقت: <strong>${escapeHtml(invTime)}</strong></div>
+      </div>
+    </div>
 
-      <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
-      <script>
-        (function(){
-          const url = ${JSON.stringify(PROMO_URL)};
-          const canvas = document.getElementById("qrCanvas");
+    <div class="card">
+      <h3 style="margin:0 0 8px">بيانات العميل</h3>
+      <div style="display:flex;gap:12px;flex-wrap:wrap">
+        <div style="min-width:180px"><strong>الاسم:</strong> ${escapeHtml(custName)}</div>
+        <div style="min-width:160px"><strong>الهاتف:</strong> ${escapeHtml(custPhone)}</div>
+        <div style="flex:1"><strong>العنوان:</strong> ${escapeHtml(custAddress)}</div>
+      </div>
+    </div>
 
-          function doPrint(){
-            try{ window.focus(); }catch(e){}
-            setTimeout(()=>{ try{ window.print(); }catch(e){} }, 220);
-          }
+    <div class="card">
+      <h3 style="margin:0 0 8px">الأصناف</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>SKU / المنتج</th>
+            <th>الكمية</th>
+            <th>السعر</th>
+            <th>خصم (جنيه)</th>
+            <th>الإجمالي</th>
+          </tr>
+        </thead>
+        <tbody>${itemsHtml}</tbody>
+      </table>
 
-          // لو QRCode متاح: ارسم ثم اطبع
-          if(window.QRCode && canvas){
-            try{
-              QRCode.toCanvas(canvas, url, { width: canvas.width, margin: 1 }, function(err){
-                if(err) console.error(err);
-                doPrint();
-              });
-            }catch(e){
-              console.error(e);
-              doPrint();
-            }
-          }else{
-            doPrint();
-          }
-        })();
-      </script>
-    </body>
-    </html>
-  `;
+      ${totalsHtml}
+      <div class="amountWords">${escapeHtml(words)}</div>
+
+      <div class="qrBox">
+        <div class="qrText">
+          امسح الـ QR لفتح صفحة الروابط / الكتالوج
+          <small>${escapeHtml(QR_LINK)}</small>
+        </div>
+        <img src="${escapeAttr(QR_IMG)}" alt="QR" onerror="this.style.display='none'">
+      </div>
+
+      <div class="footer">
+        Axentro – All Rights Reserved 2024 ©<br>
+        By Ahmed Hamouda
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // auto-print a moment after load (optional)
+    window.addEventListener('load', ()=> { setTimeout(()=> window.print(), 250); });
+  <\/script>
+</body>
+</html>
+`.trim();
+}
+
+function buildThermalHtml(data, mm){
+  const {invNo,invDate,invTime,custName,custPhone,custAddress,items,totalAfter,words} = data;
+
+  const width = (mm === "58") ? "58mm" : "80mm";
+  const fontBase = (mm === "58") ? "12px" : "13px";
+  const qrSize = (mm === "58") ? 100 : 120;
+
+  const lines = items.length ? items.map(it=>`
+    <div class="row">
+      <div class="name">${escapeHtml(it.skuName)}</div>
+      <div class="meta">
+        <span>Qty: <b>${it.qty}</b></span>
+        <span>×</span>
+        <span>${Number(it.price||0).toFixed(2)}</span>
+        ${it.disc>0 ? `<span class="disc">- ${Number(it.disc||0).toFixed(2)}</span>` : ``}
+      </div>
+      <div class="sum">= ${Number(it.sub||0).toFixed(2)}</div>
+    </div>
+  `).join("") : `<div class="empty">لا توجد أصناف</div>`;
+
+  return `
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>${escapeHtml(invNo)}</title>
+  <style>
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      width:${width};
+      background:#fff;
+      color:#111;
+      font-family: Arial, Helvetica, sans-serif;
+      direction:rtl;
+      font-size:${fontBase};
+    }
+    .paper{ padding:8px 8px 10px; }
+    .center{text-align:center}
+    .title{ font-weight:900; font-size:${mm==="58"?"15px":"16px"}; }
+    .muted{ color:#444; font-weight:700; }
+    .hr{ border-top:1px dashed #999; margin:8px 0; }
+    .kv{ display:flex; justify-content:space-between; gap:8px; font-weight:800; }
+    .kv span{white-space:nowrap}
+    .row{ padding:6px 0; border-bottom:1px dashed #ddd; }
+    .row:last-child{border-bottom:none}
+    .name{ font-weight:900; line-height:1.3; }
+    .meta{ margin-top:3px; display:flex; gap:6px; flex-wrap:wrap; font-weight:800; }
+    .disc{ color:#b45309; font-weight:900; }
+    .sum{ margin-top:3px; font-weight:900; text-align:left; }
+    .total{ font-weight:900; font-size:${mm==="58"?"14px":"15px"}; }
+    .qr{ margin-top:10px; display:flex; flex-direction:column; align-items:center; gap:6px; }
+    .qr img{ width:${qrSize}px; height:${qrSize}px; object-fit:contain; }
+    .tiny{ font-size:11px; color:#555; font-weight:800; text-align:center; }
+    @page{ size:${width} auto; margin:2mm; }
+    @media print{
+      body{ -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+    }
+  </style>
+</head>
+<body>
+  <div class="paper">
+    <div class="center title">B.S Medical &amp; Aesthetic</div>
+    <div class="center muted">فاتورة حرارية</div>
+
+    <div class="hr"></div>
+
+    <div class="kv"><span>رقم:</span><span>${escapeHtml(invNo)}</span></div>
+    <div class="kv"><span>تاريخ:</span><span>${escapeHtml(invDate)}</span></div>
+    <div class="kv"><span>وقت:</span><span>${escapeHtml(invTime)}</span></div>
+
+    <div class="hr"></div>
+
+    <div class="kv"><span>العميل:</span><span>${escapeHtml(custName)}</span></div>
+    <div class="kv"><span>هاتف:</span><span>${escapeHtml(custPhone)}</span></div>
+    <div style="margin-top:4px;font-weight:800">العنوان: ${escapeHtml(custAddress)}</div>
+
+    <div class="hr"></div>
+
+    ${lines}
+
+    <div class="hr"></div>
+
+    <div class="kv total"><span>الإجمالي:</span><span>${Number(totalAfter||0).toFixed(2)} جنيه</span></div>
+    <div style="margin-top:6px;font-weight:900">${escapeHtml(words)}</div>
+
+    <div class="qr">
+      <img src="${escapeAttr(QR_IMG)}" alt="QR" onerror="this.style.display='none'">
+      <div class="tiny">امسح الـ QR لفتح الصفحة</div>
+      <div class="tiny">${escapeHtml(QR_LINK)}</div>
+    </div>
+
+    <div class="hr"></div>
+    <div class="tiny">Axentro © 2024 — Ahmed Hamouda</div>
+  </div>
+
+  <script>
+    window.addEventListener('load', ()=> { setTimeout(()=> window.print(), 250); });
+  <\/script>
+</body>
+</html>
+`.trim();
+}
+
+function exportOrPrint(mode){
+  const data = collectInvoiceData();
+
+  let html = "";
+  if(mode === "a4") html = buildA4Html(data);
+  if(mode === "80") html = buildThermalHtml(data, "80");
+  if(mode === "58") html = buildThermalHtml(data, "58");
 
   const w = window.open("", "_blank");
   w.document.open();
@@ -1385,6 +1234,9 @@ function escapeHtml(str){
     .replace(/</g,"&lt;")
     .replace(/>/g,"&gt;")
     .replace(/"/g,"&quot;");
+}
+function escapeAttr(str){
+  return String(str || "").replace(/"/g,"&quot;");
 }
 
 /* number to Arabic words */
