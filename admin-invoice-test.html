@@ -1,9 +1,10 @@
+<!-- ========== PART 1 / 4 ========== -->
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>لوحة إدارة الفواتير - B.S Medical &amp; Aesthetic</title>
+  <title>لوحة إدارة الفواتير — B.S Medical &amp; Aesthetic</title>
 
   <style>
     :root{
@@ -98,8 +99,10 @@
     }
     input::placeholder, textarea::placeholder{color:#94a3b8}
     #invNo, #invDate, #invTime{ font-weight:900; }
+    #orderId{ font-weight:900; }
 
-    .row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+    /* ✅ عدّلناها لـ 5 أعمدة عشان Order ID */
+    .row{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
     .row2{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
     .row1{display:grid;grid-template-columns:1fr;gap:10px}
 
@@ -312,6 +315,10 @@
       <button id="loginBtn" class="btn" style="flex:1">دخول</button>
       <button id="logoutBtn" class="btn secondary" style="flex:1">خروج</button>
     </div>
+
+    <div class="hint" style="margin-top:10px">
+      🔒 حماية إضافية: عدد محاولات + قفل مؤقت + خروج تلقائي عند عدم النشاط.
+    </div>
   </div>
 </div>
 
@@ -322,9 +329,7 @@
         <img src="images/bslogo.webp" alt="BS Logo" onerror="this.style.display='none'">
       </div>
       <div>
-        <!-- ✅ تم حذف "— فواتير" -->
-        <div class="brandTitle">B.S Medical &amp; Aesthetic</div>
-        <!-- ✅ تم حذف PDF -->
+       <div class="brandTitle">B.S Medical &amp; Aesthetic</div>
         <div class="brandSub">إدارة وإنشاء فواتير</div>
       </div>
     </div>
@@ -333,6 +338,7 @@
       <button id="logoutTop" class="pill">🚪 تسجيل خروج</button>
     </div>
   </div>
+
   <!-- Import from WhatsApp -->
   <div class="card">
     <h2>استيراد طلب من واتساب</h2>
@@ -342,12 +348,13 @@
         <button class="btn" id="importBtn">📥 استيراد إلى الجدول</button>
         <button class="btn secondary" id="clearImportBtn">مسح</button>
       </div>
+      <div class="hint">💡 لو الرسالة فيها: <b>رقم الطلب</b> هيتسحب تلقائيًا ويتحط في Order ID.</div>
     </div>
   </div>
 
   <!-- Header -->
   <div class="card">
-    <h2 id="pageTitle">فاتورة - B.S</h2>
+    <h2 id="pageTitle">فاتورة — B.S</h2>
 
     <div class="row" role="region" aria-label="معلومات الفاتورة">
       <div>
@@ -361,6 +368,10 @@
       <div>
         <label for="invTime">الوقت</label>
         <input id="invTime" readonly />
+      </div>
+      <div>
+        <label for="orderId">Order ID (رقم الطلب)</label>
+        <input id="orderId" placeholder="مثال: 12548" />
       </div>
       <div>
         <label for="custName">العميل</label>
@@ -390,6 +401,7 @@
       <table id="itemsTable" role="table" aria-label="جدول الأصناف">
         <thead>
           <tr>
+            <th style="width:60px">#</th>
             <th>SKU / المنتج</th>
             <th>الكمية</th>
             <th>السعر</th>
@@ -420,6 +432,11 @@
     <div style="margin-top:10px;display:flex;gap:10px;flex-wrap:wrap">
       <button class="btn" id="thermal80Btn" style="flex:1">🧾 طباعة (حراري 80mm)</button>
       <button class="btn" id="thermal58Btn" style="flex:1">🧾 طباعة (حراري 58mm)</button>
+      <button class="btn secondary" id="saveBtn" style="flex:1">💾 حفظ الفاتورة</button>
+    </div>
+
+    <div class="hint" style="margin-top:10px">
+      💾 الحفظ: لو المتصفح يدعم اختيار مكان الحفظ هيظهر لك "Save As"، ولو لأ هيتعمل Download تلقائي.
     </div>
   </div>
 </div>
@@ -430,6 +447,7 @@
 </footer>
 
 <script>
+<!-- ========== PART 2 / 4 ========== -->
 /* ================= CONFIG ================= */
 const ADMIN_PASSWORD = "1407"; // ✅ غيّر الباسورد من هنا (داخلي فقط)
 const API_URL = "https://script.google.com/macros/s/AKfycbwsPPw3UiW6TBngBcbFxY4E8rB7JYgK1W2LRn0WaS9C7OitA1FgZ1vAz9Qr1u_ojlZ8/exec";
@@ -438,8 +456,6 @@ const IMG_PLACEHOLDER = "https://via.placeholder.com/600x400?text=No+Image";
 /* ✅ QR (صورة) — حطها في نفس فولدر الصفحة أو داخل images */
 const QR_SRC_MAIN = "qr-links.png";
 const QR_SRC_FALLBACK = "images/qr-links.png";
-
-/* ✅ النص فقط (بدون أي لينك في الطباعة) */
 const LINKS_URL_TEXT = "axentro-official.github.io/axentro-website/links.html";
 
 /* ✅ Cache products */
@@ -449,6 +465,64 @@ const CACHE_TTL_MS   = 10 * 60 * 1000;
 
 let PRODUCTS = [];
 let ROW_ID = 0;
+
+/* ================= HARDEN ADMIN ================= */
+const FAILS_KEY = "BS_ADMIN_FAILS";
+const LOCK_UNTIL_KEY = "BS_ADMIN_LOCK_UNTIL";
+const MAX_FAILS = 5;
+const LOCK_MINUTES = 10;
+
+const IDLE_MINUTES = 20;
+let idleTimer = null;
+
+function nowMs(){ return Date.now(); }
+function isLocked(){
+  const until = Number(localStorage.getItem(LOCK_UNTIL_KEY) || 0);
+  return until && nowMs() < until;
+}
+function lockRemainingText(){
+  const until = Number(localStorage.getItem(LOCK_UNTIL_KEY) || 0);
+  const diff = Math.max(0, until - nowMs());
+  const mins = Math.ceil(diff / 60000);
+  return `تم قفل الدخول مؤقتًا. حاول بعد ${mins} دقيقة.`;
+}
+function incFail(){
+  const n = Number(localStorage.getItem(FAILS_KEY) || 0) + 1;
+  localStorage.setItem(FAILS_KEY, String(n));
+  if(n >= MAX_FAILS){
+    const until = nowMs() + (LOCK_MINUTES * 60000);
+    localStorage.setItem(LOCK_UNTIL_KEY, String(until));
+  }
+  return n;
+}
+function resetFails(){
+  localStorage.removeItem(FAILS_KEY);
+  localStorage.removeItem(LOCK_UNTIL_KEY);
+}
+function startIdleGuard(){
+  stopIdleGuard();
+  const kick = ()=>{
+    try{
+      alert("تم تسجيل الخروج تلقائيًا بسبب عدم النشاط.");
+    }catch(e){}
+    setLoggedIn(false);
+  };
+  idleTimer = setTimeout(kick, IDLE_MINUTES * 60000);
+}
+function stopIdleGuard(){
+  if(idleTimer){ clearTimeout(idleTimer); idleTimer = null; }
+}
+function bumpIdle(){
+  if(sessionStorage.getItem("BS_ADMIN_OK") === "1"){
+    startIdleGuard();
+  }
+}
+["click","keydown","mousemove","touchstart","scroll"].forEach(ev=>{
+  window.addEventListener(ev, ()=> bumpIdle(), {passive:true});
+});
+document.addEventListener("visibilitychange", ()=>{
+  if(document.visibilityState === "visible") bumpIdle();
+});
 
 /* ================= LOGIN ================= */
 const loginBox  = document.getElementById('loginBox');
@@ -461,24 +535,39 @@ function setLoggedIn(isOn){
     sessionStorage.setItem("BS_ADMIN_OK", "1");
     loginBox.style.display = "none";
     document.getElementById("app").style.display = "block";
+    bumpIdle();
   }else{
     sessionStorage.removeItem("BS_ADMIN_OK");
     document.getElementById("app").style.display = "none";
     loginBox.style.display = "flex";
     passInput.value = "";
+    stopIdleGuard();
     try{ passInput.focus(); }catch(e){}
   }
 }
+
 function checkPass(){
+  if(isLocked()){
+    alert(lockRemainingText());
+    return;
+  }
   const v = String(passInput.value || "");
   if(v === ADMIN_PASSWORD){
+    resetFails();
     setLoggedIn(true);
     initInvoice();
     loadProductsSmart();
   }else{
-    alert("رمز الدخول غير صحيح");
+    const tries = incFail();
+    if(isLocked()){
+      alert(lockRemainingText());
+    }else{
+      const left = Math.max(0, MAX_FAILS - tries);
+      alert(`رمز الدخول غير صحيح\nالمتبقي قبل القفل: ${left}`);
+    }
   }
 }
+
 loginBtn.addEventListener('click', checkPass);
 passInput.addEventListener('keydown', (e)=> { if(e.key === 'Enter') checkPass(); });
 
@@ -503,6 +592,7 @@ function initInvoice(){
   document.getElementById("invDate").value = formatDateEnglish(now);
   document.getElementById("invTime").value = now.toLocaleTimeString("en-US",{hour:'2-digit',minute:'2-digit',hour12:true});
   document.getElementById("invNo").value = generateInvoiceNo();
+  // ✅ Order ID يفضل يفضّل زي ما هو (لو فاتورة جديدة فعلاً resetInvoice هيصفره)
   calcGrand();
 }
 
@@ -585,7 +675,8 @@ function buildDataLists(){
     }
   });
 }
-  /* Helpers */
+
+/* Helpers */
 function findBySku(sku){
   const s = String(sku || "").trim().toLowerCase();
   if(!s) return null;
@@ -605,9 +696,10 @@ function resolveImageBySku(sku){
   return `images/${s}.webp`;
 }
 
-/* ================= WhatsApp import (includes customer data) ================= */
+/* ================= WhatsApp import (includes customer data + Order ID) ================= */
 function extractCustomerData(fullText){
   const t = String(fullText || "");
+
   const nameMatch = t.match(/(?:^|\n)\s*الاسم\s*:\s*(.+)\s*(?:\n|$)/i);
   const name = nameMatch ? nameMatch[1].trim() : "";
 
@@ -619,7 +711,14 @@ function extractCustomerData(fullText){
   const addrMatch = t.match(/(?:📍|العنوان\s*:?)\s*(.+)\s*(?:\n|$)/);
   if(addrMatch) address = addrMatch[1].trim();
 
-  return { name, phone, address };
+  // ✅ Order ID
+  let orderId = "";
+  const orderMatch =
+    t.match(/(?:^|\n)\s*(?:رقم\s*الطلب|Order\s*ID|ORDER\s*ID)\s*:\s*(.+)\s*(?:\n|$)/i) ||
+    t.match(/(?:^|\n)\s*(?:رقم\s*الطلب)\s*#?\s*([A-Za-z0-9-_]+)\s*(?:\n|$)/i);
+  if(orderMatch) orderId = String(orderMatch[1] || "").trim();
+
+  return { name, phone, address, orderId };
 }
 function parseWhatsAppLines(fullText){
   const text = String(fullText || "").trim();
@@ -647,7 +746,8 @@ function parseWhatsAppLines(fullText){
     if(sku || name){
       if(/^\s*الاسم\s*:/i.test(line)) continue;
       if(line.includes("📞") || line.includes("📍")) continue;
-      if(line.includes("رقم الطلب") || line.includes("التاريخ") || line.includes("الوقت")) continue;
+      if(line.includes("رقم الطلب") || /order\s*id/i.test(line)) continue;
+      if(line.includes("التاريخ") || line.includes("الوقت")) continue;
       out.push({ sku, name, qty: qty || 0 });
     }
   }
@@ -666,6 +766,7 @@ function importFromWhatsApp(){
   if(cust.name) document.getElementById("custName").value = cust.name;
   if(cust.phone) document.getElementById("custPhone").value = cust.phone;
   if(cust.address) document.getElementById("custAddress").value = cust.address;
+  if(cust.orderId) document.getElementById("orderId").value = cust.orderId;
 
   const items = parseWhatsAppLines(raw);
   if(!items.length){
@@ -704,6 +805,7 @@ function importFromWhatsApp(){
     calcRowByTr(tr);
   });
 
+  refreshRowNumbers(); // ✅ ترقيم بعد الاستيراد
   calcGrand();
   alert("✅ تم الاستيراد: بيانات العميل + الأصناف");
 }
@@ -716,8 +818,16 @@ document.getElementById("waImport")?.addEventListener("paste", ()=>{
     if(raw.length >= 20) { try{ importFromWhatsApp(); }catch(e){} }
   }, 0);
 });
+<!-- ========== PART 3 / 4 ========== -->
+/* ================= ROWS + AUTO INDEX ================= */
+function refreshRowNumbers(){
+  const rows = Array.from(document.querySelectorAll("#itemsTable tbody tr"));
+  rows.forEach((tr, i)=>{
+    const cell = tr.querySelector('[data-field="idx"]');
+    if(cell) cell.textContent = String(i + 1);
+  });
+}
 
-/* ================= ROWS ================= */
 function addRow(silentFocus=false){
   ROW_ID++;
   const tbody = document.querySelector("#itemsTable tbody");
@@ -725,6 +835,7 @@ function addRow(silentFocus=false){
   tr.dataset.id = ROW_ID;
 
   tr.innerHTML = `
+    <td data-label="#" data-field="idx" style="font-weight:900">1</td>
     <td data-label="SKU / المنتج">
       <div class="prod-cell">
         <img class="thumbMini" alt="صورة المنتج" src="${IMG_PLACEHOLDER}" onerror="this.onerror=null;this.src='${IMG_PLACEHOLDER}'">
@@ -742,14 +853,18 @@ function addRow(silentFocus=false){
   `;
 
   tbody.appendChild(tr);
+  refreshRowNumbers(); // ✅ ترقيم بعد الإضافة
+
   if(!silentFocus){ tr.querySelector('[data-field="sku"]')?.focus(); }
   calcRowByTr(tr);
   return tr;
 }
 function removeRowByTr(tr){
   tr?.remove();
+  refreshRowNumbers(); // ✅ ترقيم بعد الحذف
   calcGrand();
 }
+
 const itemsTbody = document.querySelector("#itemsTable tbody");
 
 itemsTbody.addEventListener("click", (ev)=>{
@@ -813,6 +928,7 @@ function syncRowsWithProducts(){
     }
     syncRowThumb(tr);
   });
+  refreshRowNumbers();
 }
 
 /* ================= CALCS ================= */
@@ -865,21 +981,19 @@ function calcGrand(){
 
   document.getElementById("amountWords").textContent = numberToArabicWords(Math.round(totalAfter));
 }
-  <!-- =========================
-     PART 4/4 — PRINTING + BINDS
-     ========================= -->
-<script>
+
 /* ================= EXPORT / PRINT (A4 + Thermal) ================= */
 function getInvoiceData(){
   const invNo = document.getElementById("invNo").value || "";
   const invDate = document.getElementById("invDate").value || "";
   const invTime = document.getElementById("invTime").value || "";
+  const orderId = document.getElementById("orderId").value || "";
   const custName = document.getElementById("custName").value || "";
   const custPhone = document.getElementById("custPhone").value || "";
   const custAddress = document.getElementById("custAddress").value || "";
 
   const rows = Array.from(document.querySelectorAll("#itemsTable tbody tr"));
-  const items = rows.map(tr=>{
+  const items = rows.map((tr, idx)=>{
     const sku = (tr.querySelector('[data-field="sku"]')?.value || "").trim();
     const name = (tr.querySelector('[data-field="name"]')?.value || "").trim();
     const qty = Number(tr.querySelector('[data-field="qty"]')?.value) || 0;
@@ -890,7 +1004,7 @@ function getInvoiceData(){
     const disc = Math.max(0, Math.min(discIn, sub));
 
     const skuName = (sku && name) ? `${sku} | ${name}` : (sku || name);
-    return { sku, name, skuName, qty, price, disc, sub };
+    return { idx: idx + 1, sku, name, skuName, qty, price, disc, sub };
   }).filter(i => i.skuName || i.qty || i.price || i.disc);
 
   const totalBefore = items.reduce((s,i)=> s + (Number(i.sub)||0), 0);
@@ -898,11 +1012,7 @@ function getInvoiceData(){
   const totalAfter = Math.max(0, totalBefore - totalDiscount);
   const words = numberToArabicWords(Math.round(totalAfter));
 
-  return {
-    invNo, invDate, invTime,
-    custName, custPhone, custAddress,
-    items, totalBefore, totalDiscount, totalAfter, words
-  };
+  return { invNo, invDate, invTime, orderId, custName, custPhone, custAddress, items, totalBefore, totalDiscount, totalAfter, words };
 }
 
 function openPrintWindow(html, title){
@@ -914,24 +1024,21 @@ function openPrintWindow(html, title){
   try{ w.document.title = title || "فاتورة"; }catch(e){}
   w.onload = function(){
     w.focus();
-    // ✅ مهم: التأخير يساعد الصور (اللوجو/QR) تلحق تتحمل قبل الطباعة
-    setTimeout(()=> w.print(), 450);
+    setTimeout(()=> w.print(), 250);
   };
 }
-
-/* ================= A4 ================= */
-function exportA4(){
-  const d = getInvoiceData();
-
+<!-- ========== PART 4 / 4 ========== -->
+function buildA4Html(d){
   const itemsHtml = d.items.length ? d.items.map(it => `
     <tr>
+      <td>${it.idx}</td>
       <td>${escapeHtml(it.skuName)}</td>
       <td>${it.qty}</td>
       <td>${Number(it.price||0).toFixed(2)}</td>
       <td>${Number(it.disc||0).toFixed(2)}</td>
       <td>${Number(it.sub||0).toFixed(2)}</td>
     </tr>
-  `).join("") : `<tr><td colspan="5" style="padding:18px;text-align:center;color:#64748b">لا توجد أصناف</td></tr>`;
+  `).join("") : `<tr><td colspan="6" style="padding:18px;text-align:center;color:#64748b">لا توجد أصناف</td></tr>`;
 
   const totalsHtml = (d.totalDiscount > 0.00001) ? `
     <div class="totals">
@@ -945,7 +1052,7 @@ function exportA4(){
     </div>
   `;
 
-  const html = `
+  return `
 <!doctype html>
 <html lang="ar" dir="rtl">
 <head>
@@ -957,19 +1064,8 @@ function exportA4(){
       --text:#0f172a; --muted:#64748b; --gold:#b08d57; --gold2:#d7b97a;
       --stroke: rgba(15,23,42,.10);
     }
-
-    /* ✅ محاولة تقليل (Headers/Footers) من المتصفح */
     @page { size: A4; margin: 10mm; }
-    html,body{margin:0;padding:0}
-    body{
-      font-family: Arial, Helvetica, sans-serif;
-      color:var(--text);
-      direction:rtl;
-      background:#fff;
-      -webkit-print-color-adjust: exact !important;
-      print-color-adjust: exact !important;
-    }
-
+    body{font-family: Arial, Helvetica, sans-serif; color:var(--text); direction:rtl; margin:0; background:#fff;}
     .sheet{max-width:900px;margin:0 auto;}
     .card{background:#fff;border-radius:12px;padding:18px;margin-bottom:14px;border:1px solid var(--stroke);}
     .header{display:flex;justify-content:space-between;align-items:center;gap:12px;}
@@ -978,29 +1074,20 @@ function exportA4(){
     h1{margin:0;font-weight:900;color:#0f172a}
     .meta{font-size:14px;color:var(--muted); line-height:1.7}
     .meta strong{color:#0f172a}
-
     table{width:100%;border-collapse:collapse;margin-top:12px;font-size:14px}
     th,td{border:1px solid var(--stroke);padding:8px;text-align:center}
     th{background: linear-gradient(180deg, rgba(176,141,87,.10), rgba(215,185,122,.06));}
-
     .totals{margin-top:12px;display:flex;flex-direction:column;gap:8px}
     .tline{display:flex;justify-content:space-between;gap:10px;border:1px solid var(--stroke);border-radius:10px;padding:10px 12px;background:#fff;font-weight:900}
     .tline span:first-child{color:#64748b;font-weight:900}
     .tline.primary{background: linear-gradient(135deg, rgba(176,141,87,.10), rgba(215,185,122,.08)); border-color: rgba(176,141,87,.30);}
-
     .amountWords{margin-top:10px;font-weight:900;color:#334155}
-
+    .footer{margin-top:10px;text-align:center;color:#64748b;font-size:12px;line-height:1.6}
     .custGrid{display:grid;grid-template-columns:1fr;gap:10px;margin-top:8px}
     .custLine{border:1px dashed var(--stroke);border-radius:10px;padding:10px 12px}
-
     .qrWrap{margin-top:12px;display:flex;flex-direction:column;align-items:center;gap:8px}
     .qrWrap img{width:120px;height:120px;object-fit:contain;border:1px solid var(--stroke);border-radius:10px;padding:6px}
     .qrText{font-size:12px;color:#334155;font-weight:900}
-
-    .footer{margin-top:10px;text-align:center;color:#64748b;font-size:12px;line-height:1.6}
-
-    /* ✅ اخفاء أي روابط أو عناصر لا نريدها */
-    a{color:inherit;text-decoration:none}
   </style>
 </head>
 <body>
@@ -1012,6 +1099,7 @@ function exportA4(){
         <div>
           <h1>B.S Medical &amp; Aesthetic</h1>
           <div class="meta">رقم الفاتورة: <strong>${escapeHtml(d.invNo)}</strong></div>
+          <div class="meta">Order ID: <strong>${escapeHtml(d.orderId || "—")}</strong></div>
         </div>
       </div>
 
@@ -1035,6 +1123,7 @@ function exportA4(){
       <table>
         <thead>
           <tr>
+            <th>#</th>
             <th>SKU / المنتج</th>
             <th>الكمية</th>
             <th>السعر</th>
@@ -1062,22 +1151,23 @@ function exportA4(){
   </div>
 </body>
 </html>`;
-
-  openPrintWindow(html, `فاتورة ${d.invNo}`);
 }
 
-/* ================= THERMAL (80/58) ================= */
-function printThermal(mm){
+function exportA4(){
   const d = getInvoiceData();
+  openPrintWindow(buildA4Html(d), `فاتورة ${d.invNo}`);
+}
+
+function buildThermalHtml(mm, d){
   const widthMm = (mm === 58) ? 58 : 80;
 
   const items = d.items.length ? d.items.map(it=>{
-    const line1 = `${escapeHtml(it.name || it.sku || "")}`.trim() || escapeHtml(it.skuName || "");
+    const title = `${it.idx}) ${escapeHtml(it.name || it.sku || it.skuName || "")}`.trim();
     const line2 = `Qty: ${it.qty}  ×  ${Number(it.price||0).toFixed(2)}   |   Disc: ${Number(it.disc||0).toFixed(2)}`;
     const line3 = `= ${Number(it.sub||0).toFixed(2)}`;
     return `
       <div class="item">
-        <div class="b">${line1}</div>
+        <div class="b">${title}</div>
         <div class="m">${line2}</div>
         <div class="b">${line3}</div>
       </div>
@@ -1101,7 +1191,13 @@ function printThermal(mm){
     <div class="m">العنوان: ${escapeHtml(d.custAddress)}</div>
   `;
 
-  const html = `
+  const cutBlock = `
+    <div class="sep"></div>
+    <div class="center m">— قص هنا —</div>
+    <div style="height:18mm"></div>
+  `;
+
+  return `
 <!doctype html>
 <html lang="ar" dir="rtl">
 <head>
@@ -1110,40 +1206,31 @@ function printThermal(mm){
   <title>فاتورة ${escapeHtml(d.invNo)}</title>
   <style>
     @page { size: ${widthMm}mm auto; margin: 3mm; }
-    html,body{margin:0;padding:0}
     body{
       margin:0;
       font-family: Arial, Tahoma, sans-serif;
       color:#000;
       direction:rtl;
       background:#fff;
-      -webkit-print-color-adjust: exact !important;
-      print-color-adjust: exact !important;
     }
-    .paper{ width:${widthMm}mm; margin:0 auto; padding:0; }
+    .paper{
+      width:${widthMm}mm;
+      margin:0 auto;
+      padding:0;
+    }
     .center{text-align:center}
     .b{font-weight:900;font-size:13px;line-height:1.35}
     .m{font-weight:700;font-size:11px;line-height:1.35}
     .sep{border-top:1px dashed #000;margin:8px 0}
     .totRow{display:flex;justify-content:space-between;gap:8px;font-weight:900;font-size:12px}
     .totMain{font-size:14px}
-
     .qr{display:flex;flex-direction:column;align-items:center;gap:6px;margin-top:8px}
-    .qr img{
-      width:${widthMm===58? 90:110}px;
-      height:${widthMm===58? 90:110}px;
-      object-fit:contain
-    }
-
+    .qr img{width:${widthMm===58? 90:110}px;height:${widthMm===58? 90:110}px;object-fit:contain}
     .foot{margin-top:8px;font-size:10px;color:#000;text-align:center;line-height:1.5}
-    .logo{
-      width:${widthMm===58? 46:56}px;
-      height:${widthMm===58? 46:56}px;
-      object-fit:contain;
-      display:block;
-      margin:0 auto 6px
-    }
+    .logo{width:${widthMm===58? 46:56}px;height:${widthMm===58? 46:56}px;object-fit:contain;display:block;margin:0 auto 6px}
     .item{padding:2px 0}
+    /* ✅ مهم للحراري: بدون قص/صفحات */
+    html, body { height:auto; }
   </style>
 </head>
 <body>
@@ -1151,6 +1238,7 @@ function printThermal(mm){
     <div class="center">
       <img class="logo" src="images/bslogo.webp" onerror="this.style.display='none'">
       <div class="b">B.S Medical &amp; Aesthetic</div>
+      <div class="m">Order ID: <strong>${escapeHtml(d.orderId || "—")}</strong></div>
     </div>
 
     <div class="sep"></div>
@@ -1182,11 +1270,85 @@ function printThermal(mm){
       Axentro – All Rights Reserved 2024 ©<br>
       By Ahmed Hamouda
     </div>
+
+    ${cutBlock}
   </div>
 </body>
 </html>`;
+}
 
-  openPrintWindow(html, `فاتورة ${d.invNo}`);
+function printThermal(mm){
+  const d = getInvoiceData();
+  openPrintWindow(buildThermalHtml(mm, d), `فاتورة ${d.invNo}`);
+}
+
+/* ================= SAVE INVOICE (Choose location if supported) ================= */
+function blobDownload(filename, content, mime){
+  const blob = new Blob([content], {type: mime || "application/octet-stream"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(()=> URL.revokeObjectURL(url), 1500);
+}
+
+async function saveWithPicker(filename, content, mime){
+  const picker = window.showSaveFilePicker;
+  if(!picker) return false;
+
+  const ext = (filename.split(".").pop() || "").toLowerCase();
+  const types = ext === "json"
+    ? [{ description: "JSON", accept: {"application/json": [".json"]}}]
+    : [{ description: "HTML", accept: {"text/html": [".html"]}}];
+
+  const handle = await picker({
+    suggestedName: filename,
+    types,
+    excludeAcceptAllOption: false
+  });
+  const writable = await handle.createWritable();
+  await writable.write(new Blob([content], {type: mime}));
+  await writable.close();
+  return true;
+}
+
+async function saveInvoice(){
+  const d = getInvoiceData();
+
+  const choice = prompt("اكتب نوع الحفظ:\n1 = JSON (حفظ بيانات)\n2 = HTML (فاتورة جاهزة للطباعة)\n\nاكتب 1 أو 2", "2");
+  const c = String(choice || "").trim();
+
+  if(c !== "1" && c !== "2"){
+    alert("تم الإلغاء.");
+    return;
+  }
+
+  if(c === "1"){
+    const name = `invoice_${(d.orderId||d.invNo||"").replace(/[^\w-]+/g,"_")}.json`;
+    const content = JSON.stringify(d, null, 2);
+    try{
+      const ok = await saveWithPicker(name, content, "application/json;charset=utf-8");
+      if(!ok) blobDownload(name, content, "application/json;charset=utf-8");
+      alert("✅ تم حفظ JSON");
+    }catch(e){
+      blobDownload(name, content, "application/json;charset=utf-8");
+      alert("✅ تم حفظ JSON");
+    }
+  }else{
+    const name = `invoice_${(d.orderId||d.invNo||"").replace(/[^\w-]+/g,"_")}.html`;
+    const content = buildA4Html(d); // عربي UTF-8
+    try{
+      const ok = await saveWithPicker(name, content, "text/html;charset=utf-8");
+      if(!ok) blobDownload(name, content, "text/html;charset=utf-8");
+      alert("✅ تم حفظ HTML");
+    }catch(e){
+      blobDownload(name, content, "text/html;charset=utf-8");
+      alert("✅ تم حفظ HTML");
+    }
+  }
 }
 
 /* escape helper */
@@ -1248,7 +1410,6 @@ function numberToArabicWords(number){
   return `${body} جنيه مصري فقط لا غير`;
 }
 
-/* ================= RESET + INVOICE NO + BINDS ================= */
 function resetInvoice(){
   if(!confirm("بدء فاتورة جديدة؟")) return;
 
@@ -1256,6 +1417,7 @@ function resetInvoice(){
   document.getElementById("custName").value = "";
   document.getElementById("custPhone").value = "";
   document.getElementById("custAddress").value = "";
+  document.getElementById("orderId").value = "";
 
   const waTa = document.getElementById("waImport");
   if(waTa) waTa.value = "";
@@ -1263,6 +1425,7 @@ function resetInvoice(){
   ROW_ID = 0;
   initInvoice();
   addRow();
+  refreshRowNumbers();
 }
 
 function generateInvoiceNo(){
@@ -1281,11 +1444,12 @@ document.getElementById('thermal80Btn').addEventListener('click', ()=> printTher
 document.getElementById('thermal58Btn').addEventListener('click', ()=> printThermal(58));
 document.getElementById('resetBtn').addEventListener('click', resetInvoice);
 document.getElementById('newInvoiceTop').addEventListener('click', resetInvoice);
+document.getElementById('saveBtn').addEventListener('click', ()=> { try{ saveInvoice(); }catch(e){ alert("فشل الحفظ"); } });
 
 /* Init row */
 addRow(true);
+refreshRowNumbers();
 </script>
-<!-- =========================
-     END PART 4/4
-     ========================= -->
-  
+
+</body>
+</html>
