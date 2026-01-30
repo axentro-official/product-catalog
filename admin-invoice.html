@@ -7,14 +7,25 @@
 
   <style>
     :root{
-      --bg1:#0b1020; --bg2:#0f172a;
-      --stroke:#ffffff1a; --text:#e5e7eb; --muted:#94a3b8;
-      --shadow:0 18px 50px rgba(0,0,0,.45);
+      /* ✅ White + Gold Theme */
+      --bg:#ffffff;
+      --panel:#ffffff;
+      --panel2:#fbfbfd;
+      --stroke:#e6e6ee;
+      --text:#111827;
+      --muted:#6b7280;
+      --shadow:0 18px 45px rgba(17,24,39,.10);
       --radius:18px;
-      --accent:#60a5fa; --accent2:#a78bfa;
-      --ok:#22c55e; --warn:#facc15; --bad:#ef4444;
+
+      --gold:#b88a2b;
+      --gold2:#e3c06b;
+      --goldSoft: rgba(184,138,43,.12);
+
+      --ok:#16a34a; --warn:#d97706; --bad:#dc2626;
+
       --container-max:1100px;
     }
+
     *{box-sizing:border-box}
     html,body{height:100%}
     body{
@@ -22,13 +33,14 @@
       font-family: system-ui, -apple-system, "Segoe UI", Tahoma, Arial;
       color:var(--text);
       background:
-        radial-gradient(900px 500px at 10% 10%, rgba(96,165,250,.25), transparent 55%),
-        radial-gradient(700px 500px at 90% 20%, rgba(167,139,250,.18), transparent 55%),
-        linear-gradient(180deg, var(--bg1), var(--bg2));
+        radial-gradient(900px 520px at 12% 10%, rgba(184,138,43,.10), transparent 55%),
+        radial-gradient(720px 520px at 92% 12%, rgba(227,192,107,.10), transparent 55%),
+        linear-gradient(180deg, #fff, #fbfbff);
       padding:18px;
       min-height:100vh;
       display:flex;
       flex-direction:column;
+      -webkit-font-smoothing:antialiased;
     }
 
     a{color:inherit;text-decoration:none}
@@ -39,20 +51,18 @@
     .topbar{
       display:flex;align-items:center;justify-content:space-between;gap:12px;
       padding:12px 14px;border:1px solid var(--stroke);
-      border-radius:18px;background:rgba(255,255,255,.06);
+      border-radius:18px;background:rgba(255,255,255,.85);
       box-shadow:var(--shadow);backdrop-filter:blur(10px);
       flex-wrap:wrap;
       margin-bottom:16px;
     }
-    .brand{
-      display:flex; align-items:center; gap:12px; min-width:220px;
-    }
+    .brand{display:flex; align-items:center; gap:12px; min-width:220px;}
     .logo{
       width:44px;height:44px;border-radius:999px;
       display:grid;place-items:center;
-      background: linear-gradient(135deg, rgba(96,165,250,.35), rgba(167,139,250,.25));
-      border:1px solid var(--stroke);
-      box-shadow: var(--shadow);
+      background: radial-gradient(circle at 30% 20%, rgba(227,192,107,.35), rgba(184,138,43,.15));
+      border:1px solid rgba(184,138,43,.28);
+      box-shadow: 0 10px 22px rgba(184,138,43,.18);
       overflow:hidden;
       padding:6px;
       flex:0 0 auto;
@@ -60,16 +70,21 @@
     .logo img{width:100%;height:100%;object-fit:contain;display:block}
     .brandTitle{font-weight:900}
     .brandSub{font-size:12px;color:var(--muted);margin-top:2px}
+
     .topActions{display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
     .pill{
       padding:10px 12px;border-radius:14px;border:1px solid var(--stroke);
-      background:rgba(255,255,255,.06);
+      background:rgba(255,255,255,.85);
       font-weight:900;
       cursor:pointer;
+      user-select:none;
+      transition: transform .12s ease, opacity .12s ease, border-color .12s ease;
     }
+    .pill:hover{ border-color: rgba(184,138,43,.35); }
+    .pill:active{ transform: translateY(1px); }
 
     .card{
-      background:rgba(255,255,255,.06);
+      background:rgba(255,255,255,.90);
       border:1px solid var(--stroke);
       border-radius:var(--radius);
       box-shadow:var(--shadow);
@@ -84,9 +99,13 @@
       padding:10px;
       border-radius:12px;
       border:1px solid var(--stroke);
-      background:rgba(255,255,255,.06);
+      background:#fff;
       color:var(--text);
       outline:none;
+    }
+    input:focus, textarea:focus, select:focus{
+      border-color: rgba(184,138,43,.55);
+      box-shadow: 0 0 0 3px rgba(184,138,43,.14);
     }
 
     #invNo, #invDate, #invTime{ font-weight:900; }
@@ -110,6 +129,7 @@
       border-collapse:collapse;
       font-size:13px;
       min-width:980px;
+      background:#fff;
     }
     th, td{
       border:1px solid var(--stroke);
@@ -118,24 +138,26 @@
       vertical-align:middle;
     }
     th{
-      background:rgba(255,255,255,.08);
+      background: linear-gradient(180deg, #fff, #fafafa);
       font-weight:900;
     }
 
     .btn{
       padding:12px;
       border-radius:14px;
-      border:1px solid rgba(96,165,250,.4);
-      background:linear-gradient(135deg, rgba(96,165,250,.3), rgba(167,139,250,.2));
+      border:1px solid rgba(184,138,43,.38);
+      background: linear-gradient(135deg, rgba(184,138,43,.22), rgba(227,192,107,.16));
       color:var(--text);
       font-weight:900;
       cursor:pointer;
+      user-select:none;
+      transition: transform .12s ease, opacity .12s ease;
     }
     .btn:active{transform: translateY(1px)}
     .btn.secondary{
       border-color: var(--stroke);
-      background:rgba(255,255,255,.06);
-      opacity:.9;
+      background:rgba(255,255,255,.85);
+      opacity:.95;
     }
 
     .totalBox{ margin-top:10px; width:100%; }
@@ -147,15 +169,15 @@
       padding:8px 10px;
       border:1px solid var(--stroke);
       border-radius:12px;
-      background:rgba(255,255,255,.04);
+      background:rgba(255,255,255,.85);
       margin-top:8px;
       font-weight:900;
     }
     .totalLine .k{color:var(--muted);font-weight:800}
     .totalLine .v{font-weight:900}
     .totalLine.primary{
-      border-color: rgba(96,165,250,.35);
-      background: linear-gradient(135deg, rgba(96,165,250,.18), rgba(167,139,250,.10));
+      border-color: rgba(184,138,43,.35);
+      background: linear-gradient(135deg, rgba(184,138,43,.12), rgba(227,192,107,.10));
     }
 
     .amount-words{
@@ -169,19 +191,20 @@
     /* Login */
     #loginBox{
       position:fixed; inset:0;
-      background:rgba(0,0,0,.85);
+      background:rgba(17,24,39,.78);
       display:flex; align-items:center; justify-content:center;
       z-index:999;
+      padding:14px;
     }
     #loginBox .card{max-width:420px;width:min(92vw,420px)}
     .loginTitle{display:flex;align-items:center;gap:10px;margin-bottom:10px}
     .loginTitle .badge{
       padding:6px 10px;border-radius:999px;
-      border:1px solid var(--stroke);
-      background:rgba(255,255,255,.06);
+      border:1px solid rgba(184,138,43,.28);
+      background: rgba(184,138,43,.10);
       font-weight:900;
       font-size:12px;
-      color:#cbd5e1;
+      color:#111827;
     }
 
     .prod-cell{
@@ -205,7 +228,7 @@
     .thumbMini{
       width:44px;height:44px;border-radius:12px;
       border:1px solid var(--stroke);
-      object-fit:cover;background:rgba(255,255,255,.04);
+      object-fit:cover;background:#fff;
       flex:0 0 auto;
     }
 
@@ -213,10 +236,11 @@
       padding:10px 12px;
       border-radius:12px;
       border:1px solid var(--stroke);
-      background:rgba(255,255,255,.06);
+      background:rgba(255,255,255,.85);
       color:var(--text);
       cursor:pointer;
       font-weight:900;
+      user-select:none;
     }
 
     .importBox{
@@ -236,12 +260,13 @@
       text-align:center;
       color:var(--muted);
       border-top:1px solid var(--stroke);
-      background: rgba(2,6,23,.25);
+      background: rgba(255,255,255,.75);
       backdrop-filter: blur(10px);
     }
-    .site-footer .line1{ font-weight:900; color:#cbd5e1; }
+    .site-footer .line1{ font-weight:900; color:#374151; }
     .site-footer .line2{ margin-top:6px; font-weight:800; }
-    :focus{ outline:3px solid rgba(96,165,250,.2); outline-offset:3px; }
+
+    :focus{ outline:3px solid rgba(184,138,43,.18); outline-offset:3px; }
 
     /* ✅ موبايل: الجدول كروت */
     @media (max-width: 820px){
@@ -251,10 +276,11 @@
       thead{ display:none; }
       tbody tr{
         border:1px solid var(--stroke);
-        background: rgba(255,255,255,.05);
+        background: rgba(255,255,255,.92);
         border-radius: 16px;
         padding:10px;
         margin-bottom:10px;
+        box-shadow: 0 10px 24px rgba(17,24,39,.06);
       }
       tbody td{
         border:none;
@@ -262,7 +288,7 @@
         text-align:right;
       }
       tbody td + td{
-        border-top:1px dashed rgba(255,255,255,.10);
+        border-top:1px dashed rgba(17,24,39,.10);
       }
       tbody td[data-label]::before{
         content: attr(data-label);
@@ -297,12 +323,12 @@
         <img src="images/bslogo.webp" alt="BS Logo" onerror="this.style.display='none'">
       </div>
       <div>
-        <div style="font-weight:900;font-size:18px">لوحة إدارة الفواتير</div>
+        <div style="font-weight:900;font-size:18px;color:#fff">لوحة إدارة الفواتير</div>
         <div class="badge">B.S Medical &amp; Aesthetic</div>
       </div>
     </div>
 
-    <label for="passInput">رمز الدخول</label>
+    <label for="passInput" style="color:#e5e7eb">رمز الدخول</label>
     <input type="password" id="passInput" placeholder="••••••••" aria-label="رمز الدخول"/>
 
     <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
@@ -310,8 +336,11 @@
       <button id="logoutBtn" class="btn secondary" style="flex:1">خروج</button>
     </div>
 
-    <div class="hint" style="margin-top:10px">
+    <div class="hint" style="margin-top:10px;color:#d1d5db">
       ملاحظة: رمز الدخول موجود داخل الكود ويمكن تغييره من المتغير <strong>ADMIN_PASSWORD</strong>.
+    </div>
+    <div class="hint" style="margin-top:8px;color:#d1d5db">
+      تنبيه طباعة: لإزالة التاريخ والرابط اللي فوق وتحت أثناء الطباعة، من نافذة Print افتح <strong>More settings</strong> ثم اغلق <strong>Headers and footers</strong>.
     </div>
   </div>
 </div>
@@ -325,7 +354,7 @@
       </div>
       <div>
         <div class="brandTitle">B.S Medical &amp; Aesthetic — فواتير</div>
-        <div class="brandSub">إدارة وإنشاء فواتير PDF</div>
+        <div class="brandSub">إدارة وإنشاء فواتير PDF / حراري</div>
       </div>
     </div>
     <div class="topActions">
@@ -340,11 +369,13 @@
     <div class="importBox">
       <textarea id="waImport" rows="5" placeholder="الصق رسالة الطلب كاملة هنا (كما وصلت من واتساب)..."></textarea>
 
-      <!-- ✅ تم حذف صندوق الشرح (يدعم تلقائيًا) بناءً على طلبك -->
-
       <div style="display:flex;gap:10px;flex-wrap:wrap">
         <button class="btn" id="importBtn">📥 استيراد إلى الجدول</button>
         <button class="btn secondary" id="clearImportBtn">مسح</button>
+      </div>
+
+      <div class="hint">
+        ✅ بعد الاستيراد هتلاقي بيانات العميل والأصناف اتملت تلقائيًا.
       </div>
     </div>
   </div>
@@ -415,9 +446,21 @@
   </div>
 
   <!-- Actions -->
-  <div class="card row2">
-    <button class="btn" id="pdfBtn">📄 تصدير PDF</button>
-    <button class="btn" id="resetBtn">🗑️ فاتورة جديدة</button>
+  <div class="card">
+    <h2 style="margin-bottom:10px">تصدير / طباعة</h2>
+    <div class="row2">
+      <button class="btn" id="pdfBtn">📄 تصدير PDF (A4)</button>
+      <button class="btn" id="resetBtn">🗑️ فاتورة جديدة</button>
+    </div>
+
+    <div style="margin-top:10px;display:flex;gap:10px;flex-wrap:wrap">
+      <button class="btn secondary" id="thermal80Btn">🧾 طباعة حراري 80mm</button>
+      <button class="btn secondary" id="thermal58Btn">🧾 طباعة حراري 58mm</button>
+    </div>
+
+    <div class="hint" style="margin-top:10px">
+      ⚠️ لإزالة (التاريخ/الرابط) اللي فوق وتحت في Print Preview: افتح <strong>More settings</strong> ثم اغلق <strong>Headers and footers</strong>.
+    </div>
   </div>
 
 </div>
@@ -432,6 +475,10 @@
 const ADMIN_PASSWORD = "1407"; // ✅ غيّر الباسورد من هنا
 const API_URL = "https://script.google.com/macros/s/AKfycbwsPPw3UiW6TBngBcbFxY4E8rB7JYgK1W2LRn0WaS9C7OitA1FgZ1vAz9Qr1u_ojlZ8/exec";
 const IMG_PLACEHOLDER = "https://via.placeholder.com/600x400?text=No+Image";
+
+/* ✅ QR page (غيّرها لو عندك صفحة تواصل منفصلة) */
+const PROMO_URL = "https://axentro-official.github.io/product-catalog/";
+const PROMO_TEXT = "لعمل كتالوج + فواتير احترافية مثل هذا النظام، امسح QR للتواصل.";
 
 /* ✅ Cache products مثل index/order */
 const PROD_CACHE_KEY = "AX_PRODUCTS_CACHE_V1";
@@ -602,21 +649,15 @@ function resolveImageBySku(sku){
 }
 
 /* ================= WhatsApp import (✅ includes customer data) ================= */
-
-/* يستخرج: الاسم + الهاتف + العنوان من رسالة order.html */
 function extractCustomerData(fullText){
   const t = String(fullText || "");
-
-  // الاسم: ...
   const nameMatch = t.match(/(?:^|\n)\s*الاسم\s*:\s*(.+)\s*(?:\n|$)/i);
   const name = nameMatch ? nameMatch[1].trim() : "";
 
-  // الهاتف: غالبًا سطر فيه 📞
   let phone = "";
   const phoneMatch = t.match(/(?:📞|الهاتف\s*:?)\s*([+]?[\d\s-]{8,})/);
   if(phoneMatch) phone = phoneMatch[1].trim();
 
-  // العنوان: غالبًا سطر فيه 📍
   let address = "";
   const addrMatch = t.match(/(?:📍|العنوان\s*:?)\s*(.+)\s*(?:\n|$)/);
   if(addrMatch) address = addrMatch[1].trim();
@@ -624,7 +665,6 @@ function extractCustomerData(fullText){
   return { name, phone, address };
 }
 
-/* أصناف كما هي */
 function parseWhatsAppLines(fullText){
   const text = String(fullText || "").trim();
   if(!text) return [];
@@ -650,7 +690,6 @@ function parseWhatsAppLines(fullText){
       }
     }
 
-    // فلتر: نتجاهل سطور العميل/التاريخ.. ونحتفظ بس لو فيه SKU أو اسم
     if(sku || name){
       if(/^\s*الاسم\s*:/i.test(line)) continue;
       if(line.includes("📞") || line.includes("📍")) continue;
@@ -670,13 +709,11 @@ function importFromWhatsApp(){
     return;
   }
 
-  // ✅ 1) املأ بيانات العميل
   const cust = extractCustomerData(raw);
   if(cust.name) document.getElementById("custName").value = cust.name;
   if(cust.phone) document.getElementById("custPhone").value = cust.phone;
   if(cust.address) document.getElementById("custAddress").value = cust.address;
 
-  // ✅ 2) استخرج الأصناف
   const items = parseWhatsAppLines(raw);
   if(!items.length){
     alert("تم ملء بيانات العميل ✅ لكن لم أستطع استخراج أصناف. تأكد أن الرسالة تحتوي على SKU أو اسم المنتج وسطر (الكمية: رقم).");
@@ -727,7 +764,6 @@ function importFromWhatsApp(){
 document.getElementById("importBtn")?.addEventListener("click", importFromWhatsApp);
 document.getElementById("clearImportBtn")?.addEventListener("click", ()=>{ document.getElementById("waImport").value = ""; });
 
-/* ✅ تحسين إضافي: لو المستخدم لَصَق الرسالة في مربع الاستيراد وخلاص */
 document.getElementById("waImport")?.addEventListener("paste", ()=>{
   setTimeout(()=>{
     const raw = String(document.getElementById("waImport").value || "").trim();
@@ -960,8 +996,8 @@ function calcGrand(){
   document.getElementById("amountWords").textContent = numberToArabicWords(Math.round(totalAfter));
 }
 
-/* ================= EXPORT PDF ================= */
-function exportPDF(){
+/* ================= EXPORT / PRINT ================= */
+function collectInvoiceData(){
   const invNo = document.getElementById("invNo").value || "";
   const invDate = document.getElementById("invDate").value || "";
   const invTime = document.getElementById("invTime").value || "";
@@ -981,46 +1017,28 @@ function exportPDF(){
     const disc = Math.max(0, Math.min(discIn, sub));
 
     const skuName = (sku && name) ? `${sku} | ${name}` : (sku || name);
-    return { skuName, qty, price, disc, sub };
+    return { sku, name, skuName, qty, price, disc, sub };
   }).filter(i => i.skuName || i.qty || i.price || i.disc);
-
-  const logoUrl = "images/bslogo.webp";
 
   const totalBefore = items.reduce((s,i)=> s + (Number(i.sub)||0), 0);
   const totalDiscount = items.reduce((s,i)=> s + (Number(i.disc)||0), 0);
   const totalAfter = Math.max(0, totalBefore - totalDiscount);
   const words = numberToArabicWords(Math.round(totalAfter));
 
-  const style = `
-    <style>
-      :root{ --text:#111827; --muted:#6b7280 }
-      body{font-family: Arial, Helvetica, sans-serif; color:var(--text); direction:rtl; margin:20px; }
-      .sheet{max-width:900px;margin:0 auto;}
-      .card{background:#fff;border-radius:10px;padding:18px;margin-bottom:18px;box-shadow:0 6px 18px rgba(0,0,0,.08);}
-      .header{display:flex;justify-content:space-between;align-items:center;gap:12px;}
-      .brand{display:flex;align-items:center;gap:12px}
-      .brand img{width:64px;height:64px;object-fit:contain}
-      h1{margin:0;font-weight:900;color:#111827}
-      .meta{font-size:14px;color:var(--muted); line-height:1.7}
-      .meta strong{color:#111827}
-      table{width:100%;border-collapse:collapse;margin-top:12px;font-size:14px}
-      th,td{border:1px solid #e5e7eb;padding:8px;text-align:center}
-      th{background:#f8fafc}
-      .totals{margin-top:12px;display:flex;flex-direction:column;gap:8px}
-      .tline{display:flex;justify-content:space-between;gap:10px;border:1px solid #e5e7eb;border-radius:8px;padding:10px 12px;background:#f9fafb;font-weight:900}
-      .tline span:first-child{color:#6b7280;font-weight:800}
-      .tline.primary{background:#eef2ff;border-color:#c7d2fe}
-      .amountWords{margin-top:10px;font-weight:900;color:#374151}
-      .footer{margin-top:14px;text-align:center;color:#9ca3af;font-size:12px}
-      @media print{ body{margin:6mm} .sheet{max-width:100%} }
-    </style>
-  `;
+  return {
+    invNo, invDate, invTime,
+    custName, custPhone, custAddress,
+    items, totalBefore, totalDiscount, totalAfter, words
+  };
+}
 
-  let itemsHtml = '';
-  if(items.length === 0){
-    itemsHtml = `<tr><td colspan="5" style="padding:18px;text-align:center;color:var(--muted)">لا توجد أصناف</td></tr>`;
-  } else {
-    itemsHtml = items.map(it => `
+function exportOrPrint(mode){
+  // mode: "a4" | "80" | "58"
+  const data = collectInvoiceData();
+  const logoUrl = "images/bslogo.webp";
+
+  const itemsHtml = data.items.length
+    ? data.items.map(it => `
       <tr>
         <td>${escapeHtml(it.skuName)}</td>
         <td>${it.qty}</td>
@@ -1028,25 +1046,223 @@ function exportPDF(){
         <td>${Number(it.disc||0).toFixed(2)}</td>
         <td>${Number(it.sub||0).toFixed(2)}</td>
       </tr>
-    `).join("");
-  }
+    `).join("")
+    : `<tr><td colspan="5" style="padding:18px;text-align:center;color:#6b7280">لا توجد أصناف</td></tr>`;
 
   let totalsHtml = "";
-  if(totalDiscount > 0.00001){
+  if(data.totalDiscount > 0.00001){
     totalsHtml = `
       <div class="totals">
-        <div class="tline"><span>الإجمالي قبل الخصم</span><span>${totalBefore.toFixed(2)} جنيه</span></div>
-        <div class="tline"><span>إجمالي الخصم</span><span>${totalDiscount.toFixed(2)} جنيه</span></div>
-        <div class="tline primary"><span>الإجمالي بعد الخصم</span><span>${totalAfter.toFixed(2)} جنيه</span></div>
+        <div class="tline"><span>الإجمالي قبل الخصم</span><span>${data.totalBefore.toFixed(2)} جنيه</span></div>
+        <div class="tline"><span>إجمالي الخصم</span><span>${data.totalDiscount.toFixed(2)} جنيه</span></div>
+        <div class="tline primary"><span>الإجمالي بعد الخصم</span><span>${data.totalAfter.toFixed(2)} جنيه</span></div>
       </div>
     `;
   } else {
     totalsHtml = `
       <div class="totals">
-        <div class="tline primary"><span>الإجمالي</span><span>${totalAfter.toFixed(2)} جنيه</span></div>
+        <div class="tline primary"><span>الإجمالي</span><span>${data.totalAfter.toFixed(2)} جنيه</span></div>
       </div>
     `;
   }
+
+  const bodyClass = (mode === "80") ? "receipt-80" : (mode === "58" ? "receipt-58" : "");
+  const title = `فاتورة ${data.invNo}`;
+
+  const style = `
+  <style>
+    :root{
+      --text:#111827;
+      --muted:#6b7280;
+      --stroke:#e5e7eb;
+      --gold:#b88a2b;
+      --gold2:#e3c06b;
+      --shadow: 0 10px 26px rgba(17,24,39,.10);
+    }
+
+    *{
+      box-sizing:border-box;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+
+    body{
+      font-family: Arial, Helvetica, sans-serif;
+      color:var(--text);
+      direction:rtl;
+      margin:0;
+      background:#fff;
+      padding:18px;
+    }
+
+    .wrap{
+      max-width: 920px;
+      margin: 0 auto;
+    }
+
+    .card{
+      background:#fff;
+      border:1px solid var(--stroke);
+      border-radius:14px;
+      padding:16px;
+      box-shadow: var(--shadow);
+      margin-bottom:14px;
+    }
+
+    .header{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:12px;
+    }
+
+    .brand{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      min-width:0;
+    }
+
+    .brand img{
+      width:64px;height:64px;object-fit:contain;
+      border-radius:999px;
+      border:1px solid rgba(184,138,43,.25);
+      padding:6px;
+      background: radial-gradient(circle at 30% 20%, rgba(227,192,107,.25), rgba(184,138,43,.10));
+    }
+
+    .brand h1{
+      margin:0;
+      font-weight:900;
+      font-size:22px;
+      letter-spacing:.2px;
+    }
+
+    .meta{
+      font-size:13px;
+      color:var(--muted);
+      line-height:1.7;
+      text-align:left;
+    }
+    .meta strong{ color:var(--text); }
+
+    .sepGold{
+      height:2px;
+      border-radius:99px;
+      background: linear-gradient(90deg, rgba(184,138,43,.15), rgba(184,138,43,.65), rgba(227,192,107,.20));
+      margin:10px 0 0;
+    }
+
+    h3{ margin:0 0 10px; font-weight:900; }
+
+    table{
+      width:100%;
+      border-collapse:collapse;
+      margin-top:10px;
+      font-size:13px;
+    }
+    th,td{
+      border:1px solid var(--stroke);
+      padding:8px;
+      text-align:center;
+      vertical-align:middle;
+    }
+    th{
+      background: #fafafa;
+      font-weight:900;
+    }
+
+    .totals{
+      margin-top:12px;
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+    }
+    .tline{
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      border:1px solid var(--stroke);
+      border-radius:12px;
+      padding:10px 12px;
+      background:#fafafa;
+      font-weight:900;
+    }
+    .tline span:first-child{ color:var(--muted); font-weight:800; }
+    .tline.primary{
+      background: linear-gradient(135deg, rgba(184,138,43,.14), rgba(227,192,107,.10));
+      border-color: rgba(184,138,43,.25);
+    }
+
+    .amountWords{
+      margin-top:10px;
+      font-weight:900;
+      color:#374151;
+      border-top:1px dashed var(--stroke);
+      padding-top:10px;
+    }
+
+    .qrBox{
+      margin-top:12px;
+      border:1px solid rgba(184,138,43,.22);
+      background: rgba(184,138,43,.06);
+      border-radius:14px;
+      padding:12px;
+      display:flex;
+      align-items:center;
+      gap:12px;
+      justify-content:space-between;
+      break-inside: avoid-page;
+      page-break-inside: avoid;
+    }
+    .qrText{
+      font-weight:900;
+      line-height:1.6;
+      color:#374151;
+      min-width:0;
+    }
+    .qrHint{ margin-top:6px; color:var(--muted); font-weight:800; font-size:12px; }
+    .qrCanvasWrap{ text-align:center; flex:0 0 auto; }
+    #qrCanvas{ width:96px; height:96px; }
+
+    .footer{
+      margin-top:12px;
+      text-align:center;
+      color:#9ca3af;
+      font-size:12px;
+    }
+
+    /* ================= PRINT ================= */
+    @page{ size: A4; margin: 10mm; }
+
+    @media print{
+      body{ padding:0; }
+      .wrap{ max-width:100%; margin:0; }
+      .card{ box-shadow:none; }
+      table, tr, td, th{
+        page-break-inside: avoid !important;
+        break-inside: avoid-page !important;
+      }
+    }
+
+    /* ================= THERMAL ================= */
+    body.receipt-80 @page{ size: 80mm auto; margin: 3mm; }
+    body.receipt-80{ padding:0; font-size:12px; }
+    body.receipt-80 .wrap{ width:80mm; max-width:80mm; margin:0 auto; }
+    body.receipt-80 .brand h1{ font-size:16px; }
+    body.receipt-80 .brand img{ width:48px; height:48px; }
+    body.receipt-80 th, body.receipt-80 td{ padding:6px; font-size:11px; }
+    body.receipt-80 #qrCanvas{ width:86px; height:86px; }
+
+    body.receipt-58 @page{ size: 58mm auto; margin: 2.5mm; }
+    body.receipt-58{ padding:0; font-size:11px; }
+    body.receipt-58 .wrap{ width:58mm; max-width:58mm; margin:0 auto; }
+    body.receipt-58 .brand h1{ font-size:14px; }
+    body.receipt-58 .brand img{ width:44px; height:44px; }
+    body.receipt-58 th, body.receipt-58 td{ padding:5px; font-size:10px; }
+    body.receipt-58 #qrCanvas{ width:78px; height:78px; }
+  </style>
+  `;
 
   const html = `
     <!doctype html>
@@ -1054,37 +1270,43 @@ function exportPDF(){
     <head>
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
+      <title>${escapeHtml(title)}</title>
       ${style}
-      <title>فاتورة ${escapeHtml(invNo)}</title>
     </head>
-    <body>
-      <div class="sheet">
-        <div class="card header">
-          <div class="brand">
-            <img src="${logoUrl}" onerror="this.style.display='none'">
-            <div>
-              <h1>B.S Medical &amp; Aesthetic</h1>
-              <div class="meta">رقم الفاتورة: <strong>${escapeHtml(invNo)}</strong></div>
+    <body class="${bodyClass}">
+      <div class="wrap">
+        <div class="card">
+          <div class="header">
+            <div class="brand">
+              <img src="${logoUrl}" onerror="this.style.display='none'">
+              <div style="min-width:0">
+                <h1>B.S Medical &amp; Aesthetic</h1>
+                <div class="meta" style="text-align:right;color:#6b7280">
+                  رقم الفاتورة: <strong>${escapeHtml(data.invNo)}</strong>
+                </div>
+              </div>
+            </div>
+
+            <div class="meta">
+              <div>التاريخ: <strong>${escapeHtml(data.invDate)}</strong></div>
+              <div>الوقت: <strong>${escapeHtml(data.invTime)}</strong></div>
             </div>
           </div>
 
-          <div class="meta" style="text-align:left">
-            <div>التاريخ: <strong>${escapeHtml(invDate)}</strong></div>
-            <div>الوقت: <strong>${escapeHtml(invTime)}</strong></div>
+          <div class="sepGold"></div>
+        </div>
+
+        <div class="card">
+          <h3>بيانات العميل</h3>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;font-weight:900;color:#374151">
+            <div style="min-width:180px"><span style="color:#6b7280;font-weight:800">الاسم:</span> ${escapeHtml(data.custName)}</div>
+            <div style="min-width:160px"><span style="color:#6b7280;font-weight:800">الهاتف:</span> ${escapeHtml(data.custPhone)}</div>
+            <div style="flex:1;min-width:220px"><span style="color:#6b7280;font-weight:800">العنوان:</span> ${escapeHtml(data.custAddress)}</div>
           </div>
         </div>
 
         <div class="card">
-          <h3 style="margin:0 0 8px">بيانات العميل</h3>
-          <div style="display:flex;gap:12px;flex-wrap:wrap">
-            <div style="min-width:180px"><strong>الاسم:</strong> ${escapeHtml(custName)}</div>
-            <div style="min-width:160px"><strong>الهاتف:</strong> ${escapeHtml(custPhone)}</div>
-            <div style="flex:1"><strong>العنوان:</strong> ${escapeHtml(custAddress)}</div>
-          </div>
-        </div>
-
-        <div class="card">
-          <h3 style="margin:0 0 8px">الأصناف</h3>
+          <h3>الأصناف</h3>
           <table>
             <thead>
               <tr>
@@ -1099,7 +1321,18 @@ function exportPDF(){
           </table>
 
           ${totalsHtml}
-          <div class="amountWords">${escapeHtml(words)}</div>
+          <div class="amountWords">${escapeHtml(data.words)}</div>
+
+          <div class="qrBox" id="qrBox">
+            <div class="qrText">
+              👑 ${escapeHtml(PROMO_TEXT)}
+              <div class="qrHint">${escapeHtml(PROMO_URL)}</div>
+            </div>
+            <div class="qrCanvasWrap">
+              <canvas id="qrCanvas" width="96" height="96"></canvas>
+              <div style="margin-top:6px;color:#6b7280;font-weight:900;font-size:11px">QR</div>
+            </div>
+          </div>
 
           <div class="footer">
             Axentro – All Rights Reserved 2024 ©<br>
@@ -1107,6 +1340,34 @@ function exportPDF(){
           </div>
         </div>
       </div>
+
+      <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+      <script>
+        (function(){
+          const url = ${JSON.stringify(PROMO_URL)};
+          const canvas = document.getElementById("qrCanvas");
+
+          function doPrint(){
+            try{ window.focus(); }catch(e){}
+            setTimeout(()=>{ try{ window.print(); }catch(e){} }, 220);
+          }
+
+          // لو QRCode متاح: ارسم ثم اطبع
+          if(window.QRCode && canvas){
+            try{
+              QRCode.toCanvas(canvas, url, { width: canvas.width, margin: 1 }, function(err){
+                if(err) console.error(err);
+                doPrint();
+              });
+            }catch(e){
+              console.error(e);
+              doPrint();
+            }
+          }else{
+            doPrint();
+          }
+        })();
+      </script>
     </body>
     </html>
   `;
@@ -1115,10 +1376,6 @@ function exportPDF(){
   w.document.open();
   w.document.write(html);
   w.document.close();
-  w.onload = function(){
-    w.focus();
-    setTimeout(()=> w.print(), 250);
-  };
 }
 
 /* escape helper */
@@ -1190,7 +1447,6 @@ function resetInvoice(){
   document.getElementById("custPhone").value = "";
   document.getElementById("custAddress").value = "";
 
-  /* ✅ مهم: مسح صندوق استيراد واتساب عند فاتورة جديدة */
   const waTa = document.getElementById("waImport");
   if(waTa) waTa.value = "";
 
@@ -1210,7 +1466,9 @@ function generateInvoiceNo(){
 
 /* BIND UI */
 document.getElementById('addRowBtn').addEventListener('click', ()=> addRow(false));
-document.getElementById('pdfBtn').addEventListener('click', exportPDF);
+document.getElementById('pdfBtn').addEventListener('click', ()=> exportOrPrint("a4"));
+document.getElementById('thermal80Btn').addEventListener('click', ()=> exportOrPrint("80"));
+document.getElementById('thermal58Btn').addEventListener('click', ()=> exportOrPrint("58"));
 document.getElementById('resetBtn').addEventListener('click', resetInvoice);
 document.getElementById('newInvoiceTop').addEventListener('click', resetInvoice);
 
