@@ -1,3 +1,4 @@
+<!-- ========== admin-invoice.html (UPDATED - FULL) ========== -->
 <!-- ========== PART 1 / 4 ========== -->
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
@@ -101,8 +102,8 @@
     #invNo, #invDate, #invTime{ font-weight:900; }
     #orderId{ font-weight:900; }
 
-    /* ✅ عدّلناها لـ 5 أعمدة عشان Order ID */
-    .row{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
+    /* ✅ الصف العلوي 4 أعمدة (بدون اسم العميل) */
+    .row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
     .row2{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
     .row1{display:grid;grid-template-columns:1fr;gap:10px}
 
@@ -234,7 +235,6 @@
     .delBtn:hover{filter:brightness(0.99)}
 
     .importBox{display:grid;grid-template-columns:1fr;gap:10px;}
-    .hint{color:var(--muted);font-size:12px;line-height:1.7;}
 
     .site-footer{
       margin-top:auto;
@@ -315,10 +315,7 @@
       <button id="loginBtn" class="btn" style="flex:1">دخول</button>
       <button id="logoutBtn" class="btn secondary" style="flex:1">خروج</button>
     </div>
-
-    <div class="hint" style="margin-top:10px">
-      🔒 حماية إضافية: عدد محاولات + قفل مؤقت + خروج تلقائي عند عدم النشاط.
-    </div>
+    <!-- ✅ تم حذف أي Hints حسب طلبك -->
   </div>
 </div>
 
@@ -329,14 +326,11 @@
         <img src="images/bslogo.webp" alt="BS Logo" onerror="this.style.display='none'">
       </div>
       <div>
-       <div class="brandTitle">B.S Medical &amp; Aesthetic</div>
+        <div class="brandTitle">B.S Medical &amp; Aesthetic</div>
         <div class="brandSub">إدارة وإنشاء فواتير</div>
       </div>
     </div>
-    <div class="topActions">
-      <button id="newInvoiceTop" class="pill">➕ فاتورة جديدة</button>
-      <button id="logoutTop" class="pill">🚪 تسجيل خروج</button>
-    </div>
+    <!-- ✅ تم حذف أزرار الشريط العلوي -->
   </div>
 
   <!-- Import from WhatsApp -->
@@ -348,13 +342,14 @@
         <button class="btn" id="importBtn">📥 استيراد إلى الجدول</button>
         <button class="btn secondary" id="clearImportBtn">مسح</button>
       </div>
-      <div class="hint">💡 لو الرسالة فيها: <b>رقم الطلب</b> هيتسحب تلقائيًا ويتحط في Order ID.</div>
+      <!-- ✅ حذف Hint الاستيراد -->
     </div>
   </div>
 
   <!-- Header -->
   <div class="card">
-    <h2 id="pageTitle">فاتورة — B.S</h2>
+    <!-- ✅ تغيير العنوان -->
+    <h2 id="pageTitle">فاتورة  B.S</h2>
 
     <div class="row" role="region" aria-label="معلومات الفاتورة">
       <div>
@@ -373,14 +368,15 @@
         <label for="orderId">Order ID (رقم الطلب)</label>
         <input id="orderId" placeholder="مثال: 12548" />
       </div>
-      <div>
-        <label for="custName">العميل</label>
-        <input id="custName" placeholder="اسم العميل" />
-      </div>
     </div>
 
+    <!-- ✅ اسم العميل نزل تحت وبقى كبير زي الهاتف والعنوان -->
     <div style="margin-top:12px;">
       <div class="row1">
+        <div>
+          <label for="custName">اسم العميل</label>
+          <input id="custName" placeholder="اسم العميل" />
+        </div>
         <div>
           <label for="custPhone">رقم الهاتف</label>
           <input id="custPhone" placeholder="مثال: 01xxxxxxxxx أو +201xxxxxxxxx" inputmode="tel" />
@@ -392,6 +388,7 @@
       </div>
     </div>
   </div>
+  <!-- ========== PART 2 / 4 ========== -->
 
   <!-- Items -->
   <div class="card">
@@ -422,21 +419,16 @@
     <div class="amount-words" id="amountWords"></div>
   </div>
 
-  <!-- Actions -->
+  <!-- Actions (✅ فقط 4 أزرار) -->
   <div class="card">
     <div class="row2">
-      <button class="btn" id="pdfA4Btn">📄 تصدير / طباعة (A4)</button>
-      <button class="btn secondary" id="resetBtn">🗑️ فاتورة جديدة</button>
+      <button class="btn" id="thermal80Btn">🧾 طباعة حراري 80mm</button>
+      <button class="btn" id="thermal58Btn">🧾 طباعة حراري 58mm</button>
     </div>
 
     <div style="margin-top:10px;display:flex;gap:10px;flex-wrap:wrap">
-      <button class="btn" id="thermal80Btn" style="flex:1">🧾 طباعة (حراري 80mm)</button>
-      <button class="btn" id="thermal58Btn" style="flex:1">🧾 طباعة (حراري 58mm)</button>
-      <button class="btn secondary" id="saveBtn" style="flex:1">💾 حفظ الفاتورة</button>
-    </div>
-
-    <div class="hint" style="margin-top:10px">
-      💾 الحفظ: لو المتصفح يدعم اختيار مكان الحفظ هيظهر لك "Save As"، ولو لأ هيتعمل Download تلقائي.
+      <button class="btn" id="printA4Btn" style="flex:1">🖨️ طباعة A4</button>
+      <button class="btn" id="savePdfA4Btn" style="flex:1">📄 حفظ PDF لـ A4</button>
     </div>
   </div>
 </div>
@@ -446,17 +438,18 @@
   <div class="line2">By Ahmed Hamouda</div>
 </footer>
 
+<!-- ✅ مكتبة توليد PDF (ضرورية لإصلاح QR داخل PDF) -->
+<script src="https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.1/dist/html2pdf.bundle.min.js"></script>
+
 <script>
-<!-- ========== PART 2 / 4 ========== -->
 /* ================= CONFIG ================= */
 const ADMIN_PASSWORD = "1407"; // ✅ غيّر الباسورد من هنا (داخلي فقط)
 const API_URL = "https://script.google.com/macros/s/AKfycbwsPPw3UiW6TBngBcbFxY4E8rB7JYgK1W2LRn0WaS9C7OitA1FgZ1vAz9Qr1u_ojlZ8/exec";
 const IMG_PLACEHOLDER = "https://via.placeholder.com/600x400?text=No+Image";
 
-/* ✅ QR (صورة) — حطها في نفس فولدر الصفحة أو داخل images */
+/* ✅ QR (صورة) */
 const QR_SRC_MAIN = "qr-links.png";
 const QR_SRC_FALLBACK = "images/qr-links.png";
-const LINKS_URL_TEXT = "axentro-official.github.io/axentro-website/links.html";
 
 /* ✅ Cache products */
 const PROD_CACHE_KEY = "AX_PRODUCTS_CACHE_V1";
@@ -502,9 +495,7 @@ function resetFails(){
 function startIdleGuard(){
   stopIdleGuard();
   const kick = ()=>{
-    try{
-      alert("تم تسجيل الخروج تلقائيًا بسبب عدم النشاط.");
-    }catch(e){}
+    try{ alert("تم تسجيل الخروج تلقائيًا بسبب عدم النشاط."); }catch(e){}
     setLoggedIn(false);
   };
   idleTimer = setTimeout(kick, IDLE_MINUTES * 60000);
@@ -572,7 +563,6 @@ loginBtn.addEventListener('click', checkPass);
 passInput.addEventListener('keydown', (e)=> { if(e.key === 'Enter') checkPass(); });
 
 logoutBtn.addEventListener('click', ()=> setLoggedIn(false));
-document.getElementById("logoutTop")?.addEventListener("click", ()=> setLoggedIn(false));
 
 if(sessionStorage.getItem("BS_ADMIN_OK") === "1"){
   setLoggedIn(true);
@@ -592,7 +582,6 @@ function initInvoice(){
   document.getElementById("invDate").value = formatDateEnglish(now);
   document.getElementById("invTime").value = now.toLocaleTimeString("en-US",{hour:'2-digit',minute:'2-digit',hour12:true});
   document.getElementById("invNo").value = generateInvoiceNo();
-  // ✅ Order ID يفضل يفضّل زي ما هو (لو فاتورة جديدة فعلاً resetInvoice هيصفره)
   calcGrand();
 }
 
@@ -805,7 +794,7 @@ function importFromWhatsApp(){
     calcRowByTr(tr);
   });
 
-  refreshRowNumbers(); // ✅ ترقيم بعد الاستيراد
+  refreshRowNumbers();
   calcGrand();
   alert("✅ تم الاستيراد: بيانات العميل + الأصناف");
 }
@@ -818,7 +807,7 @@ document.getElementById("waImport")?.addEventListener("paste", ()=>{
     if(raw.length >= 20) { try{ importFromWhatsApp(); }catch(e){} }
   }, 0);
 });
-<!-- ========== PART 3 / 4 ========== -->
+  <!-- ========== PART 3 / 4 ========== -->
 /* ================= ROWS + AUTO INDEX ================= */
 function refreshRowNumbers(){
   const rows = Array.from(document.querySelectorAll("#itemsTable tbody tr"));
@@ -853,7 +842,7 @@ function addRow(silentFocus=false){
   `;
 
   tbody.appendChild(tr);
-  refreshRowNumbers(); // ✅ ترقيم بعد الإضافة
+  refreshRowNumbers();
 
   if(!silentFocus){ tr.querySelector('[data-field="sku"]')?.focus(); }
   calcRowByTr(tr);
@@ -861,7 +850,7 @@ function addRow(silentFocus=false){
 }
 function removeRowByTr(tr){
   tr?.remove();
-  refreshRowNumbers(); // ✅ ترقيم بعد الحذف
+  refreshRowNumbers();
   calcGrand();
 }
 
@@ -1027,7 +1016,7 @@ function openPrintWindow(html, title){
     setTimeout(()=> w.print(), 250);
   };
 }
-<!-- ========== PART 4 / 4 ========== -->
+  <!-- ========== PART 4 / 4 ========== -->
 function buildA4Html(d){
   const itemsHtml = d.items.length ? d.items.map(it => `
     <tr>
@@ -1158,6 +1147,7 @@ function exportA4(){
   openPrintWindow(buildA4Html(d), `فاتورة ${d.invNo}`);
 }
 
+/* ===== Thermal ===== */
 function buildThermalHtml(mm, d){
   const widthMm = (mm === 58) ? 58 : 80;
 
@@ -1229,7 +1219,6 @@ function buildThermalHtml(mm, d){
     .foot{margin-top:8px;font-size:10px;color:#000;text-align:center;line-height:1.5}
     .logo{width:${widthMm===58? 46:56}px;height:${widthMm===58? 46:56}px;object-fit:contain;display:block;margin:0 auto 6px}
     .item{padding:2px 0}
-    /* ✅ مهم للحراري: بدون قص/صفحات */
     html, body { height:auto; }
   </style>
 </head>
@@ -1282,76 +1271,82 @@ function printThermal(mm){
   openPrintWindow(buildThermalHtml(mm, d), `فاتورة ${d.invNo}`);
 }
 
-/* ================= SAVE INVOICE (Choose location if supported) ================= */
-function blobDownload(filename, content, mime){
-  const blob = new Blob([content], {type: mime || "application/octet-stream"});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  setTimeout(()=> URL.revokeObjectURL(url), 1500);
+/* ================= PDF SAVE (A4) — Fix QR in Saved PDF ================= */
+async function toDataURL(url){
+  try{
+    const abs = new URL(url, location.href).toString();
+    const res = await fetch(abs, { cache: "no-store" });
+    if(!res.ok) throw new Error("HTTP " + res.status);
+    const blob = await res.blob();
+    return await new Promise((resolve, reject)=>{
+      const r = new FileReader();
+      r.onload = ()=> resolve(r.result);
+      r.onerror = reject;
+      r.readAsDataURL(blob);
+    });
+  }catch(e){
+    return null;
+  }
 }
 
-async function saveWithPicker(filename, content, mime){
-  const picker = window.showSaveFilePicker;
-  if(!picker) return false;
+async function inlineAllImages(root){
+  const imgs = Array.from(root.querySelectorAll("img"));
+  for(const img of imgs){
+    const src = img.getAttribute("src") || "";
+    if(!src || src.startsWith("data:")) continue;
 
-  const ext = (filename.split(".").pop() || "").toLowerCase();
-  const types = ext === "json"
-    ? [{ description: "JSON", accept: {"application/json": [".json"]}}]
-    : [{ description: "HTML", accept: {"text/html": [".html"]}}];
+    let dataUrl = await toDataURL(src);
 
-  const handle = await picker({
-    suggestedName: filename,
-    types,
-    excludeAcceptAllOption: false
-  });
-  const writable = await handle.createWritable();
-  await writable.write(new Blob([content], {type: mime}));
-  await writable.close();
-  return true;
+    // لو ده QR_MAIN وفشل، جرّب fallback
+    if(!dataUrl && (src.includes(QR_SRC_MAIN) || src === QR_SRC_MAIN)){
+      dataUrl = await toDataURL(QR_SRC_FALLBACK);
+    }
+
+    if(dataUrl){
+      img.setAttribute("src", dataUrl);
+    }
+  }
 }
 
-async function saveInvoice(){
+async function saveA4Pdf(){
   const d = getInvoiceData();
 
-  const choice = prompt("اكتب نوع الحفظ:\n1 = JSON (حفظ بيانات)\n2 = HTML (فاتورة جاهزة للطباعة)\n\nاكتب 1 أو 2", "2");
-  const c = String(choice || "").trim();
+  // Build invoice DOM offscreen
+  const holder = document.createElement("div");
+  holder.style.position = "fixed";
+  holder.style.left = "-99999px";
+  holder.style.top = "0";
+  holder.style.width = "210mm";
+  holder.style.background = "#fff";
+  holder.style.zIndex = "-1";
 
-  if(c !== "1" && c !== "2"){
-    alert("تم الإلغاء.");
-    return;
-  }
+  holder.innerHTML = buildA4Html(d);
+  document.body.appendChild(holder);
 
-  if(c === "1"){
-    const name = `invoice_${(d.orderId||d.invNo||"").replace(/[^\w-]+/g,"_")}.json`;
-    const content = JSON.stringify(d, null, 2);
-    try{
-      const ok = await saveWithPicker(name, content, "application/json;charset=utf-8");
-      if(!ok) blobDownload(name, content, "application/json;charset=utf-8");
-      alert("✅ تم حفظ JSON");
-    }catch(e){
-      blobDownload(name, content, "application/json;charset=utf-8");
-      alert("✅ تم حفظ JSON");
-    }
-  }else{
-    const name = `invoice_${(d.orderId||d.invNo||"").replace(/[^\w-]+/g,"_")}.html`;
-    const content = buildA4Html(d); // عربي UTF-8
-    try{
-      const ok = await saveWithPicker(name, content, "text/html;charset=utf-8");
-      if(!ok) blobDownload(name, content, "text/html;charset=utf-8");
-      alert("✅ تم حفظ HTML");
-    }catch(e){
-      blobDownload(name, content, "text/html;charset=utf-8");
-      alert("✅ تم حفظ HTML");
-    }
+  const bodyEl = holder.querySelector("body");
+  const contentEl = bodyEl ? bodyEl : holder;
+
+  // ✅ inline images (logo + QR) as Base64 before PDF
+  await inlineAllImages(contentEl);
+
+  const filename = `invoice_${(d.orderId || d.invNo || "BS").replace(/[^\w-]+/g,"_")}.pdf`;
+
+  const opt = {
+    margin:       10,
+    filename:     filename,
+    image:        { type: "jpeg", quality: 0.98 },
+    html2canvas:  { scale: 2, useCORS: true, allowTaint: true, backgroundColor: "#ffffff" },
+    jsPDF:        { unit: "mm", format: "a4", orientation: "portrait" }
+  };
+
+  try{
+    await html2pdf().set(opt).from(contentEl).save();
+  }finally{
+    holder.remove();
   }
 }
 
-/* escape helper */
+/* ================= HELPERS ================= */
 function escapeHtml(str){
   return String(str || "")
     .replace(/&/g,"&amp;")
@@ -1360,7 +1355,6 @@ function escapeHtml(str){
     .replace(/"/g,"&quot;");
 }
 
-/* number to Arabic words */
 function numberToArabicWords(number){
   number = Number(number) || 0;
   if(number === 0) return "صفر جنيه مصري فقط لا غير";
@@ -1424,7 +1418,7 @@ function resetInvoice(){
 
   ROW_ID = 0;
   initInvoice();
-  addRow();
+  addRow(true);
   refreshRowNumbers();
 }
 
@@ -1437,14 +1431,16 @@ function generateInvoiceNo(){
   return `INV-BS-${y}${m}${day}-${seq}`;
 }
 
-/* BIND UI */
-document.getElementById('addRowBtn').addEventListener('click', ()=> addRow(false));
-document.getElementById('pdfA4Btn').addEventListener('click', exportA4);
-document.getElementById('thermal80Btn').addEventListener('click', ()=> printThermal(80));
-document.getElementById('thermal58Btn').addEventListener('click', ()=> printThermal(58));
-document.getElementById('resetBtn').addEventListener('click', resetInvoice);
-document.getElementById('newInvoiceTop').addEventListener('click', resetInvoice);
-document.getElementById('saveBtn').addEventListener('click', ()=> { try{ saveInvoice(); }catch(e){ alert("فشل الحفظ"); } });
+/* ================= BIND UI (✅ 4 أزرار فقط) ================= */
+document.getElementById('addRowBtn')?.addEventListener('click', ()=> addRow(false));
+
+document.getElementById('printA4Btn')?.addEventListener('click', exportA4);
+document.getElementById('savePdfA4Btn')?.addEventListener('click', ()=> {
+  saveA4Pdf().catch(()=> alert("فشل حفظ PDF"));
+});
+
+document.getElementById('thermal80Btn')?.addEventListener('click', ()=> printThermal(80));
+document.getElementById('thermal58Btn')?.addEventListener('click', ()=> printThermal(58));
 
 /* Init row */
 addRow(true);
