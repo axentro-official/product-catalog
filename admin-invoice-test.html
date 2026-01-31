@@ -179,9 +179,10 @@
       color:#334155;
     }
 
+    /* ✅ 3 خانات: خصم خاص + توصيل + ملاحظة */
     .extraBox{
       display:grid;
-      grid-template-columns:1fr 1fr;
+      grid-template-columns:1fr 1fr 1fr;
       gap:10px;
       margin-top:10px;
     }
@@ -353,6 +354,10 @@
 
     <div class="extraBox">
       <div>
+        <label for="globalDiscount">خصم خاص (جنيه)</label>
+        <input id="globalDiscount" type="number" step="0.01" min="0" placeholder="0 أو فاضي = بدون خصم خاص" />
+      </div>
+      <div>
         <label for="deliveryFee">خدمة التوصيل (جنيه)</label>
         <input id="deliveryFee" type="number" step="0.01" min="0" placeholder="0 أو فاضي = توصيل مجاني" />
       </div>
@@ -425,7 +430,6 @@ function applyModeUI(){
     if(pageTitle) pageTitle.textContent = "عرض سعر  B.S";
     if(brandSub) brandSub.textContent = "إنشاء عرض سعر (Quotation)";
     if(importCard) importCard.style.display = "none";
-
     if(thermalRow) thermalRow.style.display = "none";
     if(a4Row) a4Row.style.display = "none";
     if(quoteRow) quoteRow.style.display = "block";
@@ -434,14 +438,14 @@ function applyModeUI(){
     if(pageTitle) pageTitle.textContent = "فاتورة  B.S";
     if(brandSub) brandSub.textContent = "إدارة وإنشاء فواتير";
     if(importCard) importCard.style.display = "";
-
     if(thermalRow) thermalRow.style.display = "";
     if(a4Row) a4Row.style.display = "flex";
     if(quoteRow) quoteRow.style.display = "none";
     try{ document.title = "لوحة إدارة الفواتير — B.S Medical & Aesthetic"; }catch(e){}
   }
 }
-  /* ================= HARDEN ADMIN ================= */
+
+/* ================= HARDEN ADMIN ================= */
 const FAILS_KEY = "BS_ADMIN_FAILS";
 const LOCK_UNTIL_KEY = "BS_ADMIN_LOCK_UNTIL";
 const MAX_FAILS = 5;
@@ -750,10 +754,12 @@ function syncRowsWithProducts(){
 }
 
 /* ================= CALC ================= */
+function money(n){ n = Number(n||0); return (isFinite(n)?n:0); }
+
 function calcRowByTr(tr){
-  const qty = Number(tr.querySelector('[data-field="qty"]')?.value) || 0;
-  const price = Number(tr.querySelector('[data-field="price"]')?.value) || 0;
-  const discIn = Number(tr.querySelector('[data-field="discount"]')?.value) || 0;
+  const qty = money(tr.querySelector('[data-field="qty"]')?.value);
+  const price = money(tr.querySelector('[data-field="price"]')?.value);
+  const discIn = money(tr.querySelector('[data-field="discount"]')?.value);
 
   const subRaw = Math.max(0, qty * price);
   const disc = Math.max(0, Math.min(discIn, subRaw));
@@ -766,28 +772,39 @@ function calcRowByTr(tr){
 function calcGrand(){
   const rows = Array.from(document.querySelectorAll("#itemsTable tbody tr"));
   let totalBefore = 0;
-  let totalDiscount = 0;
+  let rowDiscountSum = 0;
 
   rows.forEach(tr=>{
-    const qty = Number(tr.querySelector('[data-field="qty"]')?.value) || 0;
-    const price = Number(tr.querySelector('[data-field="price"]')?.value) || 0;
-    const discIn = Number(tr.querySelector('[data-field="discount"]')?.value) || 0;
+    const qty = money(tr.querySelector('[data-field="qty"]')?.value);
+    const price = money(tr.querySelector('[data-field="price"]')?.value);
+    const discIn = money(tr.querySelector('[data-field="discount"]')?.value);
 
     const subRaw = Math.max(0, qty * price);
     const disc = Math.max(0, Math.min(discIn, subRaw));
 
     totalBefore += subRaw;
-    totalDiscount += disc;
+    rowDiscountSum += disc;
   });
 
-  const afterDiscount = Math.max(0, totalBefore - totalDiscount);
-  const deliveryFee = Number(document.getElementById("deliveryFee")?.value) || 0;
-  const finalTotal = afterDiscount + deliveryFee;
+  const afterRowDiscount = Math.max(0, totalBefore - rowDiscountSum);
+
+  const globalDiscountIn = money(document.getElementById("globalDiscount")?.value);
+  const globalDiscount = Math.max(0, Math.min(globalDiscountIn, afterRowDiscount));
+
+  const afterAllDiscount = Math.max(0, afterRowDiscount - globalDiscount);
+
+  const deliveryFeeIn = money(document.getElementById("deliveryFee")?.value);
+  const deliveryFee = Math.max(0, deliveryFeeIn);
+
+  const finalTotal = afterAllDiscount + deliveryFee;
 
   const deliveryText = deliveryFee > 0 ? `${deliveryFee.toFixed(2)} جنيه` : "توصيل مجاني";
 
+  // ✅ الترتيب المطلوب
   document.getElementById("totalsBox").innerHTML = `
-    <div class="totalLine"><span class="k">الإجمالي بعد الخصم</span><span class="v">${afterDiscount.toFixed(2)} جنيه</span></div>
+    <div class="totalLine"><span class="k">الإجمالي قبل الخصم</span><span class="v">${totalBefore.toFixed(2)} جنيه</span></div>
+    <div class="totalLine"><span class="k">الخصم</span><span class="v">${rowDiscountSum.toFixed(2)} جنيه</span></div>
+    <div class="totalLine"><span class="k">خصم خاص</span><span class="v">${globalDiscount.toFixed(2)} جنيه</span></div>
     <div class="totalLine"><span class="k">خدمة التوصيل</span><span class="v">${deliveryText}</span></div>
     <div class="totalLine primary"><span class="k">الإجمالي</span><span class="v">${finalTotal.toFixed(2)} جنيه</span></div>
   `;
@@ -806,27 +823,44 @@ function calcGrand(){
 }
 
 /* ================= WhatsApp import ================= */
+function extractOrderIdSmart(t){
+  const text = String(t || "");
+
+  // 1) شكل: رقم الطلب: 12548 / رقم الطلب 12548 / رقم الطلب #12548
+  let m =
+    text.match(/(?:^|\n)\s*(?:رقم\s*(?:الطلب|الأوردر|الاوردر|الاوردَر)|order\s*id)\s*(?:[:：]?\s*#?\s*)([A-Za-z0-9-_]{2,})/i);
+  if(m && m[1]) return String(m[1]).trim();
+
+  // 2) شكل: Order ID: 12548 (في نفس السطر مع كلام)
+  m = text.match(/\border\s*id\b\s*(?:[:：]?\s*#?\s*)([A-Za-z0-9-_]{2,})/i);
+  if(m && m[1]) return String(m[1]).trim();
+
+  // 3) FallBack: أول رقم طويل (>=4) بعد كلمة طلب/اوردر في نفس السطر
+  const lines = text.split(/\r?\n/);
+  for(const line of lines){
+    if(/(رقم\s*(الطلب|الأوردر|الاوردر)|order\s*id)/i.test(line)){
+      const hit = line.match(/#?\s*([0-9]{4,})/);
+      if(hit && hit[1]) return String(hit[1]).trim();
+    }
+  }
+  return "";
+}
+
 function extractCustomerData(fullText){
   const t = String(fullText || "");
 
-  const nameMatch = t.match(/(?:^|\n)\s*الاسم\s*:\s*(.+)\s*(?:\n|$)/i);
+  const nameMatch = t.match(/(?:^|\n)\s*الاسم\s*[:：]\s*(.+)\s*(?:\n|$)/i);
   const name = nameMatch ? nameMatch[1].trim() : "";
 
   let phone = "";
-  const phoneMatch = t.match(/(?:📞|الهاتف\s*:?)\s*([+]?[\d\s-]{8,})/);
+  const phoneMatch = t.match(/(?:📞|الهاتف\s*[:：]?)\s*([+]?[\d\s-]{8,})/);
   if(phoneMatch) phone = phoneMatch[1].trim();
 
   let address = "";
-  const addrMatch = t.match(/(?:📍|العنوان\s*:?)\s*(.+)\s*(?:\n|$)/);
+  const addrMatch = t.match(/(?:📍|العنوان\s*[:：]?)\s*(.+)\s*(?:\n|$)/);
   if(addrMatch) address = addrMatch[1].trim();
 
-  // ✅ قويّنا Regex عشان "رقم الاوردر/الأوردر" كمان
-  let orderId = "";
-  const orderMatch =
-    t.match(/(?:^|\n)\s*(?:رقم\s*(?:الطلب|الاوردر|الأوردر|الاوردَر)|Order\s*ID|ORDER\s*ID)\s*[:：]\s*(.+)\s*(?:\n|$)/i) ||
-    t.match(/(?:^|\n)\s*(?:رقم\s*(?:الطلب|الاوردر|الأوردر))\s*#?\s*([A-Za-z0-9-_]+)\s*(?:\n|$)/i);
-  if(orderMatch) orderId = String(orderMatch[1] || "").trim();
-
+  const orderId = extractOrderIdSmart(t);
   return { name, phone, address, orderId };
 }
 
@@ -835,8 +869,15 @@ function parseWhatsAppLines(fullText){
   if(!text) return [];
   const lines = text.split(/\r?\n/).map(l=>l.trim()).filter(Boolean);
   const out = [];
+
   for(const line of lines){
-    const qtyMatch = line.match(/الكمية\s*:\s*(\d+)/i);
+    // تجاهل سطور البيانات
+    if(/^\s*الاسم\s*[:：]/i.test(line)) continue;
+    if(line.includes("📞") || line.includes("📍")) continue;
+    if(/(رقم\s*(الطلب|الأوردر|الاوردر)|order\s*id)/i.test(line)) continue;
+    if(line.includes("التاريخ") || line.includes("الوقت")) continue;
+
+    const qtyMatch = line.match(/الكمية\s*[:：]\s*(\d+)/i);
     const qty = qtyMatch ? Number(qtyMatch[1]) : 0;
 
     const skuMatch = line.match(/\b([A-Z]{2,}\d{1,})\b/i);
@@ -851,10 +892,6 @@ function parseWhatsAppLines(fullText){
     }
 
     if(sku || name){
-      if(/^\s*الاسم\s*:/i.test(line)) continue;
-      if(line.includes("📞") || line.includes("📍")) continue;
-      if(/رقم\s*(الطلب|الاوردر|الأوردر)/i.test(line) || /order\s*id/i.test(line)) continue;
-      if(line.includes("التاريخ") || line.includes("الوقت")) continue;
       out.push({ sku, name, qty: qty || 0 });
     }
   }
@@ -877,7 +914,6 @@ function importFromWhatsApp(){
   if(cust.orderId) document.getElementById("orderId").value = cust.orderId;
 
   const items = parseWhatsAppLines(raw);
-
   if(items.length){
     const tbody = document.querySelector("#itemsTable tbody");
     tbody.innerHTML = "";
@@ -911,8 +947,7 @@ function importFromWhatsApp(){
   calcGrand();
   alert("✅ تم الاستيراد");
 }
-
-/* ================= Export Data ================= */
+  /* ================= Export Data ================= */
 function getInvoiceData(){
   const invNo = document.getElementById("invNo").value || "";
   const invDate = document.getElementById("invDate").value || "";
@@ -921,33 +956,50 @@ function getInvoiceData(){
   const custName = document.getElementById("custName").value || "";
   const custPhone = document.getElementById("custPhone").value || "";
   const custAddress = document.getElementById("custAddress").value || "";
-  const deliveryFee = Number(document.getElementById("deliveryFee")?.value) || 0;
+
+  const deliveryFee = Math.max(0, money(document.getElementById("deliveryFee")?.value));
+  const globalDiscountIn = Math.max(0, money(document.getElementById("globalDiscount")?.value));
   const note = String(document.getElementById("invoiceNote")?.value || "").trim();
 
   const rows = Array.from(document.querySelectorAll("#itemsTable tbody tr"));
   const items = rows.map((tr, idx)=>{
     const sku = (tr.querySelector('[data-field="sku"]')?.value || "").trim();
     const name = (tr.querySelector('[data-field="name"]')?.value || "").trim();
-    const qty = Number(tr.querySelector('[data-field="qty"]')?.value) || 0;
-    const price = Number(tr.querySelector('[data-field="price"]')?.value) || 0;
-    const discIn = Number(tr.querySelector('[data-field="discount"]')?.value) || 0;
+    const qty = money(tr.querySelector('[data-field="qty"]')?.value);
+    const price = money(tr.querySelector('[data-field="price"]')?.value);
+    const discIn = money(tr.querySelector('[data-field="discount"]')?.value);
 
     const subRaw = Math.max(0, qty * price);
     const disc = Math.max(0, Math.min(discIn, subRaw));
     const sub = Math.max(0, subRaw - disc);
     const skuName = (sku && name) ? `${sku} | ${name}` : (sku || name);
 
-    return { idx: idx + 1, sku, name, skuName, qty, price, disc, sub };
+    return { idx: idx + 1, sku, name, skuName, qty, price, disc, sub, subRaw };
   }).filter(i => i.skuName || i.qty || i.price || i.disc);
 
-  const totalBefore = items.reduce((s,i)=> s + (Number(i.qty||0) * Number(i.price||0)), 0);
-  const totalDiscount = items.reduce((s,i)=> s + (Number(i.disc)||0), 0);
-  const afterDiscount = Math.max(0, totalBefore - totalDiscount);
-  const finalTotal = afterDiscount + deliveryFee;
+  const totalBefore = items.reduce((s,i)=> s + money(i.subRaw), 0);
+  const rowDiscountSum = items.reduce((s,i)=> s + money(i.disc), 0);
+
+  const afterRowDiscount = Math.max(0, totalBefore - rowDiscountSum);
+  const globalDiscount = Math.max(0, Math.min(globalDiscountIn, afterRowDiscount));
+  const afterAllDiscount = Math.max(0, afterRowDiscount - globalDiscount);
+
+  const finalTotal = afterAllDiscount + deliveryFee;
+
   const words = numberToArabicWords(Math.round(finalTotal));
 
-  return { invNo, invDate, invTime, orderId, custName, custPhone, custAddress, deliveryFee, note,
-           items, totalBefore, totalDiscount, afterDiscount, finalTotal, words };
+  return {
+    invNo, invDate, invTime, orderId,
+    custName, custPhone, custAddress,
+    deliveryFee, globalDiscount, note,
+    items,
+    totalBefore,
+    rowDiscountSum,
+    afterRowDiscount,
+    afterAllDiscount,
+    finalTotal,
+    words
+  };
 }
 
 function openPrintWindow(html, title){
@@ -958,7 +1010,6 @@ function openPrintWindow(html, title){
   w.onload = function(){ w.focus(); setTimeout(()=> w.print(), 250); };
 }
 
-/* ================= A4 HTML + Thermal HTML + PDF ================= */
 function escapeHtml(str){
   return String(str || "")
     .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
@@ -993,9 +1044,11 @@ function numberToArabicWords(number){
   return `${parts.join(" و ")} جنيه مصري فقط لا غير`;
 }
 
+/* ================= A4 ================= */
 function buildA4Html(d, mode){
   const isQuote = (mode==="quote");
   const docTitle = isQuote ? "عرض سعر" : "فاتورة";
+
   const deliveryText = (Number(d.deliveryFee||0) > 0) ? `${Number(d.deliveryFee).toFixed(2)} جنيه` : "توصيل مجاني";
   const noteHtml = d.note ? `<div class="note">${escapeHtml(d.note)}</div>` : "";
 
@@ -1003,7 +1056,7 @@ function buildA4Html(d, mode){
     <tr>
       <td>${it.idx}</td>
       <td>${escapeHtml(it.skuName)}</td>
-      <td>${it.qty}</td>
+      <td>${Number(it.qty||0)}</td>
       <td>${Number(it.price||0).toFixed(2)}</td>
       <td>${Number(it.disc||0).toFixed(2)}</td>
       <td>${Number(it.sub||0).toFixed(2)}</td>
@@ -1084,7 +1137,9 @@ function buildA4Html(d, mode){
     </table>
 
     <div class="totals">
-      <div class="tline"><span>الإجمالي بعد الخصم</span><span>${Number(d.afterDiscount||0).toFixed(2)} جنيه</span></div>
+      <div class="tline"><span>الإجمالي قبل الخصم</span><span>${Number(d.totalBefore||0).toFixed(2)} جنيه</span></div>
+      <div class="tline"><span>الخصم</span><span>${Number(d.rowDiscountSum||0).toFixed(2)} جنيه</span></div>
+      <div class="tline"><span>خصم خاص</span><span>${Number(d.globalDiscount||0).toFixed(2)} جنيه</span></div>
       <div class="tline"><span>خدمة التوصيل</span><span>${deliveryText}</span></div>
       <div class="tline primary"><span>الإجمالي</span><span>${Number(d.finalTotal||0).toFixed(2)} جنيه</span></div>
     </div>
@@ -1110,11 +1165,12 @@ function exportA4(){
   openPrintWindow(buildA4Html(d, isQuoteMode() ? "quote" : "invoice"), `${isQuoteMode() ? "عرض سعر" : "فاتورة"} ${d.invNo}`);
 }
 
+/* ================= Thermal ================= */
 function buildThermalHtml(mm, d, mode){
   const widthMm = (mm === 58) ? 58 : 80;
   const isQuote = (mode==="quote");
   const titleText = isQuote ? "عرض سعر" : "فاتورة";
-  const deliveryText = (Number(d.deliveryFee||0) > 0) ? Number(d.deliveryFee).toFixed(2) : "FREE";
+  const deliveryText = (Number(d.deliveryFee||0) > 0) ? `${Number(d.deliveryFee).toFixed(2)}` : "0.00";
 
   const items = d.items.length ? d.items.map(it=>{
     const name = (it.name || it.skuName || it.sku || "").trim();
@@ -1124,14 +1180,14 @@ function buildThermalHtml(mm, d, mode){
     const sub   = Number(it.sub || 0);
 
     const left  = `Qty: ${qty} × ${price.toFixed(2)}`;
-    const right = (disc > 0) ? `Disc: ${disc.toFixed(2)}` : "";
+    const right = (disc > 0.00001) ? `Disc: ${disc.toFixed(2)}` : "";
 
     return `
       <div class="item">
         <div class="itemName">${it.idx}) ${escapeHtml(name)}</div>
         <div class="itemMeta">
           <span class="l">${left}</span>
-          <span class="r">${right}</span>
+          ${right ? `<span class="r">${right}</span>` : `<span class="r"></span>`}
         </div>
         <div class="itemTotal"><span>Total</span><span>${sub.toFixed(2)}</span></div>
       </div>
@@ -1150,7 +1206,7 @@ function buildThermalHtml(mm, d, mode){
 <title>${titleText} ${escapeHtml(d.invNo)}</title>
 <style>
   @page { size: ${widthMm}mm auto; margin: 3mm; }
-  body{margin:0;font-family: Arial, Tahoma, sans-serif;color:#000;direction:rtl;background:#fff;overflow:hidden;}
+  body{margin:0;font-family: Arial, Tahoma, sans-serif;color:#000;direction:rtl;background:#fff;}
   .paper{ width:${widthMm}mm; margin:0 auto; padding:0; }
   .center{text-align:center}
   .b{font-weight:900;font-size:13px;line-height:1.45}
@@ -1168,6 +1224,7 @@ function buildThermalHtml(mm, d, mode){
   .itemMeta .l,.itemMeta .r{direction:ltr;text-align:left;unicode-bidi:embed}
   .itemTotal{display:flex;justify-content:space-between;gap:8px;margin-top:2px;font-weight:900;font-size:12px;direction:ltr;text-align:left;unicode-bidi:embed}
   *{break-inside: avoid; page-break-inside: avoid;}
+  html,body{height:auto}
 </style>
 </head>
 <body>
@@ -1196,8 +1253,10 @@ function buildThermalHtml(mm, d, mode){
   ${items}
 
   <div class="sep"></div>
-  <div class="totRow"><span>بعد الخصم</span><span>${Number(d.afterDiscount||0).toFixed(2)}</span></div>
-  <div class="totRow"><span>التوصيل</span><span>${deliveryText}</span></div>
+  <div class="totRow"><span>قبل الخصم</span><span>${Number(d.totalBefore||0).toFixed(2)}</span></div>
+  <div class="totRow"><span>الخصم</span><span>${Number(d.rowDiscountSum||0).toFixed(2)}</span></div>
+  <div class="totRow"><span>خصم خاص</span><span>${Number(d.globalDiscount||0).toFixed(2)}</span></div>
+  <div class="totRow"><span>التوصيل</span><span>${Number(d.deliveryFee||0) > 0 ? Number(d.deliveryFee).toFixed(2) : "مجاني"}</span></div>
   <div class="totRow totMain"><span>الإجمالي</span><span>${Number(d.finalTotal||0).toFixed(2)}</span></div>
 
   <div class="sep"></div>
@@ -1220,7 +1279,7 @@ function printThermal(mm){
   openPrintWindow(buildThermalHtml(mm, d, isQuoteMode() ? "quote" : "invoice"), `${isQuoteMode() ? "عرض سعر" : "فاتورة"} ${d.invNo}`);
 }
 
-/* ✅ PDF: نولّد Fragment مناسب بدل HTML كامل (علشان ما يطلعش فاضي) */
+/* ================= PDF (FIX WHITE PAGE) ================= */
 async function toDataURL(url){
   try{
     const abs = new URL(url, location.href).toString();
@@ -1240,7 +1299,6 @@ async function inlineAllImages(root){
   for(const img of imgs){
     const src = img.getAttribute("src") || "";
     if(!src || src.startsWith("data:")) continue;
-
     let dataUrl = await toDataURL(src);
     if(!dataUrl && (src.includes(QR_SRC_MAIN) || src === QR_SRC_MAIN)){
       dataUrl = await toDataURL(QR_SRC_FALLBACK);
@@ -1253,7 +1311,7 @@ function buildA4FragmentForPdf(d, mode){
   const full = buildA4Html(d, mode);
   const style = (full.match(/<style>([\s\S]*?)<\/style>/i) || [,""])[1];
   const body  = (full.match(/<body[^>]*>([\s\S]*?)<\/body>/i) || [,""])[1];
-  return `<div>${`<style>${style}</style>`}${body}</div>`;
+  return `<div><style>${style}</style>${body}</div>`;
 }
 
 async function savePdfA4(mode){
@@ -1263,18 +1321,16 @@ async function savePdfA4(mode){
 
   const holder = document.createElement("div");
   holder.style.position = "fixed";
-  holder.style.left = "0";
+  holder.style.left = "-99999px";          /* ✅ مهم: خارج الشاشة بدل opacity 0 */
   holder.style.top = "0";
   holder.style.width = "210mm";
   holder.style.background = "#fff";
-  holder.style.opacity = "0";
-  holder.style.pointerEvents = "none";
   holder.style.zIndex = "-1";
 
   holder.innerHTML = buildA4FragmentForPdf(d, mode);
   document.body.appendChild(holder);
 
-  await new Promise(r=> setTimeout(r, 120));
+  await new Promise(r=> setTimeout(r, 150));
   await inlineAllImages(holder);
 
   const opt = {
@@ -1298,6 +1354,7 @@ async function savePdfA4(mode){
 /* ================= BIND ================= */
 document.getElementById('addRowBtn')?.addEventListener('click', ()=> addRow(false));
 document.getElementById("deliveryFee")?.addEventListener("input", calcGrand);
+document.getElementById("globalDiscount")?.addEventListener("input", calcGrand);
 document.getElementById("invoiceNote")?.addEventListener("input", calcGrand);
 
 document.getElementById('importBtn')?.addEventListener("click", importFromWhatsApp);
@@ -1326,7 +1383,6 @@ if(sessionStorage.getItem("BS_ADMIN_OK") === "1"){
 addRow(true);
 refreshRowNumbers();
 calcGrand();
-
 </script>
 </body>
 </html>
