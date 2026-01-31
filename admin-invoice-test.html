@@ -262,7 +262,7 @@
 
     <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
       <button id="loginBtn" class="btn" style="flex:1">دخول</button>
-      <button id="logoutBtn" class="btn secondary" style="flex:1">خروج</button>
+      <!-- ✅ تم حذف زر الخروج من شاشة اللوجين -->
     </div>
   </div>
 </div>
@@ -278,8 +278,18 @@
         <div class="brandSub" id="brandSub">إدارة وإنشاء فواتير</div>
       </div>
     </div>
-  </div>
 
+    <!-- ✅ تايمر الجلسة + زر الخروج (داخل الجلسة فقط) -->
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+      <div id="sessionTimer" style="font-weight:900;color:var(--muted);white-space:nowrap">
+        ⏳ متبقي: --
+      </div>
+      <button class="btn secondary" id="logoutTopBtn" style="white-space:nowrap">
+        🚪 تسجيل خروج
+      </button>
+    </div>
+
+  </div>
   <div class="card" id="importCard">
     <h2>استيراد طلب من واتساب</h2>
     <textarea id="waImport" rows="5" placeholder="الصق رسالة الطلب كاملة هنا (كما وصلت من واتساب)..."></textarea>
@@ -328,6 +338,7 @@
       </div>
     </div>
   </div>
+
   <div class="card">
     <h2>الأصناف</h2>
 
@@ -444,14 +455,17 @@ function applyModeUI(){
     try{ document.title = "لوحة إدارة الفواتير — B.S Medical & Aesthetic"; }catch(e){}
   }
 }
-
-/* ================= HARDEN ADMIN ================= */
+  /* ================= HARDEN ADMIN ================= */
 const FAILS_KEY = "BS_ADMIN_FAILS";
 const LOCK_UNTIL_KEY = "BS_ADMIN_LOCK_UNTIL";
 const MAX_FAILS = 5;
 const LOCK_MINUTES = 10;
 const IDLE_MINUTES = 20;
+
 let idleTimer = null;
+/* ✅ تايمر عرضي للجلسة */
+let idleLeftMs = IDLE_MINUTES * 60000;
+let idleTick = null;
 
 function nowMs(){ return Date.now(); }
 function isLocked(){
@@ -477,17 +491,56 @@ function resetFails(){
   localStorage.removeItem(FAILS_KEY);
   localStorage.removeItem(LOCK_UNTIL_KEY);
 }
+
+/* ✅ عرض التايمر فوق */
+function renderSessionTimer(){
+  const el = document.getElementById("sessionTimer");
+  if(!el) return;
+
+  if(sessionStorage.getItem("BS_ADMIN_OK") !== "1"){
+    el.textContent = "⏳ متبقي: --";
+    return;
+  }
+
+  const totalSec = Math.max(0, Math.ceil(idleLeftMs / 1000));
+  const mm = String(Math.floor(totalSec / 60)).padStart(2,"0");
+  const ss = String(totalSec % 60).padStart(2,"0");
+  el.textContent = `⏳ متبقي: ${mm}:${ss}`;
+}
+
 function startIdleGuard(){
   stopIdleGuard();
-  const kick = ()=>{ try{ alert("تم تسجيل الخروج تلقائيًا بسبب عدم النشاط."); }catch(e){} setLoggedIn(false); };
+
+  idleLeftMs = IDLE_MINUTES * 60000;
+  renderSessionTimer();
+
+  idleTick = setInterval(()=>{
+    idleLeftMs -= 1000;
+    renderSessionTimer();
+    if(idleLeftMs <= 0){
+      clearInterval(idleTick);
+      idleTick = null;
+    }
+  }, 1000);
+
+  const kick = ()=>{ 
+    try{ alert("تم تسجيل الخروج تلقائيًا بسبب عدم النشاط."); }catch(e){} 
+    setLoggedIn(false); 
+  };
   idleTimer = setTimeout(kick, IDLE_MINUTES * 60000);
 }
+
 function stopIdleGuard(){
   if(idleTimer){ clearTimeout(idleTimer); idleTimer = null; }
+  if(idleTick){ clearInterval(idleTick); idleTick = null; }
+  idleLeftMs = IDLE_MINUTES * 60000;
+  renderSessionTimer();
 }
+
 function bumpIdle(){
   if(sessionStorage.getItem("BS_ADMIN_OK") === "1") startIdleGuard();
 }
+
 ["click","keydown","mousemove","touchstart","scroll"].forEach(ev=>{
   window.addEventListener(ev, ()=> bumpIdle(), {passive:true});
 });
@@ -498,7 +551,6 @@ document.addEventListener("visibilitychange", ()=>{
 /* ================= LOGIN ================= */
 const loginBox  = document.getElementById('loginBox');
 const loginBtn  = document.getElementById('loginBtn');
-const logoutBtn = document.getElementById('logoutBtn');
 const passInput = document.getElementById('passInput');
 
 function setLoggedIn(isOn){
@@ -507,6 +559,7 @@ function setLoggedIn(isOn){
     loginBox.style.display = "none";
     document.getElementById("app").style.display = "block";
     bumpIdle();
+    renderSessionTimer();
   }else{
     sessionStorage.removeItem("BS_ADMIN_OK");
     document.getElementById("app").style.display = "none";
@@ -538,7 +591,9 @@ function checkPass(){
 
 loginBtn.addEventListener('click', checkPass);
 passInput.addEventListener('keydown', (e)=> { if(e.key === 'Enter') checkPass(); });
-logoutBtn.addEventListener('click', ()=> setLoggedIn(false));
+
+/* ✅ زر الخروج داخل الجلسة */
+document.getElementById('logoutTopBtn')?.addEventListener('click', ()=> setLoggedIn(false));
 
 /* ================= INIT ================= */
 function formatDateEnglish(d){ return d.toLocaleDateString("en-GB").replaceAll("/", "-"); }
@@ -603,8 +658,7 @@ async function loadProductsSmart(){
   if(cacheFresh) setTimeout(doFetch, 400);
   else await doFetch();
 }
-
-function buildDataLists(){
+  function buildDataLists(){
   let dlSku = document.getElementById("skuList");
   if(!dlSku){
     dlSku = document.createElement("datalist");
@@ -647,7 +701,8 @@ function resolveImageBySku(sku){
   if(!s) return IMG_PLACEHOLDER;
   return `images/${s}.webp`;
 }
-  /* ================= TABLE ROWS ================= */
+
+/* ================= TABLE ROWS ================= */
 function refreshRowNumbers(){
   const rows = Array.from(document.querySelectorAll("#itemsTable tbody tr"));
   rows.forEach((tr, i)=>{
@@ -800,11 +855,12 @@ function calcGrand(){
 
   const deliveryText = deliveryFee > 0 ? `${deliveryFee.toFixed(2)} جنيه` : "توصيل مجاني";
 
-  // ✅ الترتيب المطلوب
+  /* ✅ إضافة: الإجمالي قبل خدمة التوصيل */
   document.getElementById("totalsBox").innerHTML = `
     <div class="totalLine"><span class="k">الإجمالي قبل الخصم</span><span class="v">${totalBefore.toFixed(2)} جنيه</span></div>
     <div class="totalLine"><span class="k">الخصم</span><span class="v">${rowDiscountSum.toFixed(2)} جنيه</span></div>
     <div class="totalLine"><span class="k">خصم خاص</span><span class="v">${globalDiscount.toFixed(2)} جنيه</span></div>
+    <div class="totalLine"><span class="k">الإجمالي قبل خدمة التوصيل</span><span class="v">${afterAllDiscount.toFixed(2)} جنيه</span></div>
     <div class="totalLine"><span class="k">خدمة التوصيل</span><span class="v">${deliveryText}</span></div>
     <div class="totalLine primary"><span class="k">الإجمالي</span><span class="v">${finalTotal.toFixed(2)} جنيه</span></div>
   `;
@@ -825,17 +881,13 @@ function calcGrand(){
 /* ================= WhatsApp import ================= */
 function extractOrderIdSmart(t){
   const text = String(t || "");
-
-  // 1) شكل: رقم الطلب: 12548 / رقم الطلب 12548 / رقم الطلب #12548
   let m =
     text.match(/(?:^|\n)\s*(?:رقم\s*(?:الطلب|الأوردر|الاوردر|الاوردَر)|order\s*id)\s*(?:[:：]?\s*#?\s*)([A-Za-z0-9-_]{2,})/i);
   if(m && m[1]) return String(m[1]).trim();
 
-  // 2) شكل: Order ID: 12548 (في نفس السطر مع كلام)
   m = text.match(/\border\s*id\b\s*(?:[:：]?\s*#?\s*)([A-Za-z0-9-_]{2,})/i);
   if(m && m[1]) return String(m[1]).trim();
 
-  // 3) FallBack: أول رقم طويل (>=4) بعد كلمة طلب/اوردر في نفس السطر
   const lines = text.split(/\r?\n/);
   for(const line of lines){
     if(/(رقم\s*(الطلب|الأوردر|الاوردر)|order\s*id)/i.test(line)){
@@ -871,7 +923,6 @@ function parseWhatsAppLines(fullText){
   const out = [];
 
   for(const line of lines){
-    // تجاهل سطور البيانات
     if(/^\s*الاسم\s*[:：]/i.test(line)) continue;
     if(line.includes("📞") || line.includes("📍")) continue;
     if(/(رقم\s*(الطلب|الأوردر|الاوردر)|order\s*id)/i.test(line)) continue;
@@ -947,7 +998,8 @@ function importFromWhatsApp(){
   calcGrand();
   alert("✅ تم الاستيراد");
 }
-  /* ================= Export Data ================= */
+
+/* ================= Export Data ================= */
 function getInvoiceData(){
   const invNo = document.getElementById("invNo").value || "";
   const invDate = document.getElementById("invDate").value || "";
@@ -985,7 +1037,6 @@ function getInvoiceData(){
   const afterAllDiscount = Math.max(0, afterRowDiscount - globalDiscount);
 
   const finalTotal = afterAllDiscount + deliveryFee;
-
   const words = numberToArabicWords(Math.round(finalTotal));
 
   return {
@@ -1140,6 +1191,7 @@ function buildA4Html(d, mode){
       <div class="tline"><span>الإجمالي قبل الخصم</span><span>${Number(d.totalBefore||0).toFixed(2)} جنيه</span></div>
       <div class="tline"><span>الخصم</span><span>${Number(d.rowDiscountSum||0).toFixed(2)} جنيه</span></div>
       <div class="tline"><span>خصم خاص</span><span>${Number(d.globalDiscount||0).toFixed(2)} جنيه</span></div>
+      <div class="tline"><span>الإجمالي قبل خدمة التوصيل</span><span>${Number(d.afterAllDiscount||0).toFixed(2)} جنيه</span></div>
       <div class="tline"><span>خدمة التوصيل</span><span>${deliveryText}</span></div>
       <div class="tline primary"><span>الإجمالي</span><span>${Number(d.finalTotal||0).toFixed(2)} جنيه</span></div>
     </div>
@@ -1256,6 +1308,7 @@ function buildThermalHtml(mm, d, mode){
   <div class="totRow"><span>قبل الخصم</span><span>${Number(d.totalBefore||0).toFixed(2)}</span></div>
   <div class="totRow"><span>الخصم</span><span>${Number(d.rowDiscountSum||0).toFixed(2)}</span></div>
   <div class="totRow"><span>خصم خاص</span><span>${Number(d.globalDiscount||0).toFixed(2)}</span></div>
+  <div class="totRow"><span>قبل التوصيل</span><span>${Number(d.afterAllDiscount||0).toFixed(2)}</span></div>
   <div class="totRow"><span>التوصيل</span><span>${Number(d.deliveryFee||0) > 0 ? Number(d.deliveryFee).toFixed(2) : "مجاني"}</span></div>
   <div class="totRow totMain"><span>الإجمالي</span><span>${Number(d.finalTotal||0).toFixed(2)}</span></div>
 
@@ -1321,7 +1374,7 @@ async function savePdfA4(mode){
 
   const holder = document.createElement("div");
   holder.style.position = "fixed";
-  holder.style.left = "-99999px";          /* ✅ مهم: خارج الشاشة بدل opacity 0 */
+  holder.style.left = "-99999px";
   holder.style.top = "0";
   holder.style.width = "210mm";
   holder.style.background = "#fff";
