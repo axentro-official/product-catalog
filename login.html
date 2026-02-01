@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>تسجيل الدخول — Axentro</title>
+  <style>
+    :root{
+      --bg:#ffffff; --text:#0f172a; --muted:#64748b;
+      --stroke:#e6e8ee; --shadow: 0 18px 50px rgba(15,23,42,.10);
+      --radius:18px; --gold1:#D4AF37; --gold2:#B8860B;
+      --goldSoft: rgba(212,175,55,.18);
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0; font-family: system-ui, -apple-system, "Segoe UI", Tahoma, Arial;
+      color:var(--text);
+      background:
+        radial-gradient(900px 480px at 10% 10%, var(--goldSoft), transparent 60%),
+        radial-gradient(760px 520px at 90% 20%, rgba(15,23,42,.05), transparent 60%),
+        linear-gradient(180deg, var(--bg), #f7f8fb);
+      display:flex; align-items:center; justify-content:center;
+      padding:16px;
+    }
+    .card{
+      width:min(520px, 94vw);
+      border:1px solid var(--stroke);
+      border-radius:var(--radius);
+      background: rgba(255,255,255,.92);
+      box-shadow: var(--shadow);
+      padding:16px;
+    }
+    .brand{display:flex;gap:12px;align-items:center;margin-bottom:12px}
+    .logo{
+      width:52px;height:52px;border-radius:999px;display:grid;place-items:center;
+      background: linear-gradient(135deg, rgba(212,175,55,.18), rgba(184,134,11,.12));
+      border:1px solid rgba(212,175,55,.35);
+      overflow:hidden; padding:7px;
+    }
+    .logo img{width:100%;height:100%;object-fit:contain;display:block}
+    .t1{font-weight:1000;font-size:18px}
+    .t2{color:var(--muted);font-weight:900;font-size:12px;margin-top:2px}
+    label{display:block;font-size:12px;color:var(--muted);font-weight:900;margin:10px 0 6px}
+    input{
+      width:100%; padding:12px; border-radius:14px;
+      border:1px solid var(--stroke);
+      background: rgba(255,255,255,.95);
+      outline:none; font-size:16px;
+      box-shadow: 0 8px 18px rgba(15,23,42,.06);
+    }
+    input:focus{ border-color: rgba(212,175,55,.65); box-shadow: 0 10px 22px rgba(212,175,55,.14); }
+    .btn{
+      width:100%; margin-top:12px;
+      padding:12px 14px; border-radius:16px;
+      border:1px solid rgba(212,175,55,.65);
+      background: linear-gradient(135deg, rgba(212,175,55,.28), rgba(184,134,11,.22));
+      font-weight:1000; cursor:pointer;
+      box-shadow: 0 12px 22px rgba(212,175,55,.14);
+    }
+    .hint{margin-top:10px;color:var(--muted);font-weight:900;font-size:12px;line-height:1.7}
+    .err{margin-top:10px;display:none;padding:10px;border-radius:14px;
+      border:1px solid rgba(220,38,38,.18); background: rgba(220,38,38,.06);
+      color:#991b1b; font-weight:1000;
+    }
+  </style>
+</head>
+<body>
+  <div class="card" role="dialog" aria-label="تسجيل الدخول">
+    <div class="brand">
+      <div class="logo">
+        <img src="images/bslogo.webp" alt="BS Logo" onerror="this.style.display='none'">
+      </div>
+      <div>
+        <div class="t1">تسجيل الدخول</div>
+        <div class="t2">Axentro — لوحة التحكم</div>
+      </div>
+    </div>
+
+    <label for="pass">رمز الدخول</label>
+    <input id="pass" type="password" placeholder="••••••••" autocomplete="current-password" />
+
+    <button id="loginBtn" class="btn" type="button">دخول</button>
+    <div id="err" class="err">رمز الدخول غير صحيح</div>
+
+    <div class="hint">
+      بعد الدخول سيتم تحويلك إلى لوحة التحكم.<br>
+      (يمكنك تغيير رمز الدخول من أعلى الكود).
+    </div>
+  </div>
+
+<script>
+  // ✅ غيّر كلمة السر هنا
+  const DASH_PASSWORD = "1407";
+
+  // ✅ نفس فكرة admin-invoice: sessionStorage
+  const OK_KEY = "BS_DASH_OK";
+
+  // ✅ قفل بعد محاولات
+  const FAILS_KEY = "BS_DASH_FAILS";
+  const LOCK_UNTIL_KEY = "BS_DASH_LOCK_UNTIL";
+  const MAX_FAILS = 5;
+  const LOCK_MINUTES = 10;
+
+  function nowMs(){ return Date.now(); }
+  function isLocked(){
+    const until = Number(localStorage.getItem(LOCK_UNTIL_KEY) || 0);
+    return until && nowMs() < until;
+  }
+  function lockRemainingText(){
+    const until = Number(localStorage.getItem(LOCK_UNTIL_KEY) || 0);
+    const diff = Math.max(0, until - nowMs());
+    const mins = Math.ceil(diff / 60000);
+    return `تم قفل الدخول مؤقتًا. حاول بعد ${mins} دقيقة.`;
+  }
+  function incFail(){
+    const n = Number(localStorage.getItem(FAILS_KEY) || 0) + 1;
+    localStorage.setItem(FAILS_KEY, String(n));
+    if(n >= MAX_FAILS){
+      localStorage.setItem(LOCK_UNTIL_KEY, String(nowMs() + LOCK_MINUTES*60000));
+    }
+    return n;
+  }
+  function resetFails(){
+    localStorage.removeItem(FAILS_KEY);
+    localStorage.removeItem(LOCK_UNTIL_KEY);
+  }
+
+  const pass = document.getElementById("pass");
+  const btn  = document.getElementById("loginBtn");
+  const err  = document.getElementById("err");
+
+  function go(){
+    sessionStorage.setItem(OK_KEY, "1");
+    window.location.href = "dashboard.html";
+  }
+
+  function check(){
+    err.style.display = "none";
+
+    if(isLocked()){
+      err.textContent = lockRemainingText();
+      err.style.display = "block";
+      return;
+    }
+
+    const v = String(pass.value || "");
+    if(v === DASH_PASSWORD){
+      resetFails();
+      go();
+    }else{
+      const tries = incFail();
+      if(isLocked()){
+        err.textContent = lockRemainingText();
+      }else{
+        const left = Math.max(0, MAX_FAILS - tries);
+        err.textContent = `رمز الدخول غير صحيح — المتبقي قبل القفل: ${left}`;
+      }
+      err.style.display = "block";
+    }
+  }
+
+  btn.addEventListener("click", check);
+  pass.addEventListener("keydown", (e)=>{ if(e.key==="Enter") check(); });
+
+  // لو مسجل دخول بالفعل => روح للداش
+  if(sessionStorage.getItem(OK_KEY) === "1"){
+    window.location.href = "dashboard.html";
+  }else{
+    try{ pass.focus(); }catch(e){}
+  }
+</script>
+</body>
+</html>
