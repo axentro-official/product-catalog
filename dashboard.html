@@ -1,584 +1,253 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>Axentro — لوحة التحكم</title>
+  <title>لوحة التحكم — Axentro</title>
 
   <style>
     :root{
-      --bg:#ffffff;
-      --panel:#ffffff;
-      --panel2:#fbfbfd;
-      --text:#0f172a;
-      --muted:#64748b;
-      --stroke:#e6e8ee;
-      --shadow: 0 18px 50px rgba(15,23,42,.10);
-      --radius:18px;
-
-      --gold1:#D4AF37;
-      --gold2:#B8860B;
+      --bg:#ffffff; --text:#0f172a; --muted:#64748b;
+      --stroke:#e6e8ee; --shadow: 0 18px 50px rgba(15,23,42,.10);
+      --radius:18px; --gold1:#D4AF37; --gold2:#B8860B;
       --goldSoft: rgba(212,175,55,.18);
-      --goldSoft2: rgba(184,134,11,.12);
-
-      --ok:#16a34a;
-      --warn:#d97706;
-      --bad:#dc2626;
-
-      --sideW: 290px;
-      --topH: 68px;
-      --safe-b: env(safe-area-inset-bottom, 0px);
+      --container:1100px;
     }
-
     *{box-sizing:border-box}
     html,body{height:100%}
     body{
-      margin:0;
-      font-family: system-ui, -apple-system, "Segoe UI", Tahoma, Arial;
+      margin:0; font-family: system-ui, -apple-system, "Segoe UI", Tahoma, Arial;
       color:var(--text);
       background:
         radial-gradient(900px 480px at 10% 10%, var(--goldSoft), transparent 60%),
         radial-gradient(760px 520px at 90% 20%, rgba(15,23,42,.05), transparent 60%),
         linear-gradient(180deg, var(--bg), #f7f8fb);
-      -webkit-font-smoothing:antialiased;
-      display:flex;
       min-height:100vh;
-      overflow:hidden;
+      display:flex; flex-direction:column;
     }
     a{color:inherit;text-decoration:none}
-    button{ -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
-
-    /* Mobile overlay */
-    .mOverlay{
-      position:fixed; inset:0;
-      background: rgba(15,23,42,.35);
-      backdrop-filter: blur(4px);
-      display:none;
-      z-index:90;
-    }
-    .mOverlay.show{display:block}
-
-    /* Sidebar */
-    .sidebar{
-      width:var(--sideW);
-      min-width:var(--sideW);
-      border-inline-end:1px solid var(--stroke);
-      background: linear-gradient(180deg, rgba(255,255,255,.96), rgba(248,250,252,.96));
-      box-shadow: 0 18px 50px rgba(15,23,42,.08);
-      display:flex;
-      flex-direction:column;
-      padding:14px;
-      gap:12px;
-    }
-
-    .brand{
-      display:flex; align-items:center; gap:12px;
-      padding:10px;
+    .wrap{width:min(var(--container), 94vw); margin:16px auto; flex:1}
+    .topbar{
+      display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;
+      padding:12px 14px;
       border:1px solid var(--stroke);
-      border-radius:16px;
+      border-radius:18px;
       background: rgba(255,255,255,.92);
-      box-shadow: 0 10px 22px rgba(15,23,42,.06);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
     }
+    .brand{display:flex;align-items:center;gap:12px}
     .logo{
-      width:44px; height:44px; border-radius:999px; display:grid; place-items:center;
+      width:44px;height:44px;border-radius:999px;display:grid;place-items:center;
       background: linear-gradient(135deg, rgba(212,175,55,.18), rgba(184,134,11,.12));
       border:1px solid rgba(212,175,55,.35);
       overflow:hidden; padding:6px;
-      flex:0 0 auto;
     }
     .logo img{width:100%;height:100%;object-fit:contain;display:block}
-    .brandTitle{font-size:14px;font-weight:1000}
-    .brandSub{font-size:12px;color:var(--muted);margin-top:2px;font-weight:900}
-
-    .nav{
-      display:flex;
-      flex-direction:column;
-      gap:10px;
-    }
-
-    .navBtn{
-      width:100%;
-      text-align:right;
-      padding:12px;
-      border-radius:16px;
+    .t1{font-weight:1000}
+    .t2{font-size:12px;color:var(--muted);font-weight:900;margin-top:2px}
+    .right{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+    .pill{
+      padding:10px 12px;border-radius:14px;
       border:1px solid var(--stroke);
-      background: rgba(255,255,255,.92);
-      box-shadow: 0 10px 22px rgba(15,23,42,.06);
-      cursor:pointer;
+      background: rgba(255,255,255,.95);
       font-weight:1000;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:10px;
-      transition: transform .15s ease, border-color .15s ease, box-shadow .15s ease;
-    }
-    .navBtn:hover{
-      transform: translateY(-1px);
-      border-color: rgba(212,175,55,.55);
-      box-shadow: 0 16px 30px rgba(15,23,42,.10);
-    }
-    .navBtn.active{
-      border-color: rgba(212,175,55,.75);
-      background: linear-gradient(135deg, rgba(212,175,55,.22), rgba(184,134,11,.18));
-    }
-
-    .navLeft{display:flex; flex-direction:column; gap:3px; min-width:0;}
-    .navTitle{white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
-    .navHint{font-size:11px;color:var(--muted); font-weight:900; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
-
-    .badge{
-      padding:6px 10px;
-      border-radius:999px;
-      border:1px solid rgba(212,175,55,.35);
-      background: rgba(255,255,255,.86);
-      font-size:11px;
-      font-weight:1000;
-      flex:0 0 auto;
+      box-shadow: 0 8px 18px rgba(15,23,42,.06);
       white-space:nowrap;
     }
-    .bOk{ border-color: rgba(22,163,74,.25); }
-    .bWarn{ border-color: rgba(217,119,6,.25); }
-    .bBad{ border-color: rgba(220,38,38,.25); }
-
-    .cards{
-      display:grid;
-      grid-template-columns: 1fr;
-      gap:10px;
-      margin-top:6px;
-    }
-    .stat{
-      border:1px solid var(--stroke);
-      border-radius:16px;
-      background: rgba(255,255,255,.92);
-      box-shadow: 0 10px 22px rgba(15,23,42,.06);
-      padding:12px;
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      gap:10px;
-    }
-    .stat .k{font-size:12px;color:var(--muted); font-weight:900;}
-    .stat .v{font-size:16px;font-weight:1100;}
-    .stat .v small{font-size:12px;color:var(--muted);font-weight:900}
-
-    .sideFoot{
-      margin-top:auto;
-      padding-top:10px;
-      border-top:1px solid var(--stroke);
-      color:var(--muted);
-      font-size:12px;
-      text-align:center;
-      padding-bottom: calc(6px + var(--safe-b));
-    }
-
-    /* Main */
-    .main{
-      flex:1;
-      display:flex;
-      flex-direction:column;
-      min-width:0;
-    }
-
-    .topbar{
-      height:var(--topH);
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      padding:12px 14px;
-      border-bottom:1px solid var(--stroke);
-      background: linear-gradient(180deg, rgba(255,255,255,.92), rgba(255,255,255,.70));
-      backdrop-filter: blur(10px);
-      gap:10px;
-    }
-
-    .topLeft{display:flex; align-items:center; gap:10px; min-width:0;}
-    .burger{
-      display:none;
-      width:44px; height:44px;
-      border-radius:14px;
-      border:1px solid var(--stroke);
-      background: rgba(255,255,255,.92);
-      box-shadow: 0 10px 22px rgba(15,23,42,.06);
-      cursor:pointer;
-      font-weight:1000;
-    }
-
-    .pageTitle{font-weight:1100; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
-    .pageSub{font-size:12px;color:var(--muted); font-weight:900; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
-
-    .topRight{
-      display:flex;
-      align-items:center;
-      gap:10px;
-      flex-wrap:wrap;
-      justify-content:flex-end;
-    }
-
     .btn{
-      padding:10px 12px;
-      border-radius:14px;
-      border:1px solid var(--stroke);
-      background: rgba(255,255,255,.92);
+      padding:10px 12px;border-radius:14px;
+      border:1px solid rgba(212,175,55,.65);
+      background: linear-gradient(135deg, rgba(212,175,55,.28), rgba(184,134,11,.22));
+      font-weight:1000; cursor:pointer;
+      box-shadow: 0 12px 22px rgba(212,175,55,.14);
+      white-space:nowrap;
+    }
+    .btn.secondary{
+      border-color: var(--stroke);
+      background: rgba(255,255,255,.95);
       box-shadow: 0 10px 22px rgba(15,23,42,.06);
-      cursor:pointer;
-      font-weight:1000;
-      display:flex;
-      align-items:center;
-      gap:8px;
-      white-space:nowrap;
-    }
-    .btn.primary{
-      border-color: rgba(212,175,55,.65);
-      background: linear-gradient(135deg, rgba(212,175,55,.22), rgba(184,134,11,.18));
     }
 
-    .content{
-      padding:14px;
-      flex:1;
-      min-height:0;
+    .grid{
+      margin-top:14px;
+      display:grid;
+      grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+      gap:12px;
     }
-
-    .frameWrap{
-      width:100%;
-      height:100%;
-      border-radius: var(--radius);
+    .card{
       border:1px solid var(--stroke);
-      background: rgba(255,255,255,.90);
+      border-radius: var(--radius);
+      background: rgba(255,255,255,.92);
       box-shadow: var(--shadow);
-      overflow:hidden;
-      display:flex;
-      flex-direction:column;
-      min-height:0;
+      padding:14px;
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+      cursor:pointer;
+      transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease;
     }
-
-    .frameBar{
-      padding:10px;
-      border-bottom:1px solid var(--stroke);
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:10px;
-      background: rgba(248,250,252,.96);
-      flex-wrap:wrap;
+    .card:hover{ transform: translateY(-2px); border-color: rgba(212,175,55,.55); }
+    .ic{
+      width:44px;height:44px;border-radius:14px;
+      display:grid;place-items:center;
+      border:1px solid rgba(212,175,55,.35);
+      background: rgba(212,175,55,.12);
+      font-size:20px;
+      flex:0 0 auto;
     }
-    .framePath{
-      font-size:12px;
-      color:var(--muted);
-      font-weight:900;
+    .meta{min-width:0}
+    .title{font-weight:1000}
+    .sub{font-size:12px;color:var(--muted);font-weight:900;margin-top:3px}
+    .tag{
+      padding:8px 10px;border-radius:999px;
+      border:1px solid var(--stroke);
+      background: rgba(248,250,252,.95);
+      font-weight:1000; color:#334155; font-size:12px;
       white-space:nowrap;
-      overflow:hidden;
-      text-overflow:ellipsis;
-      max-width: 100%;
     }
 
-    iframe{
-      width:100%;
-      height:100%;
-      border:0;
-      background:#fff;
-      flex:1;
-      min-height:0;
+    .site-footer{
+      padding:16px 16px 22px;
+      text-align:center;
+      color:var(--muted);
+      border-top:1px solid var(--stroke);
+      background: rgba(255,255,255,.78);
+      backdrop-filter: blur(10px);
     }
+    .site-footer .line1{ font-weight:1000; color:#0f172a; }
+    .site-footer .line2{ margin-top:6px; font-weight:900; }
 
-    @media (max-width: 980px){
-      .burger{display:inline-grid; place-items:center;}
-      .sidebar{
-        position:fixed;
-        top:0; bottom:0;
-        inset-inline-start:0;
-        z-index:100;
-        transform: translateX(110%);
-        transition: transform .2s ease;
-        max-width: min(var(--sideW), 92vw);
-      }
-      .sidebar.open{transform: translateX(0);}
+    @media (max-width:720px){
+      .wrap{ width:92vw; }
+      .card:hover{ transform:none; }
     }
-
-    :focus{ outline:3px solid rgba(212,175,55,.25); outline-offset:3px; }
   </style>
 </head>
 
 <body>
-  <div id="mOverlay" class="mOverlay" tabindex="-1"></div>
-
-  <aside id="sidebar" class="sidebar" aria-label="قائمة التنقل">
-    <div class="brand">
-      <div class="logo">
-        <img src="images/bslogo.webp" alt="BS Logo"
-          onerror="this.onerror=null;this.style.display='none';this.parentElement.textContent='BS'">
+  <div class="wrap">
+    <div class="topbar">
+      <div class="brand">
+        <div class="logo">
+          <img src="images/bslogo.webp" alt="BS Logo" onerror="this.style.display='none'">
+        </div>
+        <div>
+          <div class="t1">B.S Medical &amp; Aesthetic</div>
+          <div class="t2">Axentro — لوحة التحكم</div>
+        </div>
       </div>
-      <div style="min-width:0">
-        <div class="brandTitle">B.S Medical &amp; Aesthetic</div>
-        <div class="brandSub">لوحة التحكم — Axentro</div>
+
+      <div class="right">
+        <div class="pill" id="sessionState">🔒 غير مسجل</div>
+        <button class="btn secondary" id="logoutBtn" type="button">🚪 تسجيل خروج</button>
       </div>
     </div>
 
-    <nav class="nav" aria-label="الصفحات">
-      <button class="navBtn" data-page="index.html" data-title="كتالوج المنتجات" data-sub="إضافة للسلة والبحث">
-        <span class="navLeft">
-          <span class="navTitle">🛍️ كتالوج المنتجات</span>
-          <span class="navHint">index.html</span>
-        </span>
-        <span class="badge" id="badgeProducts">—</span>
-      </button>
-
-      <button class="navBtn" data-page="order.html" data-title="إتمام الطلب" data-sub="بيانات العميل وإرسال الطلب">
-        <span class="navLeft">
-          <span class="navTitle">🧾 إتمام الطلب</span>
-          <span class="navHint">order.html</span>
-        </span>
-        <span class="badge" id="badgeCart">0</span>
-      </button>
-
-      <button class="navBtn" data-page="admin-invoice.html" data-title="لوحة الفواتير" data-sub="تسجيل دخول الإدارة">
-        <span class="navLeft">
-          <span class="navTitle">🔐 لوحة الفواتير</span>
-          <span class="navHint">admin-invoice.html</span>
-        </span>
-        <span class="badge" id="badgeAdmin">مغلق</span>
-      </button>
-
-      <button class="navBtn" data-page="admin-invoice.html?quote=1" data-title="عرض سعر" data-sub="Quotation Mode">
-        <span class="navLeft">
-          <span class="navTitle">📄 عرض سعر</span>
-          <span class="navHint">admin-invoice.html?quote=1</span>
-        </span>
-        <span class="badge">Quote</span>
-      </button>
-    </nav>
-
-    <section class="cards" aria-label="إحصائيات سريعة">
-      <div class="stat">
-        <div>
-          <div class="k">عناصر السلة</div>
-          <div class="v" id="statCartItems">0</div>
+    <div class="grid" id="grid">
+      <!-- ✅ الصفحات الحالية -->
+      <div class="card" data-go="index.html">
+        <div class="ic">🛍️</div>
+        <div class="meta">
+          <div class="title">كتالوج المنتجات</div>
+          <div class="sub">إضافة للسلة والبحث والتصفح</div>
         </div>
-        <div class="badge">AX_CART_V1</div>
+        <div class="tag">index.html</div>
       </div>
 
-      <div class="stat">
-        <div>
-          <div class="k">عدد المنتجات (من الكاش)</div>
-          <div class="v" id="statProductsCount">—</div>
+      <div class="card" data-go="order.html">
+        <div class="ic">🧾</div>
+        <div class="meta">
+          <div class="title">إتمام الطلب</div>
+          <div class="sub">مراجعة السلة وإرسال واتساب</div>
         </div>
-        <div class="badge">Cache</div>
+        <div class="tag">order.html</div>
       </div>
 
-      <div class="stat">
-        <div>
-          <div class="k">آخر تحديث للمنتجات</div>
-          <div class="v" id="statProductsTs">—</div>
+      <div class="card" data-go="admin-invoice.html">
+        <div class="ic">🔐</div>
+        <div class="meta">
+          <div class="title">لوحة الفواتير</div>
+          <div class="sub">إنشاء فاتورة + طباعة + PDF</div>
         </div>
-        <div class="badge">TS</div>
+        <div class="tag">admin-invoice.html</div>
       </div>
 
-      <div class="stat">
-        <div>
-          <div class="k">حالة الأدمن</div>
-          <div class="v" id="statAdmin">—</div>
+      <div class="card" data-go="admin-invoice.html?quote=1">
+        <div class="ic">📄</div>
+        <div class="meta">
+          <div class="title">عرض سعر</div>
+          <div class="sub">Quotation PDF</div>
         </div>
-        <div class="badge" id="statAdminBadge">BS_ADMIN_OK</div>
+        <div class="tag">quote=1</div>
       </div>
-    </section>
 
-    <div class="sideFoot">
-      Axentro – All Rights Reserved 2024 ©<br>By Ahmed Hamouda
+      <!-- ✅ صفحات مستقبلية (Placeholder) -->
+      <div class="card" data-go="expenses.html">
+        <div class="ic">💸</div>
+        <div class="meta">
+          <div class="title">المصروفات</div>
+          <div class="sub">قريبًا</div>
+        </div>
+        <div class="tag">expenses.html</div>
+      </div>
+
+      <div class="card" data-go="inventory.html">
+        <div class="ic">📦</div>
+        <div class="meta">
+          <div class="title">المخزن</div>
+          <div class="sub">قريبًا</div>
+        </div>
+        <div class="tag">inventory.html</div>
+      </div>
+
+      <div class="card" data-go="reports.html">
+        <div class="ic">📊</div>
+        <div class="meta">
+          <div class="title">التقارير</div>
+          <div class="sub">قريبًا</div>
+        </div>
+        <div class="tag">reports.html</div>
+      </div>
+
+      <div class="card" data-go="profits.html">
+        <div class="ic">💰</div>
+        <div class="meta">
+          <div class="title">الأرباح</div>
+          <div class="sub">قريبًا</div>
+        </div>
+        <div class="tag">profits.html</div>
+      </div>
     </div>
-  </aside>
+  </div>
 
-  <main class="main">
-    <header class="topbar">
-      <div class="topLeft">
-        <button id="burger" class="burger" aria-label="فتح القائمة">☰</button>
-        <div style="min-width:0">
-          <div class="pageTitle" id="pageTitle">لوحة التحكم</div>
-          <div class="pageSub" id="pageSub">اختر صفحة من القائمة</div>
-        </div>
-      </div>
-
-      <div class="topRight">
-        <button id="openFull" class="btn" title="فتح الصفحة في تبويب مستقل (أفضل للطباعة و PDF)">⤢ فتح كامل</button>
-        <button id="reloadFrame" class="btn" title="تحديث الصفحة داخل الداشبورد">↻ تحديث</button>
-        <button id="goCatalog" class="btn primary" title="الذهاب للكتالوج">🛍️ الكتالوج</button>
-      </div>
-    </header>
-
-    <section class="content">
-      <div class="frameWrap">
-        <div class="frameBar">
-          <div class="framePath" id="framePath">—</div>
-          <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
-            <span class="badge" id="modeBadge">داخل البرنامج</span>
-            <span class="badge" id="quickCart">السلة: 0</span>
-          </div>
-        </div>
-        <iframe id="appFrame" src="index.html" title="Axentro App"></iframe>
-      </div>
-    </section>
-  </main>
+  <footer class="site-footer">
+    <div class="line1">Axentro – All Rights Reserved 2024 ©</div>
+    <div class="line2">By Ahmed Hamouda</div>
+  </footer>
 
 <script>
-  // ---- Storage keys from your project
-  const LS_CART = "AX_CART_V1";
-  const LS_PROD_CACHE = "AX_PRODUCTS_CACHE_V1";
-  const LS_PROD_TS = "AX_PRODUCTS_CACHE_TS_V1";
-  const SS_ADMIN_OK = "BS_ADMIN_OK";
+  const OK_KEY = "BS_DASH_OK";
 
-  // ---- DOM
-  const sidebar = document.getElementById("sidebar");
-  const mOverlay = document.getElementById("mOverlay");
-  const burger = document.getElementById("burger");
-
-  const appFrame = document.getElementById("appFrame");
-  const pageTitle = document.getElementById("pageTitle");
-  const pageSub = document.getElementById("pageSub");
-  const framePath = document.getElementById("framePath");
-
-  const openFull = document.getElementById("openFull");
-  const reloadFrame = document.getElementById("reloadFrame");
-  const goCatalog = document.getElementById("goCatalog");
-
-  const badgeCart = document.getElementById("badgeCart");
-  const badgeProducts = document.getElementById("badgeProducts");
-  const badgeAdmin = document.getElementById("badgeAdmin");
-
-  const statCartItems = document.getElementById("statCartItems");
-  const statProductsCount = document.getElementById("statProductsCount");
-  const statProductsTs = document.getElementById("statProductsTs");
-  const statAdmin = document.getElementById("statAdmin");
-  const statAdminBadge = document.getElementById("statAdminBadge");
-
-  const quickCart = document.getElementById("quickCart");
-  const modeBadge = document.getElementById("modeBadge");
-
-  function safeJsonParse(raw, fallback){
-    try{ return JSON.parse(raw); }catch(e){ return fallback; }
+  // ✅ حارس الدخول: لو مش مسجل يرجع للوجين
+  if(sessionStorage.getItem(OK_KEY) !== "1"){
+    window.location.href = "login.html";
   }
 
-  function fmtTs(ts){
-    const n = Number(ts||0);
-    if(!n) return "—";
-    const d = new Date(n);
-    return d.toLocaleString("ar-EG", { hour12:true });
-  }
+  const sessionState = document.getElementById("sessionState");
+  sessionState.textContent = "✅ مسجل دخول";
 
-  function cartCount(){
-    const cart = safeJsonParse(localStorage.getItem(LS_CART) || "[]", []);
-    if(!Array.isArray(cart)) return 0;
-    return cart.reduce((s,it)=> s + (Number(it?.qty)||0), 0);
-  }
-
-  function productsCount(){
-    const list = safeJsonParse(localStorage.getItem(LS_PROD_CACHE) || "[]", []);
-    return Array.isArray(list) ? list.length : 0;
-  }
-
-  function adminState(){
-    return sessionStorage.getItem(SS_ADMIN_OK) === "1";
-  }
-
-  function setBadge(el, text, kind){
-    if(!el) return;
-    el.textContent = text;
-    el.classList.remove("bOk","bWarn","bBad");
-    if(kind) el.classList.add(kind);
-  }
-
-  function updateBadges(){
-    const c = cartCount();
-    badgeCart.textContent = String(c);
-    statCartItems.textContent = String(c);
-    quickCart.textContent = "السلة: " + String(c);
-
-    const pc = productsCount();
-    badgeProducts.textContent = pc ? (pc + " منتج") : "—";
-    statProductsCount.textContent = pc ? String(pc) : "—";
-
-    statProductsTs.textContent = fmtTs(localStorage.getItem(LS_PROD_TS));
-
-    const isAdmin = adminState();
-    statAdmin.textContent = isAdmin ? "✅ مسجل دخول" : "🔒 غير مسجل";
-    setBadge(badgeAdmin, isAdmin ? "مفتوح" : "مغلق", isAdmin ? "bOk" : "bBad");
-    statAdminBadge.style.opacity = isAdmin ? "1" : ".85";
-  }
-
-  // Active state
-  function setActiveNav(page){
-    document.querySelectorAll(".navBtn").forEach(b=>{
-      b.classList.toggle("active", b.dataset.page === page);
-    });
-  }
-
-  // Open page inside iframe
-  function openPage(page, title, sub){
-    appFrame.src = page;
-    pageTitle.textContent = title || "لوحة التحكم";
-    pageSub.textContent = sub || page;
-    framePath.textContent = "الصفحة الحالية: " + page;
-
-    setActiveNav(page);
-
-    // Helpful hint for admin printing
-    if(page.startsWith("admin-invoice.html")){
-      modeBadge.textContent = "يفضل فتح كامل للطباعة/PDF";
-    }else{
-      modeBadge.textContent = "داخل البرنامج";
-    }
-
-    // Close sidebar on mobile
-    if(window.matchMedia("(max-width: 980px)").matches){
-      sidebar.classList.remove("open");
-      mOverlay.classList.remove("show");
-    }
-  }
-
-  // Nav events
-  document.querySelectorAll(".navBtn").forEach(btn=>{
-    btn.addEventListener("click", ()=>{
-      const page = btn.dataset.page;
-      openPage(page, btn.dataset.title, btn.dataset.sub);
-    });
+  document.getElementById("logoutBtn").addEventListener("click", ()=>{
+    sessionStorage.removeItem(OK_KEY);
+    window.location.href = "login.html";
   });
 
-  // Toolbar
-  openFull.addEventListener("click", ()=>{
-    const src = appFrame.getAttribute("src") || "index.html";
-    window.open(src, "_blank");
+  // ✅ فتح الصفحات
+  document.getElementById("grid").addEventListener("click", (e)=>{
+    const card = e.target.closest("[data-go]");
+    if(!card) return;
+    const url = card.getAttribute("data-go");
+    if(!url) return;
+    window.location.href = url; // نفس التبويب
   });
-
-  reloadFrame.addEventListener("click", ()=>{
-    try{ appFrame.contentWindow.location.reload(); }
-    catch(e){ appFrame.src = appFrame.src; }
-  });
-
-  goCatalog.addEventListener("click", ()=>{
-    openPage("index.html", "كتالوج المنتجات", "إضافة للسلة والبحث");
-  });
-
-  // Mobile sidebar
-  function openSidebar(){
-    sidebar.classList.add("open");
-    mOverlay.classList.add("show");
-  }
-  function closeSidebar(){
-    sidebar.classList.remove("open");
-    mOverlay.classList.remove("show");
-  }
-  burger.addEventListener("click", openSidebar);
-  mOverlay.addEventListener("click", closeSidebar);
-  document.addEventListener("keydown", (e)=>{
-    if(e.key === "Escape") closeSidebar();
-  });
-
-  // Keep stats fresh
-  updateBadges();
-  window.addEventListener("focus", updateBadges);
-  window.addEventListener("storage", updateBadges);
-  setInterval(updateBadges, 2000);
-
-  // Default open
-  openPage("index.html", "كتالوج المنتجات", "إضافة للسلة والبحث");
 </script>
-
 </body>
 </html>
