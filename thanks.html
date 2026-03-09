@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>تم استلام الطلب</title>
+  <style>
+    :root{--bg:#ffffff;--text:#0f172a;--muted:#64748b;--stroke:#e6e8ee;--gold1:#D4AF37;--gold2:#B8860B;--radius:18px;--shadow:0 18px 50px rgba(15,23,42,.10);}
+    *{box-sizing:border-box} body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Tahoma,Arial;color:var(--text);background:linear-gradient(180deg,var(--bg),#f7f8fb);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:18px}
+    .card{width:min(720px,100%);background:#fff;border:1px solid var(--stroke);border-radius:24px;box-shadow:var(--shadow);padding:24px;text-align:center}
+    .badge{width:74px;height:74px;border-radius:999px;margin:0 auto 14px;display:grid;place-items:center;font-size:34px;background:linear-gradient(135deg,rgba(212,175,55,.22),rgba(184,134,11,.18));border:1px solid rgba(212,175,55,.45)}
+    h1{margin:0 0 10px;font-size:28px} p{margin:0;color:var(--muted);line-height:1.8}
+    .orderBox{margin-top:18px;padding:14px;border-radius:16px;border:1px solid var(--stroke);background:#fafafa}
+    .orderId{font-size:24px;font-weight:1000;letter-spacing:.4px}
+    .btns{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:18px}
+    .btn{padding:12px 16px;border-radius:16px;border:1px solid var(--stroke);background:#fff;color:var(--text);font-weight:1000;text-decoration:none;cursor:pointer}
+    .btn.primary{border-color:rgba(212,175,55,.6);background:linear-gradient(135deg, rgba(212,175,55,.24), rgba(184,134,11,.18))}
+    .mini{margin-top:14px;font-size:13px;color:var(--muted)}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="badge">✓</div>
+    <h1>تم استلام طلبك بنجاح</h1>
+    <p>تم حفظ الطلب في النظام. احتفظ برقم الطلب التالي للمتابعة أو للمراجعة داخل لوحة الفواتير.</p>
+    <div class="orderBox">
+      <div style="font-size:13px;color:var(--muted);margin-bottom:6px">رقم الطلب</div>
+      <div id="orderId" class="orderId">—</div>
+    </div>
+    <div class="btns">
+      <button id="copyBtn" class="btn primary" type="button">نسخ رقم الطلب</button>
+      <a class="btn" href="./">الرجوع للكتالوج</a>
+      <button id="waBtn" class="btn" type="button">فتح واتساب</button>
+    </div>
+    <div class="mini">يمكنك استخدام رقم الطلب نفسه داخل لوحة إدارة الفواتير لجلب الطلب مباشرة.</div>
+  </div>
+<script>
+  const OWNER_WA = "201146476993";
+  const params = new URLSearchParams(location.search);
+  const orderId = params.get("order_id") || "—";
+  document.getElementById("orderId").textContent = orderId;
+  document.getElementById("copyBtn").addEventListener("click", async ()=>{
+    try{ await navigator.clipboard.writeText(orderId); alert("تم نسخ رقم الطلب"); }
+    catch(e){}
+  });
+  document.getElementById("waBtn").addEventListener("click", ()=>{
+    const msg = sessionStorage.getItem("BS_LAST_WA_MSG") || `مرحبا، أريد المتابعة على الطلب رقم ${orderId}`;
+    const url = `https://wa.me/${OWNER_WA}?text=${encodeURIComponent(msg)}`;
+    window.open(url, "_blank");
+  });
+</script>
+</body>
+</html>

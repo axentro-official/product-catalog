@@ -183,6 +183,19 @@
     display:flex; gap:8px; flex-wrap:wrap; align-items:center
   }
 
+  .priceTag{
+    margin-top:2px;
+    font-size:14px;
+    font-weight:1000;
+    color:#0f172a;
+  }
+  .priceTag small{
+    font-size:11px;
+    color:var(--muted);
+    font-weight:900;
+    margin-inline-start:4px;
+  }
+
   /* ✅ status */
   .st-available{color:var(--ok); font-weight:1000}
   .st-low{color:var(--warn); font-weight:1000}
@@ -499,10 +512,10 @@
 
 <script>
 /* CONFIG */
-const API_URL = "https://script.google.com/macros/s/AKfycbwsPPw3UiW6TBngBcbFxY4E8rB7JYgK1W2LRn0WaS9C7OitA1FgZ1vAz9Qr1u_ojlZ8/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbwA-TDjlHKaqeTneXqCYxDQqJFht8uuk2J1wVEx8K6UVdgHGGmTQxXhlekxrmF3erO-/exec";
 const PROD_CACHE_KEY = "AX_PRODUCTS_CACHE_V1";
 const PROD_CACHE_TS  = "AX_PRODUCTS_CACHE_TS_V1";
-const CACHE_TTL_MS   = 10 * 60 * 1000;
+const CACHE_TTL_MS   = 60 * 1000;
 
 const IMG_PLACEHOLDER = "https://via.placeholder.com/600x400?text=No+Image";
 function resolveImageById(id){ return `images/${id}.webp`; }
@@ -643,7 +656,7 @@ function renderCart(){
   }
 
   cart.forEach(it=>{
-    const p = products.find(x=>String(x.id)===String(it.id)) || { id: it.id, name: "منتج غير متاح", category: "-", availability: "Unknown" };
+    const p = products.find(x=>String(x.id)===String(it.id)) || { id: it.id, name: "منتج غير متاح", category: "-", availability: "Unknown", price: 0 };
 
     const row = document.createElement("div");
     row.className = "item";
@@ -655,6 +668,7 @@ function renderCart(){
       <div class="iInfo">
         <div class="iName">${escapeHtml(p.name||p.id)}</div>
         <div class="iMeta">${escapeHtml(p.category||'-')} • <span class="${statusClass(p.availability)}">${escapeHtml(p.availability)}</span> • ${escapeHtml(p.id)}</div>
+        <div class="priceTag">${Number(p.price||0).toFixed(2)} جنيه <small>× ${Number(it.qty)||1}</small></div>
         <div class="rmBtn" data-act="rm" data-id="${escapeAttr(p.id)}" role="button" tabindex="0">حذف من السلة</div>
       </div>
       <div class="qtyBox">
@@ -724,6 +738,7 @@ function renderCatalog(){
       const titleEl = card.querySelector(".title");
       const pidEl = card.querySelector(".meta .pid");
       const statusEl = card.querySelector(".meta .st");
+      const priceEl = card.querySelector(".priceTag");
       const qValEl = card.querySelector("[data-mini-val]");
 
       if(titleEl) titleEl.textContent = p.name || "-";
@@ -732,6 +747,7 @@ function renderCatalog(){
         statusEl.textContent = p.availability;
         statusEl.className = "st " + statusClass(p.availability);
       }
+      if(priceEl) priceEl.innerHTML = `${Number(p.price||0).toFixed(2)} جنيه <small>للقطعة</small>`;
       if(qValEl) qValEl.textContent = draftVal;
 
       const existingImg = card.querySelector("img.js-img");
@@ -757,6 +773,7 @@ function renderCatalog(){
           <span class="st ${statusClass(p.availability)}">${escapeHtml(p.availability)}</span>
           <span class="pid" style="opacity:.85;margin-inline-start:8px">${escapeHtml(p.id||'')}</span>
         </div>
+        <div class="priceTag">${Number(p.price||0).toFixed(2)} جنيه <small>للقطعة</small></div>
 
         <div class="buyRow">
           <div class="qtyMini" aria-label="كمية المنتج">

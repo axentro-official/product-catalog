@@ -317,7 +317,10 @@
       </div>
       <div>
         <label for="orderId">Order ID (رقم الطلب)</label>
-        <input id="orderId" placeholder="مثال: 12548" />
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <input id="orderId" placeholder="مثال: BS-20260309-12345" style="flex:1" />
+          <button class="btn secondary" id="fetchOrderBtn" type="button" style="min-width:160px">جلب الطلب من النظام</button>
+        </div>
       </div>
     </div>
 
@@ -410,14 +413,14 @@
 <script>
 /* ================= CONFIG ================= */
 const ADMIN_PASSWORD = "1407";
-const API_URL = "https://script.google.com/macros/s/AKfycbwsPPw3UiW6TBngBcbFxY4E8rB7JYgK1W2LRn0WaS9C7OitA1FgZ1vAz9Qr1u_ojlZ8/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbwA-TDjlHKaqeTneXqCYxDQqJFht8uuk2J1wVEx8K6UVdgHGGmTQxXhlekxrmF3erO-/exec";
 const IMG_PLACEHOLDER = "https://via.placeholder.com/600x400?text=No+Image";
 const QR_SRC_MAIN = "qr-links.png";
 const QR_SRC_FALLBACK = "images/qr-links.png";
 
 const PROD_CACHE_KEY = "AX_PRODUCTS_CACHE_V1";
 const PROD_CACHE_TS  = "AX_PRODUCTS_CACHE_TS_V1";
-const CACHE_TTL_MS   = 10 * 60 * 1000;
+const CACHE_TTL_MS   = 60 * 1000;
 
 let PRODUCTS = [];
 let ROW_ID = 0;
@@ -765,14 +768,20 @@ itemsTbody.addEventListener("input", (ev)=>{
   if(field === "sku"){
     const sku = String(el.value||"").trim();
     const p = findBySku(sku);
-    if(p) tr.querySelector('[data-field="name"]').value = String(p.name||"").trim();
+    if(p){
+      tr.querySelector('[data-field="name"]').value = String(p.name||"").trim();
+      tr.querySelector('[data-field="price"]').value = Number(p.price||0).toFixed(2);
+    }
     syncRowThumb(tr);
     calcRowByTr(tr);
     return;
   }
   if(field === "name"){
     const p2 = findByName(el.value);
-    if(p2) tr.querySelector('[data-field="sku"]').value = String(p2.id||"").trim();
+    if(p2){
+      tr.querySelector('[data-field="sku"]').value = String(p2.id||"").trim();
+      tr.querySelector('[data-field="price"]').value = Number(p2.price||0).toFixed(2);
+    }
     syncRowThumb(tr);
     calcRowByTr(tr);
     return;
@@ -795,12 +804,19 @@ function syncRowsWithProducts(){
     const sku = String(skuEl?.value||"").trim();
     const name = String(nameEl?.value||"").trim();
 
+    const priceEl = tr.querySelector('[data-field="price"]');
     if(sku && (!name || name === "—")){
       const p = findBySku(sku);
-      if(p) nameEl.value = String(p.name||"").trim();
+      if(p){
+        nameEl.value = String(p.name||"").trim();
+        if(priceEl && (!Number(priceEl.value)||Number(priceEl.value)===0)) priceEl.value = Number(p.price||0).toFixed(2);
+      }
     }else if(name && !sku){
       const p2 = findByName(name);
-      if(p2) skuEl.value = String(p2.id||"").trim();
+      if(p2){
+        skuEl.value = String(p2.id||"").trim();
+        if(priceEl && (!Number(priceEl.value)||Number(priceEl.value)===0)) priceEl.value = Number(p2.price||0).toFixed(2);
+      }
     }
     syncRowThumb(tr);
   });
@@ -985,12 +1001,18 @@ function importFromWhatsApp(){
       if(it.sku){
         skuEl.value = it.sku;
         const p = findBySku(it.sku);
-        if(p) nameEl.value = String(p.name||"").trim();
+        if(p){
+          nameEl.value = String(p.name||"").trim();
+          tr.querySelector('[data-field="price"]').value = Number(p.price||0).toFixed(2);
+        }
         else if(it.name) nameEl.value = it.name;
       }else if(it.name){
         nameEl.value = it.name;
         const p2 = findByName(it.name);
-        if(p2) skuEl.value = String(p2.id||"").trim();
+        if(p2){
+          skuEl.value = String(p2.id||"").trim();
+          tr.querySelector('[data-field="price"]').value = Number(p2.price||0).toFixed(2);
+        }
       }
 
       qtyEl.value = it.qty ? String(it.qty) : "1";
@@ -1003,6 +1025,52 @@ function importFromWhatsApp(){
 
   calcGrand();
   alert("✅ تم الاستيراد");
+}
+
+
+async function loadOrderFromSystem(){
+  const orderId = String(document.getElementById("orderId")?.value || "").trim();
+  if(!orderId){ alert("اكتب رقم الطلب أولاً."); return; }
+
+  try{
+    const url = `${API_URL}?action=getOrder&orderId=${encodeURIComponent(orderId)}`;
+    const res = await fetch(url, { cache: "no-store" });
+    if(!res.ok) throw new Error("HTTP " + res.status);
+    const data = await res.json();
+    if(!data || data.ok !== true || !data.order) throw new Error(data?.error || "الطلب غير موجود");
+
+    const ord = data.order;
+    document.getElementById("custName").value = String(ord.customer_name || "");
+    document.getElementById("custPhone").value = String(ord.phone || "");
+    document.getElementById("custAddress").value = String(ord.address || "");
+
+    if(ord.order_type){
+      // display only if needed in future
+    }
+
+    const tbody = document.querySelector("#itemsTable tbody");
+    tbody.innerHTML = "";
+    ROW_ID = 0;
+
+    (ord.items || []).forEach(it=>{
+      const tr = addRow(true);
+      const sku = String(it.sku || it.id || "").trim();
+      const p = sku ? findBySku(sku) : null;
+      tr.querySelector('[data-field="sku"]').value = sku;
+      tr.querySelector('[data-field="name"]').value = String(it.name || p?.name || "").trim();
+      tr.querySelector('[data-field="qty"]').value = String(Math.max(1, Number(it.qty)||1));
+      tr.querySelector('[data-field="price"]').value = Number((p?.price ?? it.price ?? 0)).toFixed(2);
+      syncRowThumb(tr);
+      calcRowByTr(tr);
+    });
+
+    refreshRowNumbers();
+    calcGrand();
+    alert("✅ تم جلب الطلب من النظام");
+  }catch(err){
+    console.error(err);
+    alert(err?.message || "تعذر جلب الطلب من النظام");
+  }
 }
 
 /* ================= Export Data ================= */
@@ -1445,3 +1513,6 @@ calcGrand();
 </script>
 </body>
 </html>
+
+
+document.getElementById("fetchOrderBtn")?.addEventListener("click", loadOrderFromSystem);
