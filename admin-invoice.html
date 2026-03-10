@@ -317,15 +317,7 @@
       </div>
       <div>
         <label for="orderId">Order ID (رقم الطلب)</label>
-        <input id="orderId" placeholder="مثال: BS-20260309-36124" />
-        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
-          <button class="btn secondary" id="fetchOrderBtn" type="button" style="flex:1">🔎 جلب الطلب من النظام</button>
-          <button class="btn" id="confirmInvoiceBtn" type="button" style="flex:1">✅ تأكيد الفاتورة وخصم المخزون</button>
-          <button class="btn secondary" id="partialReturnBtn" type="button" style="flex:1">↩️ مرتجع جزئي</button>
-          <button class="btn secondary" id="fullReturnBtn" type="button" style="flex:1">⛔ مرتجع كامل</button>
-        </div>
-        <div id="orderStatusInfo" style="margin-top:8px;font-size:12px;color:#64748b;font-weight:900"></div>
-        <div id="returnHint" style="margin-top:6px;font-size:12px;color:#92400e;font-weight:900;display:none">في المرتجع الجزئي: عدّل الكميات في الجدول إلى الكمية المطلوب إرجاعها فقط، واترك غير المرتجع = 0.</div>
+        <input id="orderId" placeholder="مثال: 12548" />
       </div>
     </div>
 
@@ -418,18 +410,20 @@
 <script>
 /* ================= CONFIG ================= */
 const ADMIN_PASSWORD = "1407";
-const API_URL = "https://script.google.com/macros/s/AKfycbwA-TDjlHKaqeTneXqCYxDQqJFht8uuk2J1wVEx8K6UVdgHGGmTQxXhlekxrmF3erO-/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbwsPPw3UiW6TBngBcbFxY4E8rB7JYgK1W2LRn0WaS9C7OitA1FgZ1vAz9Qr1u_ojlZ8/exec";
 const IMG_PLACEHOLDER = "https://via.placeholder.com/600x400?text=No+Image";
 const QR_SRC_MAIN = "qr-links.png";
 const QR_SRC_FALLBACK = "images/qr-links.png";
 
 const PROD_CACHE_KEY = "AX_PRODUCTS_CACHE_V1";
 const PROD_CACHE_TS  = "AX_PRODUCTS_CACHE_TS_V1";
-const CACHE_TTL_MS   = 60 * 1000;
+const CACHE_TTL_MS   = 10 * 60 * 1000;
 
 let PRODUCTS = [];
 let ROW_ID = 0;
-let CURRENT_ORDER = null;
+let CURRENT_INVOICE_ID = '';
+let CURRENT_ORDER_STATE = null;
+let CURRENT_INVOICE_STATE = null;
 
 /* ================= MODE ================= */
 function isQuoteMode(){
@@ -735,7 +729,7 @@ function addRow(silentFocus=false){
         <input class="nameInput" list="nameList" placeholder="اسم المنتج" autocomplete="off" data-field="name" />
       </div>
     </td>
-    <td data-label="الكمية"><input type="number" min="0" value="1" data-field="qty"></td>
+    <td data-label="الكمية"><input type="number" min="1" value="1" data-field="qty"></td>
     <td data-label="السعر"><input type="number" step="0.01" min="0" value="0" data-field="price"></td>
     <td data-label="خصم (جنيه)"><input type="number" step="0.01" min="0" value="0" data-field="discount"></td>
     <td data-label="الإجمالي" class="rowTotal" data-field="rowTotal">0.00</td>
@@ -774,20 +768,14 @@ itemsTbody.addEventListener("input", (ev)=>{
   if(field === "sku"){
     const sku = String(el.value||"").trim();
     const p = findBySku(sku);
-    if(p){
-      tr.querySelector('[data-field="name"]').value = String(p.name||"").trim();
-      tr.querySelector('[data-field="price"]').value = Number(p.price||0);
-    }
+    if(p) tr.querySelector('[data-field="name"]').value = String(p.name||"").trim();
     syncRowThumb(tr);
     calcRowByTr(tr);
     return;
   }
   if(field === "name"){
     const p2 = findByName(el.value);
-    if(p2){
-      tr.querySelector('[data-field="sku"]').value = String(p2.id||"").trim();
-      tr.querySelector('[data-field="price"]').value = Number(p2.price||0);
-    }
+    if(p2) tr.querySelector('[data-field="sku"]').value = String(p2.id||"").trim();
     syncRowThumb(tr);
     calcRowByTr(tr);
     return;
@@ -812,18 +800,10 @@ function syncRowsWithProducts(){
 
     if(sku && (!name || name === "—")){
       const p = findBySku(sku);
-      if(p){
-        nameEl.value = String(p.name||"").trim();
-        const priceEl = tr.querySelector('[data-field="price"]');
-        if(priceEl && !Number(priceEl.value||0)) priceEl.value = Number(p.price||0);
-      }
+      if(p) nameEl.value = String(p.name||"").trim();
     }else if(name && !sku){
       const p2 = findByName(name);
-      if(p2){
-        skuEl.value = String(p2.id||"").trim();
-        const priceEl = tr.querySelector('[data-field="price"]');
-        if(priceEl && !Number(priceEl.value||0)) priceEl.value = Number(p2.price||0);
-      }
+      if(p2) skuEl.value = String(p2.id||"").trim();
     }
     syncRowThumb(tr);
   });
@@ -979,29 +959,48 @@ function parseWhatsAppLines(fullText){
 }
 
 
-function clearInvoiceRows_(){
-  const tbody = document.querySelector("#itemsTable tbody");
-  if(!tbody) return;
-  tbody.innerHTML = "";
-  ROW_ID = 0;
-  refreshRowNumbers();
-  calcGrand();
+function renderInvoiceStatusBar_(){
+  const el = document.getElementById("invoiceStatusBar");
+  if(!el) return;
+  const inv = CURRENT_INVOICE_STATE;
+  const ord = CURRENT_ORDER_STATE;
+  if(!inv && !ord){ el.textContent = ""; return; }
+  const parts = [];
+  if(inv?.invoice_id) parts.push(`رقم الفاتورة المحفوظة: ${inv.invoice_id}`);
+  if(ord?.inventory_status) parts.push(`حالة المخزون: ${ord.inventory_status}`);
+  if(ord?.invoice_status) parts.push(`حالة الفاتورة: ${ord.invoice_status}`);
+  el.textContent = parts.join(" | ");
 }
 
-function setRowFromProductData_(tr, item){
-  const sku = String(item?.sku || item?.id || "").trim();
-  const name = String(item?.name || "").trim();
-  const qty = Math.max(1, Number(item?.qty || 1));
-  const price = Number(item?.price || 0);
+function collectInvoiceItemsFromUI_(){
+  return Array.from(document.querySelectorAll("#itemsTable tbody tr")).map(tr=>{
+    const sku = String(tr.querySelector('[data-field="sku"]')?.value || "").trim();
+    const name = String(tr.querySelector('[data-field="name"]')?.value || "").trim();
+    const qty = Math.max(0, Number(tr.querySelector('[data-field="qty"]')?.value || 0));
+    const unit_price = Number(tr.querySelector('[data-field="price"]')?.value || 0);
+    const line_discount = Math.max(0, Number(tr.querySelector('[data-field="discount"]')?.value || 0));
+    const line_total = Math.max(0, Number(tr.querySelector('[data-field="rowTotal"]')?.textContent || 0));
+    return { sku, name, qty, unit_price, line_discount, line_total };
+  }).filter(x=>x.sku && x.qty > 0);
+}
 
-  tr.querySelector('[data-field="sku"]').value = sku;
-  tr.querySelector('[data-field="name"]').value = name;
-  tr.querySelector('[data-field="qty"]').value = qty;
-  tr.querySelector('[data-field="qty"]').dataset.originalQty = String(qty);
-  tr.querySelector('[data-field="price"]').value = price;
-  tr.querySelector('[data-field="discount"]').value = 0;
-  syncRowThumb(tr);
-  calcRowByTr(tr);
+function buildInvoicePayloadFromUI_(){
+  const d = getInvoiceData();
+  return {
+    order_id: String(d.orderId || "").trim(),
+    invoice_id: CURRENT_INVOICE_ID || String(d.invNo || "").trim(),
+    customer_name: String(d.custName || "").trim(),
+    phone: String(d.custPhone || "").trim(),
+    address: String(d.custAddress || "").trim(),
+    order_type: "",
+    subtotal_before_discount: Number(d.totalBefore || 0),
+    row_discount_total: Number(d.rowDiscountSum || 0),
+    global_discount: Number(d.globalDiscount || 0),
+    delivery_fee: Number(d.deliveryFee || 0),
+    final_total: Number(d.finalTotal || 0),
+    note: String(d.note || "").trim(),
+    items: collectInvoiceItemsFromUI_()
+  };
 }
 
 async function fetchOrderFromSystem(){
@@ -1019,7 +1018,17 @@ async function fetchOrderFromSystem(){
     if(!data || !data.ok || !data.order){
       throw new Error(data?.error || "تعذر جلب الطلب.");
     }
-    fillInvoiceFromOrder_(data.order);
+
+    CURRENT_ORDER_STATE = data.order || null;
+    CURRENT_INVOICE_STATE = data.invoice || null;
+    CURRENT_INVOICE_ID = data?.invoice?.invoice_id ? String(data.invoice.invoice_id) : "";
+
+    fillInvoiceFromOrder_(data.invoice || data.order, !!data.invoice);
+    if(data.invoice?.invoice_id){
+      document.getElementById("invNo").value = String(data.invoice.invoice_id);
+    }
+
+    renderInvoiceStatusBar_();
     alert("تم جلب الطلب بنجاح.");
   }catch(e){
     console.error(e);
@@ -1027,17 +1036,15 @@ async function fetchOrderFromSystem(){
   }
 }
 
-function fillInvoiceFromOrder_(order){
-  CURRENT_ORDER = order || null;
-  document.getElementById("orderId").value = String(order.order_id || "").trim();
-  renderOrderStatusInfo_(order);
-  document.getElementById("returnHint").style.display = "none";
-  document.getElementById("custName").value = String(order.customer_name || "").trim();
-  document.getElementById("custPhone").value = String(order.phone || "").trim();
-  document.getElementById("custAddress").value = String(order.address || "").trim();
+function fillInvoiceFromOrder_(payload, isInvoice){
+  const data = payload || {};
+  document.getElementById("orderId").value = String(data.order_id || "").trim();
+  document.getElementById("custName").value = String(data.customer_name || "").trim();
+  document.getElementById("custPhone").value = String(data.phone || "").trim();
+  document.getElementById("custAddress").value = String(data.address || "").trim();
 
-  if(order.created_at){
-    const dt = new Date(String(order.created_at).replace(" ", "T"));
+  if(data.created_at){
+    const dt = new Date(String(data.created_at).replace(" ", "T"));
     if(!isNaN(dt.getTime())){
       document.getElementById("invDate").value = formatDateEnglish(dt);
       document.getElementById("invTime").value = dt.toLocaleTimeString("en-US",{hour:'2-digit',minute:'2-digit',hour12:true});
@@ -1048,160 +1055,121 @@ function fillInvoiceFromOrder_(order){
   tbody.innerHTML = "";
   ROW_ID = 0;
 
-  const typeRadios = Array.from(document.querySelectorAll("input[name='type']"));
-  const normalizedType = String(order.order_type || "").trim();
-  typeRadios.forEach(r => { r.checked = (r.value === normalizedType); });
-  if(!typeRadios.some(r=>r.checked) && typeRadios[0]) typeRadios[0].checked = true;
-
-  const items = Array.isArray(order.items) ? order.items : [];
+  const items = Array.isArray(data.items) ? data.items : [];
   items.forEach(item=>{
     const tr = addRow(true);
-    setRowFromProductData_(tr, item);
+    tr.querySelector('[data-field="sku"]').value = String(item.sku || item.id || "").trim();
+    tr.querySelector('[data-field="name"]').value = String(item.name || "").trim();
+    tr.querySelector('[data-field="qty"]').value = Math.max(0, Number(item.qty || 0));
+    tr.querySelector('[data-field="price"]').value = Number(item.unit_price !== undefined ? item.unit_price : item.price || 0);
+    tr.querySelector('[data-field="discount"]').value = Number(item.line_discount !== undefined ? item.line_discount : item.discount || 0);
+    syncRowThumb(tr);
+    calcRowByTr(tr);
   });
 
   if(!items.length) addRow(true);
 
-  document.getElementById("globalDiscount").value = 0;
-  document.getElementById("deliveryFee").value = 0;
-  document.getElementById("invoiceNote").value = "";
-
+  document.getElementById("globalDiscount").value = Number(data.global_discount || 0);
+  document.getElementById("deliveryFee").value = Number(data.delivery_fee || 0);
+  document.getElementById("invoiceNote").value = String(data.note || "");
   refreshRowNumbers();
   calcGrand();
 }
 
-
-function renderOrderStatusInfo_(order){
-  const box = document.getElementById("orderStatusInfo");
-  if(!box) return;
-  if(!order){ box.textContent = ""; return; }
-  const inv = String(order.inventory_status || "—").trim();
-  const invc = String(order.invoice_status || "—").trim();
-  box.textContent = `حالة المخزون: ${inv} | حالة الفاتورة: ${invc}`;
-}
-
-function collectReturnItemsFromTable_(){
-  const rows = Array.from(document.querySelectorAll("#itemsTable tbody tr"));
-  return rows.map(tr=>{
-    const sku = String(tr.querySelector('[data-field="sku"]')?.value || "").trim();
-    const name = String(tr.querySelector('[data-field="name"]')?.value || "").trim();
-    const qty = Math.max(0, Math.floor(money(tr.querySelector('[data-field="qty"]')?.value)));
-    const price = money(tr.querySelector('[data-field="price"]')?.value);
-    const soldQty = Math.max(0, Math.floor(money(tr.querySelector('[data-field="qty"]')?.dataset?.originalQty || qty)));
-    return { sku, name, qty, price, soldQty };
-  }).filter(x=>x.sku);
-}
-
-async function fullReturnInvoiceFromSystem(){
-  const orderId = String(document.getElementById("orderId")?.value || "").trim();
-  if(!orderId){ alert("اكتب رقم الطلب أولاً."); return; }
-  if(!CURRENT_ORDER){ alert("اجلب الطلب من النظام أولاً."); return; }
-  const ok = confirm("سيتم إرجاع الفاتورة بالكامل وإضافة كل الكميات مرة أخرى إلى المخزون. هل تريد المتابعة؟");
-  if(!ok) return;
-
-  const btn = document.getElementById("fullReturnBtn");
-  const oldText = btn ? btn.textContent : "";
-  try{
-    if(btn){ btn.disabled = true; btn.textContent = "جاري الإرجاع..."; }
-    const res = await fetch(API_URL, {
-      method: "POST",
-      body: JSON.stringify({ action: "returnInvoice", orderId })
-    });
-    if(!res.ok) throw new Error("HTTP " + res.status);
-    const data = await res.json();
-    if(!data || !data.ok) throw new Error(data?.error || "تعذر تنفيذ المرتجع الكامل.");
-    alert(data.already_returned ? "الفاتورة مرتجعة بالكامل بالفعل." : "تم تنفيذ المرتجع الكامل بنجاح.");
-    await fetchOrderFromSystem();
-  }catch(e){
-    console.error(e);
-    alert("فشل المرتجع الكامل: " + (e?.message || e));
-  }finally{
-    if(btn){ btn.disabled = false; btn.textContent = oldText || "⛔ مرتجع كامل"; }
-  }
-}
-
-async function partialReturnInvoiceFromSystem(){
-  const orderId = String(document.getElementById("orderId")?.value || "").trim();
-  if(!orderId){ alert("اكتب رقم الطلب أولاً."); return; }
-  if(!CURRENT_ORDER){ alert("اجلب الطلب من النظام أولاً."); return; }
-
-  const items = collectReturnItemsFromTable_().filter(x=>x.qty > 0);
-  if(!items.length){
-    document.getElementById("returnHint").style.display = "block";
-    alert("في المرتجع الجزئي عدّل كميات الأصناف في الجدول إلى الكميات المطلوب إرجاعها ثم اضغط الزر مرة أخرى.");
-    return;
-  }
-
-  for(const item of items){
-    if(item.qty > item.soldQty){
-      alert(`كمية المرتجع للصنف ${item.sku} أكبر من الكمية المباعة في الفاتورة.`);
-      return;
-    }
-  }
-
-  const lines = items.map(x=>`${x.sku} | ${x.name} | qty: ${x.qty}`).join("\n");
-  const ok = confirm("سيتم تنفيذ مرتجع جزئي لهذه الأصناف:\n\n" + lines);
-  if(!ok) return;
-
-  const btn = document.getElementById("partialReturnBtn");
-  const oldText = btn ? btn.textContent : "";
-  try{
-    if(btn){ btn.disabled = true; btn.textContent = "جاري المرتجع..."; }
-    const res = await fetch(API_URL, {
-      method: "POST",
-      body: JSON.stringify({ action: "returnInvoicePartial", orderId, items })
-    });
-    if(!res.ok) throw new Error("HTTP " + res.status);
-    const data = await res.json();
-    if(!data || !data.ok) throw new Error(data?.error || "تعذر تنفيذ المرتجع الجزئي.");
-    alert("تم تنفيذ المرتجع الجزئي بنجاح.");
-    await fetchOrderFromSystem();
-  }catch(e){
-    console.error(e);
-    alert("فشل المرتجع الجزئي: " + (e?.message || e));
-  }finally{
-    if(btn){ btn.disabled = false; btn.textContent = oldText || "↩️ مرتجع جزئي"; }
-  }
-}
-
 async function confirmInvoiceFromSystem(){
   const orderId = String(document.getElementById("orderId")?.value || "").trim();
-  if(!orderId){
-    alert("اكتب رقم الطلب أولاً.");
-    return;
-  }
-  if(isQuoteMode()){
-    alert("وضع الكوتيشن لا يدعم تأكيد الفاتورة.");
-    return;
-  }
-  const ok = confirm("سيتم خصم الكميات من المخزون وتأكيد الفاتورة لهذا الطلب. هل تريد المتابعة؟");
+  if(!orderId){ alert("اكتب رقم الطلب أولاً."); return; }
+  if(isQuoteMode()){ alert("وضع الكوتيشن لا يدعم تأكيد الفاتورة."); return; }
+
+  const invoice = buildInvoicePayloadFromUI_();
+  if(!invoice.items.length){ alert("أضف صنفًا واحدًا على الأقل."); return; }
+
+  const ok = confirm(CURRENT_INVOICE_ID
+    ? "سيتم حفظ التعديلات الحالية على نفس الفاتورة وتحديث المخزون بالفروق. هل تريد المتابعة؟"
+    : "سيتم إنشاء/تأكيد الفاتورة وحفظ الشحن والخصومات وتحديث المخزون. هل تريد المتابعة؟");
   if(!ok) return;
 
   const btn = document.getElementById("confirmInvoiceBtn");
   const oldText = btn ? btn.textContent : "";
   try{
-    if(btn){ btn.disabled = true; btn.textContent = "جاري التأكيد..."; }
+    if(btn){ btn.disabled = true; btn.textContent = "جاري الحفظ..."; }
     const res = await fetch(API_URL, {
-  method: "POST",
-  body: JSON.stringify({
-    action: "confirmInvoice",
-    orderId: orderId
-  })
-});
+      method: "POST",
+      body: JSON.stringify({ action:"confirmInvoice", orderId, invoice })
+    });
     if(!res.ok) throw new Error("HTTP " + res.status);
     const data = await res.json();
-    if(!data || !data.ok){
-      throw new Error(data?.error || "تعذر تأكيد الفاتورة.");
-    }
-    const msg = data.already_confirmed
-      ? "الفاتورة مؤكدة بالفعل من قبل."
-      : "تم تأكيد الفاتورة وخصم المخزون بنجاح.";
-    alert(msg);
+    if(!data || !data.ok) throw new Error(data?.error || "تعذر حفظ الفاتورة.");
+    CURRENT_INVOICE_ID = String(data.invoice_id || CURRENT_INVOICE_ID || "");
+    if(CURRENT_INVOICE_ID) document.getElementById("invNo").value = CURRENT_INVOICE_ID;
     await fetchOrderFromSystem();
+    alert("تم حفظ/تأكيد الفاتورة بنجاح.");
   }catch(e){
     console.error(e);
-    alert("فشل تأكيد الفاتورة: " + (e?.message || e));
+    alert("فشل حفظ/تأكيد الفاتورة: " + (e?.message || e));
   }finally{
-    if(btn){ btn.disabled = false; btn.textContent = oldText || "✅ تأكيد الفاتورة وخصم المخزون"; }
+    if(btn){ btn.disabled = false; btn.textContent = oldText || "✅ حفظ/تأكيد الفاتورة"; }
+  }
+}
+
+async function returnInvoiceFullFromSystem(){
+  const orderId = String(document.getElementById("orderId")?.value || "").trim();
+  if(!orderId){ alert("اكتب رقم الطلب أولاً."); return; }
+  const ok = confirm("سيتم تنفيذ مرتجع كامل لهذه الفاتورة. هل تريد المتابعة؟");
+  if(!ok) return;
+
+  const btn = document.getElementById("returnFullBtn");
+  const old = btn ? btn.textContent : "";
+  try{
+    if(btn){ btn.disabled = true; btn.textContent = "جاري الإرجاع..."; }
+    const res = await fetch(API_URL, {
+      method: "POST",
+      body: JSON.stringify({ action:"returnInvoice", orderId })
+    });
+    if(!res.ok) throw new Error("HTTP " + res.status);
+    const data = await res.json();
+    if(!data || !data.ok) throw new Error(data?.error || "تعذر تنفيذ المرتجع الكامل.");
+    await fetchOrderFromSystem();
+    alert(data.already_returned ? "الفاتورة مرتجعة بالكامل بالفعل." : "تم تنفيذ المرتجع الكامل بنجاح.");
+  }catch(e){
+    console.error(e);
+    alert("فشل المرتجع الكامل: " + (e?.message || e));
+  }finally{
+    if(btn){ btn.disabled = false; btn.textContent = old || "⛔ مرتجع كامل"; }
+  }
+}
+
+async function returnInvoicePartialFromSystem(){
+  const orderId = String(document.getElementById("orderId")?.value || "").trim();
+  if(!orderId){ alert("اكتب رقم الطلب أولاً."); return; }
+
+  const items = collectInvoiceItemsFromUI_().map(x=>({ sku:x.sku, qty:Number(x.qty||0) })).filter(x=>x.qty>0);
+  if(!items.length){
+    alert("اجعل الكمية في كل صف = الكمية المطلوب إرجاعها فقط، ثم اضغط مرتجع جزئي.");
+    return;
+  }
+
+  const ok = confirm("سيتم تنفيذ مرتجع جزئي بالكميات الحالية الظاهرة في الجدول. هل تريد المتابعة؟");
+  if(!ok) return;
+
+  const btn = document.getElementById("returnPartialBtn");
+  const old = btn ? btn.textContent : "";
+  try{
+    if(btn){ btn.disabled = true; btn.textContent = "جاري المرتجع..."; }
+    const res = await fetch(API_URL, {
+      method: "POST",
+      body: JSON.stringify({ action:"returnInvoicePartial", orderId, items })
+    });
+    if(!res.ok) throw new Error("HTTP " + res.status);
+    const data = await res.json();
+    if(!data || !data.ok) throw new Error(data?.error || "تعذر تنفيذ المرتجع الجزئي.");
+    await fetchOrderFromSystem();
+    alert("تم تنفيذ المرتجع الجزئي بنجاح.");
+  }catch(e){
+    console.error(e);
+    alert("فشل المرتجع الجزئي: " + (e?.message || e));
+  }finally{
+    if(btn){ btn.disabled = false; btn.textContent = old || "↩️ مرتجع جزئي"; }
   }
 }
 
@@ -1235,7 +1203,7 @@ function importFromWhatsApp(){
       if(it.sku){
         skuEl.value = it.sku;
         const p = findBySku(it.sku);
-        if(p){ nameEl.value = String(p.name||"").trim(); tr.querySelector('[data-field="price"]').value = Number(p.price||0); }
+        if(p) nameEl.value = String(p.name||"").trim();
         else if(it.name) nameEl.value = it.name;
       }else if(it.name){
         nameEl.value = it.name;
@@ -1668,10 +1636,6 @@ document.getElementById("invoiceNote")?.addEventListener("input", calcGrand);
 
 document.getElementById('importBtn')?.addEventListener("click", importFromWhatsApp);
 document.getElementById('clearImportBtn')?.addEventListener("click", ()=>{ document.getElementById("waImport").value=""; });
-document.getElementById('fetchOrderBtn')?.addEventListener("click", fetchOrderFromSystem);
-document.getElementById('confirmInvoiceBtn')?.addEventListener("click", confirmInvoiceFromSystem);
-document.getElementById('fullReturnBtn')?.addEventListener("click", fullReturnInvoiceFromSystem);
-document.getElementById('partialReturnBtn')?.addEventListener("click", partialReturnInvoiceFromSystem);
 
 document.getElementById('printA4Btn')?.addEventListener('click', exportA4);
 document.getElementById('savePdfA4Btn')?.addEventListener('click', ()=> savePdfA4("invoice"));
