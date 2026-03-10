@@ -317,7 +317,15 @@
       </div>
       <div>
         <label for="orderId">Order ID (رقم الطلب)</label>
-        <input id="orderId" placeholder="مثال: 12548" />
+        <input id="orderId" placeholder="مثال: BS-20260309-36124" />
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
+          <button class="btn secondary" id="fetchOrderBtn" type="button" style="flex:1">🔎 جلب الطلب من النظام</button>
+          <button class="btn" id="confirmInvoiceBtn" type="button" style="flex:1">💾 حفظ / تأكيد الفاتورة</button>
+          <button class="btn secondary" id="partialReturnBtn" type="button" style="flex:1">↩️ مرتجع جزئي</button>
+          <button class="btn secondary" id="fullReturnBtn" type="button" style="flex:1">⛔ مرتجع كامل</button>
+        </div>
+        <div id="orderStatusInfo" style="margin-top:8px;font-size:12px;color:#64748b;font-weight:900"></div>
+        <div id="returnHint" style="margin-top:6px;font-size:12px;color:#92400e;font-weight:900;display:none">في المرتجع الجزئي: عدّل كميات الأصناف في الجدول إلى الكميات المطلوب إرجاعها فقط، واترك غير المرتجع = 0.</div>
       </div>
     </div>
 
@@ -421,9 +429,10 @@ const CACHE_TTL_MS   = 10 * 60 * 1000;
 
 let PRODUCTS = [];
 let ROW_ID = 0;
-let CURRENT_INVOICE_ID = '';
+let CURRENT_ORDER = null;
 let CURRENT_ORDER_STATE = null;
 let CURRENT_INVOICE_STATE = null;
+let CURRENT_INVOICE_ID = "";
 
 /* ================= MODE ================= */
 function isQuoteMode(){
@@ -768,14 +777,22 @@ itemsTbody.addEventListener("input", (ev)=>{
   if(field === "sku"){
     const sku = String(el.value||"").trim();
     const p = findBySku(sku);
-    if(p) tr.querySelector('[data-field="name"]').value = String(p.name||"").trim();
+    if(p){
+      tr.querySelector('[data-field="name"]').value = String(p.name||"").trim();
+      const priceEl = tr.querySelector('[data-field="price"]');
+      if(priceEl && !Number(priceEl.value||0)) priceEl.value = Number(p.price||0);
+    }
     syncRowThumb(tr);
     calcRowByTr(tr);
     return;
   }
   if(field === "name"){
     const p2 = findByName(el.value);
-    if(p2) tr.querySelector('[data-field="sku"]').value = String(p2.id||"").trim();
+    if(p2){
+      tr.querySelector('[data-field="sku"]').value = String(p2.id||"").trim();
+      const priceEl = tr.querySelector('[data-field="price"]');
+      if(priceEl && !Number(priceEl.value||0)) priceEl.value = Number(p2.price||0);
+    }
     syncRowThumb(tr);
     calcRowByTr(tr);
     return;
@@ -800,10 +817,18 @@ function syncRowsWithProducts(){
 
     if(sku && (!name || name === "—")){
       const p = findBySku(sku);
-      if(p) nameEl.value = String(p.name||"").trim();
+      if(p){
+        nameEl.value = String(p.name||"").trim();
+        const priceEl = tr.querySelector('[data-field="price"]');
+        if(priceEl && !Number(priceEl.value||0)) priceEl.value = Number(p.price||0);
+      }
     }else if(name && !sku){
       const p2 = findByName(name);
-      if(p2) skuEl.value = String(p2.id||"").trim();
+      if(p2){
+        skuEl.value = String(p2.id||"").trim();
+        const priceEl = tr.querySelector('[data-field="price"]');
+        if(priceEl && !Number(priceEl.value||0)) priceEl.value = Number(p2.price||0);
+      }
     }
     syncRowThumb(tr);
   });
@@ -958,18 +983,14 @@ function parseWhatsAppLines(fullText){
   return out;
 }
 
-
-function renderInvoiceStatusBar_(){
-  const el = document.getElementById("invoiceStatusBar");
-  if(!el) return;
-  const inv = CURRENT_INVOICE_STATE;
-  const ord = CURRENT_ORDER_STATE;
-  if(!inv && !ord){ el.textContent = ""; return; }
+function renderOrderStatusInfo_(order, invoice){
+  const box = document.getElementById("orderStatusInfo");
+  if(!box) return;
   const parts = [];
-  if(inv?.invoice_id) parts.push(`رقم الفاتورة المحفوظة: ${inv.invoice_id}`);
-  if(ord?.inventory_status) parts.push(`حالة المخزون: ${ord.inventory_status}`);
-  if(ord?.invoice_status) parts.push(`حالة الفاتورة: ${ord.invoice_status}`);
-  el.textContent = parts.join(" | ");
+  if(invoice?.invoice_id) parts.push(`رقم الفاتورة المحفوظة: ${invoice.invoice_id}`);
+  if(order?.inventory_status) parts.push(`حالة المخزون: ${order.inventory_status}`);
+  if(order?.invoice_status) parts.push(`حالة الفاتورة: ${order.invoice_status}`);
+  box.textContent = parts.join(" | ");
 }
 
 function collectInvoiceItemsFromUI_(){
@@ -992,7 +1013,7 @@ function buildInvoicePayloadFromUI_(){
     customer_name: String(d.custName || "").trim(),
     phone: String(d.custPhone || "").trim(),
     address: String(d.custAddress || "").trim(),
-    order_type: "",
+    order_type: CURRENT_ORDER_STATE?.order_type || "",
     subtotal_before_discount: Number(d.totalBefore || 0),
     row_discount_total: Number(d.rowDiscountSum || 0),
     global_discount: Number(d.globalDiscount || 0),
@@ -1019,16 +1040,15 @@ async function fetchOrderFromSystem(){
       throw new Error(data?.error || "تعذر جلب الطلب.");
     }
 
+    CURRENT_ORDER = data.order || null;
     CURRENT_ORDER_STATE = data.order || null;
     CURRENT_INVOICE_STATE = data.invoice || null;
     CURRENT_INVOICE_ID = data?.invoice?.invoice_id ? String(data.invoice.invoice_id) : "";
 
     fillInvoiceFromOrder_(data.invoice || data.order, !!data.invoice);
-    if(data.invoice?.invoice_id){
-      document.getElementById("invNo").value = String(data.invoice.invoice_id);
-    }
-
-    renderInvoiceStatusBar_();
+    if(CURRENT_INVOICE_ID) document.getElementById("invNo").value = CURRENT_INVOICE_ID;
+    renderOrderStatusInfo_(CURRENT_ORDER_STATE, CURRENT_INVOICE_STATE);
+    document.getElementById("returnHint").style.display = "none";
     alert("تم جلب الطلب بنجاح.");
   }catch(e){
     console.error(e);
@@ -1072,6 +1092,7 @@ function fillInvoiceFromOrder_(payload, isInvoice){
   document.getElementById("globalDiscount").value = Number(data.global_discount || 0);
   document.getElementById("deliveryFee").value = Number(data.delivery_fee || 0);
   document.getElementById("invoiceNote").value = String(data.note || "");
+
   refreshRowNumbers();
   calcGrand();
 }
@@ -1095,7 +1116,7 @@ async function confirmInvoiceFromSystem(){
     if(btn){ btn.disabled = true; btn.textContent = "جاري الحفظ..."; }
     const res = await fetch(API_URL, {
       method: "POST",
-      body: JSON.stringify({ action:"confirmInvoice", orderId, invoice })
+      body: JSON.stringify({ action: "confirmInvoice", orderId, invoice })
     });
     if(!res.ok) throw new Error("HTTP " + res.status);
     const data = await res.json();
@@ -1108,23 +1129,23 @@ async function confirmInvoiceFromSystem(){
     console.error(e);
     alert("فشل حفظ/تأكيد الفاتورة: " + (e?.message || e));
   }finally{
-    if(btn){ btn.disabled = false; btn.textContent = oldText || "✅ حفظ/تأكيد الفاتورة"; }
+    if(btn){ btn.disabled = false; btn.textContent = oldText || "💾 حفظ / تأكيد الفاتورة"; }
   }
 }
 
-async function returnInvoiceFullFromSystem(){
+async function fullReturnInvoiceFromSystem(){
   const orderId = String(document.getElementById("orderId")?.value || "").trim();
   if(!orderId){ alert("اكتب رقم الطلب أولاً."); return; }
   const ok = confirm("سيتم تنفيذ مرتجع كامل لهذه الفاتورة. هل تريد المتابعة؟");
   if(!ok) return;
 
-  const btn = document.getElementById("returnFullBtn");
+  const btn = document.getElementById("fullReturnBtn");
   const old = btn ? btn.textContent : "";
   try{
     if(btn){ btn.disabled = true; btn.textContent = "جاري الإرجاع..."; }
     const res = await fetch(API_URL, {
       method: "POST",
-      body: JSON.stringify({ action:"returnInvoice", orderId })
+      body: JSON.stringify({ action: "returnInvoice", orderId })
     });
     if(!res.ok) throw new Error("HTTP " + res.status);
     const data = await res.json();
@@ -1139,26 +1160,31 @@ async function returnInvoiceFullFromSystem(){
   }
 }
 
-async function returnInvoicePartialFromSystem(){
+async function partialReturnInvoiceFromSystem(){
   const orderId = String(document.getElementById("orderId")?.value || "").trim();
   if(!orderId){ alert("اكتب رقم الطلب أولاً."); return; }
 
-  const items = collectInvoiceItemsFromUI_().map(x=>({ sku:x.sku, qty:Number(x.qty||0) })).filter(x=>x.qty>0);
+  const items = collectInvoiceItemsFromUI_().map(x=>({ sku:x.sku, qty:Number(x.qty||0), name:x.name })).filter(x=>x.qty > 0);
   if(!items.length){
-    alert("اجعل الكمية في كل صف = الكمية المطلوب إرجاعها فقط، ثم اضغط مرتجع جزئي.");
+    document.getElementById("returnHint").style.display = "block";
+    alert("في المرتجع الجزئي: اجعل الكمية في كل صف = الكمية المطلوب إرجاعها فقط، واترك غير المرتجع = 0.");
     return;
   }
 
-  const ok = confirm("سيتم تنفيذ مرتجع جزئي بالكميات الحالية الظاهرة في الجدول. هل تريد المتابعة؟");
+  const lines = items.map(x=>`${x.sku} | ${x.name || ''} | qty: ${x.qty}`).join("
+");
+  const ok = confirm("سيتم تنفيذ مرتجع جزئي بالكميات الحالية الظاهرة في الجدول:
+
+" + lines);
   if(!ok) return;
 
-  const btn = document.getElementById("returnPartialBtn");
+  const btn = document.getElementById("partialReturnBtn");
   const old = btn ? btn.textContent : "";
   try{
     if(btn){ btn.disabled = true; btn.textContent = "جاري المرتجع..."; }
     const res = await fetch(API_URL, {
       method: "POST",
-      body: JSON.stringify({ action:"returnInvoicePartial", orderId, items })
+      body: JSON.stringify({ action: "returnInvoicePartial", orderId, items })
     });
     if(!res.ok) throw new Error("HTTP " + res.status);
     const data = await res.json();
@@ -1174,6 +1200,12 @@ async function returnInvoicePartialFromSystem(){
 }
 
 function importFromWhatsApp(){
+  CURRENT_ORDER = null;
+  CURRENT_ORDER_STATE = null;
+  CURRENT_INVOICE_STATE = null;
+  CURRENT_INVOICE_ID = "";
+  renderOrderStatusInfo_(null, null);
+  document.getElementById("returnHint").style.display = "none";
   if(isQuoteMode()){
     alert("وضع الكوتيشن لا يدعم الاستيراد من واتساب.");
     return;
@@ -1636,6 +1668,10 @@ document.getElementById("invoiceNote")?.addEventListener("input", calcGrand);
 
 document.getElementById('importBtn')?.addEventListener("click", importFromWhatsApp);
 document.getElementById('clearImportBtn')?.addEventListener("click", ()=>{ document.getElementById("waImport").value=""; });
+document.getElementById('fetchOrderBtn')?.addEventListener("click", fetchOrderFromSystem);
+document.getElementById('confirmInvoiceBtn')?.addEventListener("click", confirmInvoiceFromSystem);
+document.getElementById('fullReturnBtn')?.addEventListener("click", fullReturnInvoiceFromSystem);
+document.getElementById('partialReturnBtn')?.addEventListener("click", partialReturnInvoiceFromSystem);
 
 document.getElementById('printA4Btn')?.addEventListener('click', exportA4);
 document.getElementById('savePdfA4Btn')?.addEventListener('click', ()=> savePdfA4("invoice"));
@@ -1660,6 +1696,7 @@ if(sessionStorage.getItem("BS_ADMIN_OK") === "1"){
 addRow(true);
 refreshRowNumbers();
 calcGrand();
+renderOrderStatusInfo_(null, null);
 </script>
 </body>
 </html>
