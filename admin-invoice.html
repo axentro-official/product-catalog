@@ -12,26 +12,32 @@
       --text:#0f172a;
       --muted:#64748b;
       --stroke:rgba(15,23,42,.10);
-      --shadow: 0 18px 50px rgba(2,6,23,.12);
-      --radius:18px;
+      --shadow:0 18px 50px rgba(2,6,23,.12);
+      --shadow-soft:0 10px 28px rgba(2,6,23,.08);
+      --radius:20px;
 
       --gold:#b08d57;
       --gold2:#d7b97a;
+      --gold3:#efe7d8;
 
-      --primary:#0b3a7a;
-      --primary2:#124da3;
+      --danger:#991b1b;
+      --danger-bg:#fff5f5;
+      --success:#166534;
+      --success-bg:#f0fdf4;
 
-      --container-max:1100px;
+      --container-max:1180px;
     }
+
     *{box-sizing:border-box}
     html,body{height:100%}
+
     body{
       margin:0;
-      font-family: system-ui, -apple-system, "Segoe UI", Tahoma, Arial;
+      font-family:system-ui,-apple-system,"Segoe UI",Tahoma,Arial;
       color:var(--text);
       background:
-        radial-gradient(900px 500px at 10% 10%, rgba(176,141,87,.18), transparent 55%),
-        radial-gradient(700px 500px at 90% 20%, rgba(215,185,122,.18), transparent 55%),
+        radial-gradient(900px 500px at 10% 10%, rgba(176,141,87,.16), transparent 55%),
+        radial-gradient(700px 500px at 90% 20%, rgba(215,185,122,.14), transparent 55%),
         linear-gradient(180deg, #ffffff, var(--bg));
       padding:18px;
       min-height:100vh;
@@ -39,30 +45,68 @@
       flex-direction:column;
     }
 
-    .wrap{max-width:var(--container-max);margin:0 auto;width:100%;flex:1}
+    .wrap{
+      max-width:var(--container-max);
+      margin:0 auto;
+      width:100%;
+      flex:1;
+    }
 
     .topbar{
-      display:flex;align-items:center;justify-content:space-between;gap:12px;
-      padding:12px 14px;border:1px solid var(--stroke);
-      border-radius:18px;background:rgba(255,255,255,.86);
-      box-shadow:var(--shadow);backdrop-filter:blur(10px);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:14px;
+      padding:14px 16px;
+      border:1px solid var(--stroke);
+      border-radius:20px;
+      background:rgba(255,255,255,.86);
+      box-shadow:var(--shadow);
+      backdrop-filter:blur(10px);
       flex-wrap:wrap;
       margin-bottom:16px;
     }
-    .brand{display:flex; align-items:center; gap:12px; min-width:220px;}
+
+    .brand{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      min-width:220px;
+    }
+
     .logo{
-      width:44px;height:44px;border-radius:999px;
-      display:grid;place-items:center;
-      background: linear-gradient(135deg, rgba(176,141,87,.22), rgba(215,185,122,.18));
+      width:46px;
+      height:46px;
+      border-radius:999px;
+      display:grid;
+      place-items:center;
+      background:linear-gradient(135deg, rgba(176,141,87,.22), rgba(215,185,122,.18));
       border:1px solid rgba(176,141,87,.35);
-      box-shadow: 0 10px 24px rgba(2,6,23,.10);
+      box-shadow:0 10px 24px rgba(2,6,23,.10);
       overflow:hidden;
       padding:6px;
       flex:0 0 auto;
     }
-    .logo img{width:100%;height:100%;object-fit:contain;display:block}
-    .brandTitle{font-weight:900}
-    .brandSub{font-size:12px;color:var(--muted);margin-top:2px}
+
+    .logo img{
+      width:100%;
+      height:100%;
+      object-fit:contain;
+      display:block;
+    }
+
+    .brandTitle{
+      font-weight:1000;
+      font-size:18px;
+      line-height:1.2;
+    }
+
+    .brandSub{
+      font-size:12px;
+      color:var(--muted);
+      margin-top:3px;
+      font-weight:800;
+    }
 
     .card{
       background:rgba(255,255,255,.92);
@@ -73,194 +117,581 @@
       margin-bottom:16px;
     }
 
-    h2{margin:0 0 10px;font-weight:900}
-    label{font-size:12px;color:var(--muted)}
+    .sectionHead{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      margin-bottom:12px;
+      flex-wrap:wrap;
+    }
+
+    h2{
+      margin:0;
+      font-weight:1000;
+      font-size:18px;
+      line-height:1.3;
+    }
+
+    .softBadge{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:8px 12px;
+      border-radius:999px;
+      border:1px solid rgba(176,141,87,.25);
+      background:linear-gradient(135deg, rgba(176,141,87,.11), rgba(215,185,122,.08));
+      color:#6b7280;
+      font-size:12px;
+      font-weight:900;
+    }
+
+    label{
+      display:block;
+      font-size:12px;
+      color:var(--muted);
+      margin-bottom:6px;
+      font-weight:900;
+    }
+
     input, textarea{
       width:100%;
-      padding:10px;
-      border-radius:12px;
+      padding:12px 12px;
+      border-radius:14px;
       border:1px solid rgba(15,23,42,.14);
       background:#fff;
       color:var(--text);
       outline:none;
+      transition:border-color .15s ease, box-shadow .15s ease, transform .15s ease;
     }
+
+    input:focus, textarea:focus{
+      border-color:rgba(176,141,87,.55);
+      box-shadow:0 0 0 4px rgba(176,141,87,.10);
+    }
+
     input::placeholder, textarea::placeholder{color:#94a3b8}
-    #invNo, #invDate, #invTime{ font-weight:900; }
-    #orderId{ font-weight:900; }
 
-    .row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
-    .row2{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
-    .row1{display:grid;grid-template-columns:1fr;gap:10px}
-
-    @media (max-width:920px){
-      .row{grid-template-columns:repeat(2,1fr);}
-      .row2{grid-template-columns:repeat(1,1fr);}
-    }
-    @media (max-width:520px){
-      .row{grid-template-columns:repeat(1,1fr);}
-      input, textarea{ font-size:16px; }
+    #invNo, #invDate, #invTime, #orderId{
+      font-weight:1000;
     }
 
-    .table-wrap{overflow:auto;margin-top:10px;border-radius:12px}
+    .row{
+      display:grid;
+      grid-template-columns:repeat(4,1fr);
+      gap:12px;
+    }
+
+    .row2{
+      display:grid;
+      grid-template-columns:repeat(2,1fr);
+      gap:12px;
+    }
+
+    .row1{
+      display:grid;
+      grid-template-columns:1fr;
+      gap:12px;
+    }
+
+    .actionsGrid{
+      display:grid;
+      grid-template-columns:repeat(4,1fr);
+      gap:10px;
+    }
+
+    .btn{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:8px;
+      min-height:48px;
+      padding:12px 14px;
+      border-radius:14px;
+      border:1px solid rgba(176,141,87,.32);
+      background:linear-gradient(135deg, rgba(176,141,87,.16), rgba(215,185,122,.13));
+      color:var(--text);
+      font-weight:1000;
+      font-size:14px;
+      cursor:pointer;
+      transition:transform .15s ease, box-shadow .15s ease, filter .15s ease;
+      box-shadow:0 6px 16px rgba(2,6,23,.05);
+    }
+
+    .btn:hover{
+      transform:translateY(-1px);
+      filter:brightness(1.01);
+      box-shadow:0 10px 22px rgba(2,6,23,.09);
+    }
+
+    .btn:disabled{
+      cursor:not-allowed;
+      opacity:.68;
+      transform:none;
+      box-shadow:none;
+    }
+
+    .btn.secondary{
+      border-color:rgba(15,23,42,.12);
+      background:#fff;
+    }
+
+    .btn.success{
+      border-color:rgba(22,101,52,.22);
+      background:linear-gradient(135deg, rgba(22,101,52,.08), rgba(34,197,94,.08));
+      color:#14532d;
+    }
+
+    .btn.danger{
+      border-color:rgba(153,27,27,.18);
+      background:linear-gradient(135deg, rgba(153,27,27,.07), rgba(239,68,68,.09));
+      color:#7f1d1d;
+    }
+
+    .btn.logout{
+      border-color:rgba(15,23,42,.10);
+      background:#fff;
+      padding-inline:16px;
+      min-height:44px;
+      box-shadow:none;
+    }
+
+    .btn .ico{
+      font-size:15px;
+      line-height:1;
+      opacity:.95;
+    }
+
+    .statusBar{
+      margin-top:10px;
+      padding:10px 12px;
+      border:1px dashed rgba(15,23,42,.12);
+      border-radius:14px;
+      background:rgba(248,250,252,.9);
+      font-size:12px;
+      color:#475569;
+      font-weight:900;
+      line-height:1.7;
+    }
+
+    .hintWarn{
+      margin-top:8px;
+      padding:10px 12px;
+      border-radius:12px;
+      background:#fff8eb;
+      color:#92400e;
+      border:1px solid rgba(146,64,14,.12);
+      font-size:12px;
+      font-weight:900;
+      display:none;
+      line-height:1.7;
+    }
+
+    .table-wrap{
+      overflow:auto;
+      margin-top:10px;
+      border-radius:14px;
+      border:1px solid rgba(15,23,42,.08);
+      background:#fff;
+    }
+
     table{
       width:100%;
       border-collapse:collapse;
       font-size:13px;
       min-width:980px;
       background:#fff;
-      border-radius:12px;
-      overflow:hidden;
     }
+
     th, td{
-      border:1px solid rgba(15,23,42,.10);
+      border:1px solid rgba(15,23,42,.08);
       padding:8px;
       text-align:center;
       vertical-align:middle;
     }
+
     th{
-      background: linear-gradient(180deg, rgba(176,141,87,.10), rgba(215,185,122,.06));
-      font-weight:900;
+      background:linear-gradient(180deg, rgba(176,141,87,.10), rgba(215,185,122,.06));
+      font-weight:1000;
+      white-space:nowrap;
     }
 
-    .btn{
-      padding:12px;
-      border-radius:14px;
-      border:1px solid rgba(176,141,87,.35);
-      background:linear-gradient(135deg, rgba(176,141,87,.18), rgba(215,185,122,.14));
-      color:var(--text);
-      font-weight:900;
-      cursor:pointer;
-    }
-    .btn:hover{filter:brightness(1.02)}
-    .btn.secondary{
-      border-color: rgba(15,23,42,.14);
-      background:#fff;
-      opacity:.95;
+    .prod-cell{
+      display:flex;
+      gap:8px;
+      align-items:center;
+      justify-content:flex-start;
+      flex-wrap:nowrap;
     }
 
-    .prod-cell{display:flex;gap:8px;align-items:center;justify-content:flex-start;flex-wrap:nowrap;}
-    .skuInput{width:140px;min-width:120px;text-align:center;font-weight:900;}
-    .nameInput{flex:1;min-width:280px;}
+    .skuInput{
+      width:140px;
+      min-width:120px;
+      text-align:center;
+      font-weight:1000;
+    }
+
+    .nameInput{
+      flex:1;
+      min-width:280px;
+    }
+
     .thumbMini{
-      width:44px;height:44px;border-radius:12px;
+      width:44px;
+      height:44px;
+      border-radius:12px;
       border:1px solid rgba(15,23,42,.12);
-      object-fit:cover;background:#fff;
+      object-fit:cover;
+      background:#fff;
       flex:0 0 auto;
     }
+
     .delBtn{
-      padding:10px 12px;border-radius:12px;
-      border:1px solid rgba(15,23,42,.14);
-      background:#fff;color:var(--text);
-      cursor:pointer;font-weight:900;
+      padding:10px 12px;
+      border-radius:12px;
+      border:1px solid rgba(15,23,42,.12);
+      background:#fff;
+      color:var(--text);
+      cursor:pointer;
+      font-weight:1000;
+      width:100%;
     }
 
-    .totalBox{ margin-top:10px; width:100%; }
-    .totalLine{
-      display:flex;align-items:center;justify-content:space-between;gap:10px;
-      padding:10px 12px;border:1px solid rgba(15,23,42,.10);
-      border-radius:12px;background:#fff;margin-top:8px;font-weight:900;
+    .belowTableBar{
+      display:flex;
+      justify-content:flex-end;
+      align-items:center;
+      gap:12px;
+      margin-top:12px;
+      flex-wrap:wrap;
     }
-    .totalLine .k{color:var(--muted);font-weight:800}
+
+    .extraBox{
+      display:grid;
+      grid-template-columns:1fr 1fr 1fr;
+      gap:12px;
+      margin-top:14px;
+    }
+
+    .totalBox{
+      margin-top:12px;
+      width:100%;
+    }
+
+    .totalLine{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      padding:11px 13px;
+      border:1px solid rgba(15,23,42,.09);
+      border-radius:14px;
+      background:#fff;
+      margin-top:8px;
+      font-weight:1000;
+    }
+
+    .totalLine .k{
+      color:var(--muted);
+      font-weight:900;
+    }
+
     .totalLine.primary{
-      border-color: rgba(176,141,87,.35);
-      background: linear-gradient(135deg, rgba(176,141,87,.10), rgba(215,185,122,.08));
+      border-color:rgba(176,141,87,.28);
+      background:linear-gradient(135deg, rgba(176,141,87,.10), rgba(215,185,122,.08));
     }
 
     .amount-words{
-      margin-top:10px;font-weight:900;color:var(--muted);
+      margin-top:12px;
+      font-weight:1000;
+      color:#475569;
       border-top:1px dashed rgba(15,23,42,.14);
-      padding-top:10px;
+      padding-top:12px;
+      text-align:center;
     }
+
     .noteBox{
       margin-top:10px;
       padding-top:10px;
       border-top:1px dashed rgba(15,23,42,.14);
       font-weight:900;
       color:#334155;
-    }
-
-    .extraBox{
-      display:grid;
-      grid-template-columns:1fr 1fr 1fr;
-      gap:10px;
-      margin-top:10px;
-    }
-    @media (max-width:920px){
-      .extraBox{grid-template-columns:1fr;}
+      text-align:center;
     }
 
     #loginBox{
-      position:fixed; inset:0;
-      background:rgba(2,6,23,.55);
-      display:flex; align-items:center; justify-content:center;
+      position:fixed;
+      inset:0;
+      background:rgba(2,6,23,.50);
+      display:flex;
+      align-items:center;
+      justify-content:center;
       z-index:999;
       padding:14px;
-      backdrop-filter: blur(10px);
+      backdrop-filter:blur(12px);
     }
-    #loginBox .card{max-width:520px;width:min(92vw,520px)}
-    .loginTitle{display:flex;align-items:center;gap:12px;margin-bottom:12px}
-    .loginMainTitle{font-weight:1000;font-size:22px;color: var(--gold);letter-spacing:.2px;}
+
+    .loginShell{
+      width:min(96vw, 720px);
+    }
+
+    #loginBox .card{
+      width:100%;
+      margin-bottom:0;
+      padding:22px;
+      border-radius:26px;
+    }
+
+    .loginTitle{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:14px;
+      margin-bottom:16px;
+    }
+
+    .loginHead{
+      display:flex;
+      align-items:center;
+      gap:12px;
+    }
+
+    .loginMainTitle{
+      font-weight:1000;
+      font-size:24px;
+      color:var(--gold);
+      letter-spacing:.2px;
+      line-height:1.3;
+    }
+
+    .loginSub{
+      font-weight:1000;
+      font-size:13px;
+      color:#334155;
+      margin-top:4px;
+    }
+
+    .loginInputWrap{
+      margin-top:8px;
+    }
+
+    .loginBtnRow{
+      margin-top:14px;
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+
+    .loginFooter{
+      margin-top:18px;
+      padding-top:16px;
+      border-top:1px solid rgba(15,23,42,.08);
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      gap:10px;
+      text-align:center;
+    }
+
+    .loginFooterText{
+      font-size:12px;
+      color:#475569;
+      font-weight:900;
+      line-height:1.7;
+    }
+
+    .qrLink{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      width:110px;
+      height:110px;
+      border-radius:18px;
+      border:1px solid rgba(176,141,87,.25);
+      background:#fff;
+      padding:10px;
+      box-shadow:var(--shadow-soft);
+      text-decoration:none;
+      transition:transform .15s ease, box-shadow .15s ease;
+    }
+
+    .qrLink:hover{
+      transform:translateY(-2px);
+      box-shadow:0 16px 28px rgba(2,6,23,.12);
+    }
+
+    .qrLink img{
+      width:100%;
+      height:100%;
+      object-fit:contain;
+      display:block;
+    }
+
+    .qrCaption{
+      font-size:12px;
+      color:#64748b;
+      font-weight:900;
+    }
 
     .site-footer{
       margin-top:auto;
-      padding:16px 16px 22px;
+      padding:18px 16px 24px;
       text-align:center;
       color:var(--muted);
-      border-top:1px solid rgba(15,23,42,.10);
-      background: rgba(255,255,255,.75);
-      backdrop-filter: blur(10px);
+      border-top:1px solid rgba(15,23,42,.08);
+      background:rgba(255,255,255,.75);
+      backdrop-filter:blur(10px);
+      border-radius:22px 22px 0 0;
     }
-    .site-footer .line1{ font-weight:900; color:#334155; }
-    .site-footer .line2{ margin-top:6px; font-weight:800; }
 
-    @media (max-width: 820px){
-      .table-wrap{ overflow:visible; }
-      table{ min-width:0; }
-      table, thead, tbody, th, td, tr{ display:block; width:100%; }
-      thead{ display:none; }
+    .site-footer .line1{
+      font-weight:1000;
+      color:#334155;
+    }
+
+    .site-footer .line2{
+      margin-top:6px;
+      font-weight:900;
+    }
+
+    .site-footer .line3{
+      margin-top:12px;
+      display:flex;
+      justify-content:center;
+    }
+
+    .site-footer .line3 .qrLink{
+      width:90px;
+      height:90px;
+      border-radius:16px;
+      box-shadow:none;
+    }
+
+    @media (max-width:1024px){
+      .actionsGrid{
+        grid-template-columns:repeat(2,1fr);
+      }
+      .row{
+        grid-template-columns:repeat(2,1fr);
+      }
+      .extraBox{
+        grid-template-columns:1fr;
+      }
+    }
+
+    @media (max-width:720px){
+      body{padding:12px}
+      .topbar{
+        padding:12px;
+        border-radius:18px;
+      }
+      .brandTitle{
+        font-size:16px;
+      }
+      .loginMainTitle{
+        font-size:20px;
+      }
+    }
+
+    @media (max-width:560px){
+      .row,
+      .row2,
+      .actionsGrid{
+        grid-template-columns:1fr;
+      }
+
+      .table-wrap{overflow:visible}
+      table{min-width:0}
+      table, thead, tbody, th, td, tr{
+        display:block;
+        width:100%;
+      }
+      thead{display:none}
       tbody tr{
-        border:1px solid rgba(15,23,42,.12);
-        background: #fff;
-        border-radius: 16px;
+        border:1px solid rgba(15,23,42,.10);
+        background:#fff;
+        border-radius:16px;
         padding:10px;
         margin-bottom:10px;
-        box-shadow: 0 10px 28px rgba(2,6,23,.06);
+        box-shadow:0 10px 28px rgba(2,6,23,.06);
       }
-      tbody td{ border:none; padding:8px 0; text-align:right; }
-      tbody td + td{ border-top:1px dashed rgba(15,23,42,.12); }
+      tbody td{
+        border:none;
+        padding:8px 0;
+        text-align:right;
+      }
+      tbody td + td{
+        border-top:1px dashed rgba(15,23,42,.12);
+      }
       tbody td[data-label]::before{
-        content: attr(data-label);
+        content:attr(data-label);
         display:block;
-        font-size:12px;color: var(--muted);
-        font-weight:900;margin-bottom:6px;
+        font-size:12px;
+        color:var(--muted);
+        font-weight:1000;
+        margin-bottom:6px;
       }
-      .prod-cell{ flex-wrap:wrap; }
-      .nameInput{ min-width: 100%; }
-      .thumbMini{ width:52px; height:52px; }
-      tbody input{ width:100%; font-size:16px; text-align:center; font-weight:900; }
-      .delBtn{ width:100%; }
+      .prod-cell{flex-wrap:wrap}
+      .nameInput{min-width:100%}
+      .thumbMini{width:52px;height:52px}
+      tbody input{
+        width:100%;
+        font-size:16px;
+        text-align:center;
+        font-weight:1000;
+      }
+      .delBtn{width:100%}
+      .loginTitle{
+        align-items:flex-start;
+      }
+      .loginHead{
+        align-items:flex-start;
+      }
     }
   </style>
 </head>
 
 <body>
 <div id="loginBox">
-  <div class="card" role="dialog" aria-modal="true" aria-label="تسجيل دخول الإدارة">
-    <div class="loginTitle">
-      <div class="logo" style="box-shadow:none">
-        <img src="images/bslogo.webp" alt="BS Logo" onerror="this.style.display='none'">
+  <div class="loginShell">
+    <div class="card" role="dialog" aria-modal="true" aria-label="تسجيل دخول الإدارة">
+      <div class="loginTitle">
+        <div class="loginHead">
+          <div class="logo" style="box-shadow:none">
+            <img src="images/bslogo.webp" alt="BS Logo" onerror="this.style.display='none'">
+          </div>
+          <div>
+            <div class="loginMainTitle">لوحة إدارة الفواتير</div>
+            <div class="loginSub">B.S Medical &amp; Aesthetic</div>
+          </div>
+        </div>
       </div>
-      <div>
-        <div class="loginMainTitle">لوحة إدارة الفواتير</div>
-        <div style="font-weight:900;font-size:12px;color:#334155;margin-top:4px">B.S Medical &amp; Aesthetic</div>
+
+      <div class="loginInputWrap">
+        <label for="passInput">رمز الدخول</label>
+        <input type="password" id="passInput" placeholder="••••••••" aria-label="رمز الدخول"/>
       </div>
-    </div>
 
-    <label for="passInput">رمز الدخول</label>
-    <input type="password" id="passInput" placeholder="••••••••" aria-label="رمز الدخول"/>
+      <div class="loginBtnRow">
+        <button id="loginBtn" class="btn" style="flex:1">
+          <span class="ico">🔐</span>
+          <span>دخول</span>
+        </button>
+      </div>
 
-    <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
-      <button id="loginBtn" class="btn" style="flex:1">دخول</button>
+      <div class="loginFooter">
+        <div class="loginFooterText">
+          Axentro – All Rights Reserved 2024 ©<br>
+          By Ahmed Hamouda
+        </div>
+
+        <a class="qrLink" href="images/qr-links.png" target="_blank" rel="noopener noreferrer" aria-label="QR code">
+          <img src="images/qr-links.png" alt="QR Links" onerror="this.style.display='none'">
+        </a>
+
+        <div class="qrCaption">اضغط على QR لفتحه</div>
+      </div>
     </div>
   </div>
 </div>
@@ -278,26 +709,53 @@
     </div>
 
     <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-      <div id="sessionTimer" style="font-weight:900;color:var(--muted);white-space:nowrap">
-        ⏳ متبقي: --
-      </div>
-      <button class="btn secondary" id="logoutTopBtn" style="white-space:nowrap">
-        🚪 تسجيل خروج
+      <div id="sessionTimer" class="softBadge">⏳ متبقي: --</div>
+      <button class="btn logout" id="logoutTopBtn" type="button">
+        <span class="ico">⟵</span>
+        <span>إنهاء الجلسة</span>
       </button>
     </div>
   </div>
 
-  <div class="card" id="importCard">
-    <h2>استيراد طلب من واتساب</h2>
-    <textarea id="waImport" rows="5" placeholder="الصق رسالة الطلب كاملة هنا (كما وصلت من واتساب)..."></textarea>
-    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px">
-      <button class="btn" id="importBtn">📥 استيراد إلى الجدول</button>
-      <button class="btn secondary" id="clearImportBtn">مسح</button>
+  <div class="card">
+    <div class="sectionHead">
+      <h2>إدارة الطلب والفاتورة</h2>
+      <div class="softBadge">لوحة تنفيذ أوامر الفاتورة والمرتجعات</div>
+    </div>
+
+    <div class="actionsGrid">
+      <button class="btn secondary" id="fetchOrderBtn" type="button">
+        <span class="ico">🔎</span>
+        <span>جلب الطلب من النظام</span>
+      </button>
+
+      <button class="btn success" id="confirmInvoiceBtn" type="button">
+        <span class="ico">💾</span>
+        <span>حفظ / تأكيد الفاتورة</span>
+      </button>
+
+      <button class="btn secondary" id="partialReturnBtn" type="button">
+        <span class="ico">↩️</span>
+        <span>مرتجع جزئي</span>
+      </button>
+
+      <button class="btn danger" id="fullReturnBtn" type="button">
+        <span class="ico">⛔</span>
+        <span>مرتجع كامل</span>
+      </button>
+    </div>
+
+    <div id="orderStatusInfo" class="statusBar"></div>
+    <div id="returnHint" class="hintWarn">
+      في المرتجع الجزئي: عدّل كميات الأصناف في الجدول إلى الكميات المطلوب إرجاعها فقط، واترك غير المرتجع = 0.
     </div>
   </div>
 
   <div class="card">
-    <h2 id="pageTitle">فاتورة  B.S</h2>
+    <div class="sectionHead">
+      <h2 id="pageTitle">فاتورة B.S</h2>
+      <div class="softBadge">بيانات الفاتورة الأساسية</div>
+    </div>
 
     <div class="row" role="region" aria-label="معلومات الفاتورة">
       <div>
@@ -315,18 +773,10 @@
       <div>
         <label for="orderId">Order ID (رقم الطلب)</label>
         <input id="orderId" placeholder="مثال: BS-20260309-36124" />
-        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
-          <button class="btn secondary" id="fetchOrderBtn" type="button" style="flex:1">🔎 جلب الطلب من النظام</button>
-          <button class="btn" id="confirmInvoiceBtn" type="button" style="flex:1">💾 حفظ / تأكيد الفاتورة</button>
-          <button class="btn secondary" id="partialReturnBtn" type="button" style="flex:1">↩️ مرتجع جزئي</button>
-          <button class="btn secondary" id="fullReturnBtn" type="button" style="flex:1">⛔ مرتجع كامل</button>
-        </div>
-        <div id="orderStatusInfo" style="margin-top:8px;font-size:12px;color:#64748b;font-weight:900"></div>
-        <div id="returnHint" style="margin-top:6px;font-size:12px;color:#92400e;font-weight:900;display:none">في المرتجع الجزئي: عدّل كميات الأصناف في الجدول إلى الكميات المطلوب إرجاعها فقط، واترك غير المرتجع = 0.</div>
       </div>
     </div>
 
-    <div style="margin-top:12px;">
+    <div style="margin-top:14px;">
       <div class="row1">
         <div>
           <label for="custName">اسم العميل</label>
@@ -345,7 +795,10 @@
   </div>
 
   <div class="card">
-    <h2>الأصناف</h2>
+    <div class="sectionHead">
+      <h2>الأصناف</h2>
+      <div class="softBadge">إدارة أصناف الفاتورة</div>
+    </div>
 
     <div class="table-wrap" aria-live="polite">
       <table id="itemsTable" role="table" aria-label="جدول الأصناف">
@@ -364,8 +817,11 @@
       </table>
     </div>
 
-    <div style="display:flex;gap:12px;margin-top:12px;align-items:center;flex-wrap:wrap">
-      <button class="btn" id="addRowBtn">+ إضافة صنف</button>
+    <div class="belowTableBar">
+      <button class="btn" id="addRowBtn" type="button">
+        <span class="ico">＋</span>
+        <span>إضافة صنف</span>
+      </button>
     </div>
 
     <div class="extraBox">
@@ -389,18 +845,23 @@
   </div>
 
   <div class="card" id="actionsCard">
+    <div class="sectionHead">
+      <h2>الطباعة والتصدير</h2>
+      <div class="softBadge">خيارات الطباعة و PDF</div>
+    </div>
+
     <div class="row2" id="thermalRow">
-      <button class="btn" id="thermal80Btn">🧾 طباعة حراري 80mm</button>
-      <button class="btn" id="thermal58Btn">🧾 طباعة حراري 58mm</button>
+      <button class="btn" id="thermal80Btn" type="button">🧾 طباعة حراري 80mm</button>
+      <button class="btn" id="thermal58Btn" type="button">🧾 طباعة حراري 58mm</button>
     </div>
 
     <div style="margin-top:10px;display:flex;gap:10px;flex-wrap:wrap" id="a4Row">
-      <button class="btn" id="printA4Btn" style="flex:1">🖨️ طباعة A4</button>
-      <button class="btn" id="savePdfA4Btn" style="flex:1">📄 حفظ PDF لـ A4</button>
+      <button class="btn" id="printA4Btn" type="button" style="flex:1">🖨️ طباعة A4</button>
+      <button class="btn" id="savePdfA4Btn" type="button" style="flex:1">📄 حفظ PDF لـ A4</button>
     </div>
 
     <div style="margin-top:10px;display:none" id="quoteRow">
-      <button class="btn" id="saveQuotePdfBtn" style="width:100%">📄 حفظ PDF (عرض سعر)</button>
+      <button class="btn" id="saveQuotePdfBtn" type="button" style="width:100%">📄 حفظ PDF (عرض سعر)</button>
     </div>
   </div>
 </div>
@@ -408,6 +869,11 @@
 <footer class="site-footer">
   <div class="line1">Axentro – All Rights Reserved 2024 ©</div>
   <div class="line2">By Ahmed Hamouda</div>
+  <div class="line3">
+    <a class="qrLink" href="images/qr-links.png" target="_blank" rel="noopener noreferrer" aria-label="QR code footer">
+      <img src="images/qr-links.png" alt="QR Links Footer" onerror="this.style.display='none'">
+    </a>
+  </div>
 </footer>
 
 <script src="https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.1/dist/html2pdf.bundle.min.js"></script>
@@ -420,7 +886,7 @@ const API_URLS = [
 ];
 const API_URL = API_URLS[0];
 const IMG_PLACEHOLDER = "https://via.placeholder.com/600x400?text=No+Image";
-const QR_SRC_MAIN = "qr-links.png";
+const QR_SRC_MAIN = "images/qr-links.png";
 const QR_SRC_FALLBACK = "images/qr-links.png";
 
 const PROD_CACHE_KEY = "AX_PRODUCTS_CACHE_V1";
@@ -444,7 +910,10 @@ function buildApiUrl_(baseUrl, paramsObj){
   });
   return baseUrl + (usp.toString() ? "?" + usp.toString() : "");
 }
-function sleep_(ms){ return new Promise(resolve => setTimeout(resolve, ms)); }
+
+function sleep_(ms){
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
 
 async function fetchWithTimeout_(url, options = {}, timeoutMs = 20000){
   const controller = new AbortController();
@@ -465,7 +934,8 @@ async function fetchWithTimeout_(url, options = {}, timeoutMs = 20000){
 async function apiGetJson_(paramsObj, retryCount = 1){
   let lastErr = null;
   const urls = [LAST_WORKING_API_URL, ...API_URLS.filter(u => u !== LAST_WORKING_API_URL)];
-  for (const baseUrl of urls){
+
+  for(const baseUrl of urls){
     for(let attempt = 0; attempt <= retryCount; attempt++){
       try{
         const res = await fetchWithTimeout_(buildApiUrl_(baseUrl, paramsObj), { method: "GET" }, 20000);
@@ -481,13 +951,15 @@ async function apiGetJson_(paramsObj, retryCount = 1){
       }
     }
   }
+
   throw lastErr || new Error("Request failed");
 }
 
 async function apiPostJson_(payload, retryCount = 1){
   let lastErr = null;
   const urls = [LAST_WORKING_API_URL, ...API_URLS.filter(u => u !== LAST_WORKING_API_URL)];
-  for (const baseUrl of urls){
+
+  for(const baseUrl of urls){
     for(let attempt = 0; attempt <= retryCount; attempt++){
       try{
         const res = await fetchWithTimeout_(baseUrl, {
@@ -498,6 +970,7 @@ async function apiPostJson_(payload, retryCount = 1){
           },
           body: JSON.stringify(payload || {})
         }, 25000);
+
         if(!res.ok) throw new Error("HTTP " + res.status);
         const text = await res.text();
         if(!text) throw new Error("Empty response");
@@ -510,36 +983,37 @@ async function apiPostJson_(payload, retryCount = 1){
       }
     }
   }
+
   throw lastErr || new Error("Request failed");
 }
 
 /* ================= MODE ================= */
 function isQuoteMode(){
-  try{ return new URLSearchParams(location.search).get("quote") === "1"; }
-  catch(e){ return false; }
+  try{
+    return new URLSearchParams(location.search).get("quote") === "1";
+  }catch(e){
+    return false;
+  }
 }
 
 function applyModeUI(){
   const quote = isQuoteMode();
   const pageTitle = document.getElementById("pageTitle");
   const brandSub  = document.getElementById("brandSub");
-  const importCard = document.getElementById("importCard");
   const thermalRow = document.getElementById("thermalRow");
   const a4Row = document.getElementById("a4Row");
   const quoteRow = document.getElementById("quoteRow");
 
   if(quote){
-    if(pageTitle) pageTitle.textContent = "عرض سعر  B.S";
+    if(pageTitle) pageTitle.textContent = "عرض سعر B.S";
     if(brandSub) brandSub.textContent = "إنشاء عرض سعر (Quotation)";
-    if(importCard) importCard.style.display = "none";
     if(thermalRow) thermalRow.style.display = "none";
     if(a4Row) a4Row.style.display = "none";
     if(quoteRow) quoteRow.style.display = "block";
     try{ document.title = "عرض سعر — B.S Medical & Aesthetic"; }catch(e){}
   }else{
-    if(pageTitle) pageTitle.textContent = "فاتورة  B.S";
+    if(pageTitle) pageTitle.textContent = "فاتورة B.S";
     if(brandSub) brandSub.textContent = "إدارة وإنشاء فواتير";
-    if(importCard) importCard.style.display = "";
     if(thermalRow) thermalRow.style.display = "";
     if(a4Row) a4Row.style.display = "flex";
     if(quoteRow) quoteRow.style.display = "none";
@@ -558,7 +1032,9 @@ let idleTimer = null;
 let idleLeftMs = IDLE_MINUTES * 60000;
 let idleTick = null;
 
-function nowMs(){ return Date.now(); }
+function nowMs(){
+  return Date.now();
+}
 
 function isLocked(){
   const until = Number(localStorage.getItem(LOCK_UNTIL_KEY) || 0);
@@ -590,13 +1066,15 @@ function resetFails(){
 function renderSessionTimer(){
   const el = document.getElementById("sessionTimer");
   if(!el) return;
+
   if(sessionStorage.getItem("BS_ADMIN_OK") !== "1"){
     el.textContent = "⏳ متبقي: --";
     return;
   }
+
   const totalSec = Math.max(0, Math.ceil(idleLeftMs / 1000));
-  const mm = String(Math.floor(totalSec / 60)).padStart(2,"0");
-  const ss = String(totalSec % 60).padStart(2,"0");
+  const mm = String(Math.floor(totalSec / 60)).padStart(2, "0");
+  const ss = String(totalSec % 60).padStart(2, "0");
   el.textContent = `⏳ متبقي: ${mm}:${ss}`;
 }
 
@@ -618,6 +1096,7 @@ function startIdleGuard(){
     try{ alert("تم تسجيل الخروج تلقائيًا بسبب عدم النشاط."); }catch(e){}
     setLoggedIn(false);
   };
+
   idleTimer = setTimeout(kick, IDLE_MINUTES * 60000);
 }
 
@@ -629,12 +1108,15 @@ function stopIdleGuard(){
 }
 
 function bumpIdle(){
-  if(sessionStorage.getItem("BS_ADMIN_OK") === "1") startIdleGuard();
+  if(sessionStorage.getItem("BS_ADMIN_OK") === "1"){
+    startIdleGuard();
+  }
 }
 
 ["click","keydown","mousemove","touchstart","scroll"].forEach(ev=>{
-  window.addEventListener(ev, ()=> bumpIdle(), {passive:true});
+  window.addEventListener(ev, ()=> bumpIdle(), { passive:true });
 });
+
 document.addEventListener("visibilitychange", ()=>{
   if(document.visibilityState === "visible") bumpIdle();
 });
@@ -675,8 +1157,9 @@ function checkPass(){
     loadProductsSmart();
   }else{
     const tries = incFail();
-    if(isLocked()) alert(lockRemainingText());
-    else{
+    if(isLocked()){
+      alert(lockRemainingText());
+    }else{
       const left = Math.max(0, MAX_FAILS - tries);
       alert(`رمز الدخول غير صحيح\nالمتبقي قبل القفل: ${left}`);
     }
@@ -697,9 +1180,9 @@ function formatDateEnglish(d){
 function generateInvoiceNo(){
   const d = new Date();
   const y = d.getFullYear();
-  const m = String(d.getMonth()+1).padStart(2,"0");
-  const day = String(d.getDate()).padStart(2,"0");
-  const seq = String(Math.floor(Math.random()*900)+100);
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  const seq = String(Math.floor(Math.random() * 900) + 100);
   return `INV-BS-${y}${m}${day}-${seq}`;
 }
 
@@ -780,6 +1263,7 @@ function buildDataLists(){
   PRODUCTS.forEach(p=>{
     const id = String(p.id || "").trim();
     const name = String(p.name || "").trim();
+
     if(id){
       const o = document.createElement("option");
       o.value = id;
@@ -823,14 +1307,14 @@ function refreshRowNumbers(){
   });
 }
 
-function addRow(silentFocus=false){
+function addRow(silentFocus = false){
   ROW_ID++;
   const tbody = document.querySelector("#itemsTable tbody");
   const tr = document.createElement("tr");
   tr.dataset.id = ROW_ID;
 
   tr.innerHTML = `
-    <td data-label="#" data-field="idx" style="font-weight:900">1</td>
+    <td data-label="#" data-field="idx" style="font-weight:1000">1</td>
     <td data-label="SKU / المنتج">
       <div class="prod-cell">
         <img class="thumbMini" alt="صورة المنتج" src="${IMG_PLACEHOLDER}" onerror="this.onerror=null;this.src='${IMG_PLACEHOLDER}'">
@@ -912,6 +1396,7 @@ function syncRowThumb(tr){
 
 function syncRowsWithProducts(){
   const rows = Array.from(document.querySelectorAll("#itemsTable tbody tr"));
+
   rows.forEach(tr=>{
     const skuEl = tr.querySelector('[data-field="sku"]');
     const nameEl = tr.querySelector('[data-field="name"]');
@@ -995,6 +1480,7 @@ function calcGrand(){
   `;
 
   document.getElementById("amountWords").textContent = numberToArabicWords(Math.round(finalTotal));
+
   const note = String(document.getElementById("invoiceNote")?.value || "").trim();
   const noteBox = document.getElementById("noteBox");
   if(note){
@@ -1007,68 +1493,6 @@ function calcGrand(){
 }
 
 /* ================= HELPERS ================= */
-function extractOrderIdSmart(text){
-  const t = String(text || "");
-  let m = t.match(/(?:رقم\s*(?:الطلب|الاوردَر|الاوردر|الأوردر)|طلب\s*رقم|order\s*(?:id|no|number))\s*(?:[:：#]?\s*)([A-Za-z0-9-_]{3,})/i);
-  if(m && m[1]) return m[1].trim();
-
-  const lines = t.split(/\r?\n/);
-  for(const line of lines){
-    if(/طلب|order/i.test(line)){
-      const hit = line.match(/([0-9]{4,})/);
-      if(hit) return hit[1];
-    }
-  }
-
-  const fallback = t.match(/\b([0-9]{5,})\b/);
-  return fallback ? fallback[1] : "";
-}
-
-function extractCustomerData(fullText){
-  const t = String(fullText || "");
-  const nameMatch = t.match(/(?:^|\n)\s*الاسم\s*[:：]\s*(.+)\s*(?:\n|$)/i);
-  const name = nameMatch ? nameMatch[1].trim() : "";
-
-  let phone = "";
-  const phoneMatch = t.match(/(?:📞|الهاتف\s*[:：]?)\s*([+]?[\d\s-]{8,})/);
-  if(phoneMatch) phone = phoneMatch[1].trim();
-
-  let address = "";
-  const addrMatch = t.match(/(?:📍|العنوان\s*[:：]?)\s*(.+)\s*(?:\n|$)/);
-  if(addrMatch) address = addrMatch[1].trim();
-
-  const orderId = extractOrderIdSmart(t);
-  return { name, phone, address, orderId };
-}
-
-function parseWhatsAppLines(fullText){
-  const text = String(fullText || "").trim();
-  if(!text) return [];
-  const lines = text.split(/\r?\n/).map(l=>l.trim()).filter(Boolean);
-  const out = [];
-
-  for(const line of lines){
-    if(/^\s*الاسم\s*[:：]/i.test(line)) continue;
-    if(line.includes("📞") || line.includes("📍")) continue;
-    if(/(رقم\s*(الطلب|الأوردر|الاوردر)|order\s*id)/i.test(line)) continue;
-    if(line.includes("التاريخ") || line.includes("الوقت")) continue;
-
-    const qtyMatch = line.match(/الكمية\s*[:：]\s*(\d+)/i);
-    const qty = qtyMatch ? Number(qtyMatch[1]) : 0;
-    const skuMatch = line.match(/\b([A-Z]{2,}\d{1,})\b/i);
-    const sku = skuMatch ? skuMatch[1].toUpperCase() : "";
-
-    let name = "";
-    const pipeParts = line.split("|").map(s=>s.trim()).filter(Boolean);
-    if(pipeParts.length >= 2) name = (pipeParts[1] || "").replace(/^•\s*/,"").trim();
-    else if(sku) name = line.replace(sku, "").replace(/^•\s*/,"").trim();
-
-    if(sku || name) out.push({ sku, name, qty: qty || 0 });
-  }
-
-  return out;
-}
-
 function renderOrderStatusInfo_(order, invoice){
   const box = document.getElementById("orderStatusInfo");
   if(!box) return;
@@ -1076,7 +1500,7 @@ function renderOrderStatusInfo_(order, invoice){
   if(invoice?.invoice_id) parts.push(`رقم الفاتورة المحفوظة: ${invoice.invoice_id}`);
   if(order?.inventory_status) parts.push(`حالة المخزون: ${order.inventory_status}`);
   if(order?.invoice_status) parts.push(`حالة الفاتورة: ${order.invoice_status}`);
-  box.textContent = parts.join(" | ");
+  box.textContent = parts.length ? parts.join(" | ") : "جاهز لاستقبال أمر جديد.";
 }
 
 function collectInvoiceItemsFromUI_(){
@@ -1162,7 +1586,7 @@ async function fetchOrderFromSystem(){
     console.error(e);
     alert("فشل جلب الطلب: " + (e?.message || e));
   }finally{
-    if(btn){ btn.disabled = false; btn.textContent = oldText || "🔎 جلب الطلب من النظام"; }
+    if(btn){ btn.disabled = false; btn.textContent = oldText || "جلب الطلب من النظام"; }
   }
 }
 
@@ -1217,6 +1641,7 @@ function fillInvoiceFromOrder_(payload){
     alert("اكتب رقم الطلب أولاً.");
     return;
   }
+
   if(isQuoteMode()){
     alert("وضع الكوتيشن لا يدعم تأكيد الفاتورة.");
     return;
@@ -1247,7 +1672,9 @@ function fillInvoiceFromOrder_(payload){
     }
 
     CURRENT_INVOICE_ID = String(data.invoice_id || CURRENT_INVOICE_ID || "");
-    if(CURRENT_INVOICE_ID) document.getElementById("invNo").value = CURRENT_INVOICE_ID;
+    if(CURRENT_INVOICE_ID){
+      document.getElementById("invNo").value = CURRENT_INVOICE_ID;
+    }
 
     await fetchOrderFromSystem();
     alert("تم حفظ/تأكيد الفاتورة بنجاح.");
@@ -1255,7 +1682,7 @@ function fillInvoiceFromOrder_(payload){
     console.error(e);
     alert("فشل حفظ/تأكيد الفاتورة: " + (e?.message || e));
   }finally{
-    if(btn){ btn.disabled = false; btn.textContent = oldText || "💾 حفظ / تأكيد الفاتورة"; }
+    if(btn){ btn.disabled = false; btn.textContent = oldText || "حفظ / تأكيد الفاتورة"; }
   }
 }
 
@@ -1286,7 +1713,7 @@ async function fullReturnInvoiceFromSystem(){
     console.error(e);
     alert("فشل المرتجع الكامل: " + (e?.message || e));
   }finally{
-    if(btn){ btn.disabled = false; btn.textContent = oldText || "⛔ مرتجع كامل"; }
+    if(btn){ btn.disabled = false; btn.textContent = oldText || "مرتجع كامل"; }
   }
 }
 
@@ -1317,10 +1744,7 @@ async function partialReturnInvoiceFromSystem(){
     }
   }
 
-  const lines = items
-    .map(x => `${x.sku} | ${x.name} | qty: ${x.qty}`)
-    .join("\n");
-
+  const lines = items.map(x => `${x.sku} | ${x.name} | qty: ${x.qty}`).join("\n");
   const ok = confirm("سيتم تنفيذ مرتجع جزئي لهذه الأصناف:\n\n" + lines);
   if(!ok) return;
 
@@ -1351,72 +1775,9 @@ async function partialReturnInvoiceFromSystem(){
   }finally{
     if(btn){
       btn.disabled = false;
-      btn.textContent = oldText || "↩️ مرتجع جزئي";
+      btn.textContent = oldText || "مرتجع جزئي";
     }
   }
-}
-
-function importFromWhatsApp(){
-  CURRENT_ORDER = null;
-  CURRENT_ORDER_STATE = null;
-  CURRENT_INVOICE_STATE = null;
-  CURRENT_INVOICE_ID = "";
-  renderOrderStatusInfo_(null, null);
-  document.getElementById("returnHint").style.display = "none";
-
-  if(isQuoteMode()){
-    alert("وضع الكوتيشن لا يدعم الاستيراد من واتساب.");
-    return;
-  }
-
-  const ta = document.getElementById("waImport");
-  const raw = String(ta.value || "").trim();
-  if(!raw){
-    alert("الصق رسالة واتساب أولاً.");
-    return;
-  }
-
-  const cust = extractCustomerData(raw);
-  if(cust.name) document.getElementById("custName").value = cust.name;
-  if(cust.phone) document.getElementById("custPhone").value = cust.phone;
-  if(cust.address) document.getElementById("custAddress").value = cust.address;
-  if(cust.orderId) document.getElementById("orderId").value = cust.orderId;
-
-  const items = parseWhatsAppLines(raw);
-  if(items.length){
-    const tbody = document.querySelector("#itemsTable tbody");
-    tbody.innerHTML = "";
-    ROW_ID = 0;
-
-    items.forEach(it=>{
-      const tr = addRow(true);
-      const skuEl = tr.querySelector('[data-field="sku"]');
-      const nameEl = tr.querySelector('[data-field="name"]');
-      const qtyEl = tr.querySelector('[data-field="qty"]');
-
-      if(it.sku){
-        skuEl.value = it.sku;
-        const p = findBySku(it.sku);
-        if(p) nameEl.value = String(p.name || "").trim();
-        else if(it.name) nameEl.value = it.name;
-      }else if(it.name){
-        nameEl.value = it.name;
-        const p2 = findByName(it.name);
-        if(p2) skuEl.value = String(p2.id || "").trim();
-      }
-
-      qtyEl.value = it.qty ? String(it.qty) : "1";
-      qtyEl.dataset.originalQty = String(it.qty ? Number(it.qty) : 1);
-
-      syncRowThumb(tr);
-      calcRowByTr(tr);
-    });
-
-    refreshRowNumbers();
-  }
-
-  calcGrand();
-  alert("✅ تم الاستيراد");
 }
 
 function getInvoiceData(){
@@ -1494,8 +1855,9 @@ function numberToArabicWords(number){
     const rest = n % 100;
     if(h) res.push(hundreds[h]);
     if(rest){
-      if(rest < 20) res.push(ones[rest]);
-      else{
+      if(rest < 20){
+        res.push(ones[rest]);
+      }else{
         const t = Math.floor(rest/10), o = rest%10;
         if(o) res.push(ones[o] + " و " + tens[t]);
         else res.push(tens[t]);
@@ -1633,7 +1995,9 @@ async function inlineAllImages(root){
     const src = img.getAttribute("src") || "";
     if(!src || src.startsWith("data:")) continue;
     let dataUrl = await toDataURL(src);
-    if(!dataUrl && (src.includes(QR_SRC_MAIN) || src === QR_SRC_MAIN)) dataUrl = await toDataURL(QR_SRC_FALLBACK);
+    if(!dataUrl && (src.includes(QR_SRC_MAIN) || src === QR_SRC_MAIN)){
+      dataUrl = await toDataURL(QR_SRC_FALLBACK);
+    }
     if(dataUrl) img.setAttribute("src", dataUrl);
   }
 }
@@ -1651,10 +2015,13 @@ function openPrintWindowSafe(html, title){
     alert("Pop-up blocked. اسمح بفتح النوافذ المنبثقة.");
     return;
   }
+
   w.document.open();
   w.document.write(html);
   w.document.close();
+
   try{ w.document.title = title || "فاتورة"; }catch(e){}
+
   w.onload = function(){
     w.focus();
     setTimeout(()=> w.print(), 250);
@@ -1674,7 +2041,7 @@ function printThermal(mm){
 async function savePdfA4(mode){
   const d = getInvoiceData();
   const safeKey = (d.orderId || d.invNo || "BS").replace(/[^\w-]+/g,"_");
-  const filename = `${mode==="quote" ? "quotation" : "invoice"}_${safeKey}.pdf`;
+  const filename = `${mode === "quote" ? "quotation" : "invoice"}_${safeKey}.pdf`;
 
   const holder = document.createElement("div");
   holder.style.position = "fixed";
@@ -1712,11 +2079,6 @@ document.getElementById("addRowBtn")?.addEventListener("click", ()=> addRow(fals
 document.getElementById("deliveryFee")?.addEventListener("input", calcGrand);
 document.getElementById("globalDiscount")?.addEventListener("input", calcGrand);
 document.getElementById("invoiceNote")?.addEventListener("input", calcGrand);
-
-document.getElementById("importBtn")?.addEventListener("click", importFromWhatsApp);
-document.getElementById("clearImportBtn")?.addEventListener("click", ()=>{
-  document.getElementById("waImport").value = "";
-});
 
 document.getElementById("fetchOrderBtn")?.addEventListener("click", fetchOrderFromSystem);
 document.getElementById("confirmInvoiceBtn")?.addEventListener("click", confirmInvoiceFromSystem);
