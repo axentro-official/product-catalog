@@ -432,6 +432,7 @@ let ROW_ID = 0;
 let CURRENT_ORDER = null;
 let CURRENT_ORDER_STATE = null;
 let CURRENT_INVOICE_STATE = null;
+let CURRENT_INVOICE_ID = "";
 let LAST_WORKING_API_URL = API_URL;
 
 /* ================= API HELPERS ================= */
@@ -444,16 +445,23 @@ function buildApiUrl_(baseUrl, paramsObj){
   return baseUrl + (usp.toString() ? "?" + usp.toString() : "");
 }
 function sleep_(ms){ return new Promise(resolve => setTimeout(resolve, ms)); }
+
 async function fetchWithTimeout_(url, options = {}, timeoutMs = 20000){
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try{
     return await fetch(url, {
-      ...options, signal: controller.signal, redirect: "follow", cache: "no-store",
+      ...options,
+      signal: controller.signal,
+      redirect: "follow",
+      cache: "no-store",
       headers: { "Accept": "application/json", ...(options.headers || {}) }
     });
-  } finally { clearTimeout(timer); }
+  } finally {
+    clearTimeout(timer);
+  }
 }
+
 async function apiGetJson_(paramsObj, retryCount = 1){
   let lastErr = null;
   const urls = [LAST_WORKING_API_URL, ...API_URLS.filter(u => u !== LAST_WORKING_API_URL)];
@@ -467,11 +475,15 @@ async function apiGetJson_(paramsObj, retryCount = 1){
         const data = JSON.parse(text);
         LAST_WORKING_API_URL = baseUrl;
         return data;
-      }catch(err){ lastErr = err; if(attempt < retryCount) await sleep_(700 * (attempt + 1)); }
+      }catch(err){
+        lastErr = err;
+        if(attempt < retryCount) await sleep_(700 * (attempt + 1));
+      }
     }
   }
   throw lastErr || new Error("Request failed");
 }
+
 async function apiPostJson_(payload, retryCount = 1){
   let lastErr = null;
   const urls = [LAST_WORKING_API_URL, ...API_URLS.filter(u => u !== LAST_WORKING_API_URL)];
@@ -480,7 +492,10 @@ async function apiPostJson_(payload, retryCount = 1){
       try{
         const res = await fetchWithTimeout_(baseUrl, {
           method: "POST",
-          headers: { "Content-Type": "text/plain;charset=utf-8", "Accept": "application/json" },
+          headers: {
+            "Content-Type": "text/plain;charset=utf-8",
+            "Accept": "application/json"
+          },
           body: JSON.stringify(payload || {})
         }, 25000);
         if(!res.ok) throw new Error("HTTP " + res.status);
@@ -489,17 +504,21 @@ async function apiPostJson_(payload, retryCount = 1){
         const data = JSON.parse(text);
         LAST_WORKING_API_URL = baseUrl;
         return data;
-      }catch(err){ lastErr = err; if(attempt < retryCount) await sleep_(900 * (attempt + 1)); }
+      }catch(err){
+        lastErr = err;
+        if(attempt < retryCount) await sleep_(900 * (attempt + 1));
+      }
     }
   }
   throw lastErr || new Error("Request failed");
 }
-let CURRENT_INVOICE_ID = "";
 
+/* ================= MODE ================= */
 function isQuoteMode(){
   try{ return new URLSearchParams(location.search).get("quote") === "1"; }
   catch(e){ return false; }
 }
+
 function applyModeUI(){
   const quote = isQuoteMode();
   const pageTitle = document.getElementById("pageTitle");
@@ -528,6 +547,7 @@ function applyModeUI(){
   }
 }
 
+/* ================= LOGIN / SESSION ================= */
 const FAILS_KEY = "BS_ADMIN_FAILS";
 const LOCK_UNTIL_KEY = "BS_ADMIN_LOCK_UNTIL";
 const MAX_FAILS = 5;
@@ -539,16 +559,19 @@ let idleLeftMs = IDLE_MINUTES * 60000;
 let idleTick = null;
 
 function nowMs(){ return Date.now(); }
+
 function isLocked(){
   const until = Number(localStorage.getItem(LOCK_UNTIL_KEY) || 0);
   return until && nowMs() < until;
 }
+
 function lockRemainingText(){
   const until = Number(localStorage.getItem(LOCK_UNTIL_KEY) || 0);
   const diff = Math.max(0, until - nowMs());
   const mins = Math.ceil(diff / 60000);
   return `تم قفل الدخول مؤقتًا. حاول بعد ${mins} دقيقة.`;
 }
+
 function incFail(){
   const n = Number(localStorage.getItem(FAILS_KEY) || 0) + 1;
   localStorage.setItem(FAILS_KEY, String(n));
@@ -558,10 +581,12 @@ function incFail(){
   }
   return n;
 }
+
 function resetFails(){
   localStorage.removeItem(FAILS_KEY);
   localStorage.removeItem(LOCK_UNTIL_KEY);
 }
+
 function renderSessionTimer(){
   const el = document.getElementById("sessionTimer");
   if(!el) return;
@@ -574,10 +599,12 @@ function renderSessionTimer(){
   const ss = String(totalSec % 60).padStart(2,"0");
   el.textContent = `⏳ متبقي: ${mm}:${ss}`;
 }
+
 function startIdleGuard(){
   stopIdleGuard();
   idleLeftMs = IDLE_MINUTES * 60000;
   renderSessionTimer();
+
   idleTick = setInterval(()=>{
     idleLeftMs -= 1000;
     renderSessionTimer();
@@ -586,18 +613,25 @@ function startIdleGuard(){
       idleTick = null;
     }
   }, 1000);
-  const kick = ()=>{ try{ alert("تم تسجيل الخروج تلقائيًا بسبب عدم النشاط."); }catch(e){} setLoggedIn(false); };
+
+  const kick = ()=>{
+    try{ alert("تم تسجيل الخروج تلقائيًا بسبب عدم النشاط."); }catch(e){}
+    setLoggedIn(false);
+  };
   idleTimer = setTimeout(kick, IDLE_MINUTES * 60000);
 }
+
 function stopIdleGuard(){
   if(idleTimer){ clearTimeout(idleTimer); idleTimer = null; }
   if(idleTick){ clearInterval(idleTick); idleTick = null; }
   idleLeftMs = IDLE_MINUTES * 60000;
   renderSessionTimer();
 }
+
 function bumpIdle(){
   if(sessionStorage.getItem("BS_ADMIN_OK") === "1") startIdleGuard();
 }
+
 ["click","keydown","mousemove","touchstart","scroll"].forEach(ev=>{
   window.addEventListener(ev, ()=> bumpIdle(), {passive:true});
 });
@@ -605,9 +639,9 @@ document.addEventListener("visibilitychange", ()=>{
   if(document.visibilityState === "visible") bumpIdle();
 });
 
-const loginBox  = document.getElementById('loginBox');
-const loginBtn  = document.getElementById('loginBtn');
-const passInput = document.getElementById('passInput');
+const loginBox  = document.getElementById("loginBox");
+const loginBtn  = document.getElementById("loginBtn");
+const passInput = document.getElementById("passInput");
 
 function setLoggedIn(isOn){
   if(isOn){
@@ -627,7 +661,11 @@ function setLoggedIn(isOn){
 }
 
 function checkPass(){
-  if(isLocked()){ alert(lockRemainingText()); return; }
+  if(isLocked()){
+    alert(lockRemainingText());
+    return;
+  }
+
   const v = String(passInput.value || "").trim();
   if(v === ADMIN_PASSWORD){
     resetFails();
@@ -645,11 +683,17 @@ function checkPass(){
   }
 }
 
-loginBtn.addEventListener('click', checkPass);
-passInput.addEventListener('keydown', (e)=> { if(e.key === 'Enter') checkPass(); });
-document.getElementById('logoutTopBtn')?.addEventListener('click', ()=> setLoggedIn(false));
+loginBtn.addEventListener("click", checkPass);
+passInput.addEventListener("keydown", (e)=>{
+  if(e.key === "Enter") checkPass();
+});
+document.getElementById("logoutTopBtn")?.addEventListener("click", ()=> setLoggedIn(false));
 
-function formatDateEnglish(d){ return d.toLocaleDateString("en-GB").replaceAll("/", "-"); }
+/* ================= INIT ================= */
+function formatDateEnglish(d){
+  return d.toLocaleDateString("en-GB").replaceAll("/", "-");
+}
+
 function generateInvoiceNo(){
   const d = new Date();
   const y = d.getFullYear();
@@ -658,6 +702,7 @@ function generateInvoiceNo(){
   const seq = String(Math.floor(Math.random()*900)+100);
   return `INV-BS-${y}${m}${day}-${seq}`;
 }
+
 function initInvoice(){
   const now = new Date();
   document.getElementById("invDate").value = formatDateEnglish(now);
@@ -666,10 +711,12 @@ function initInvoice(){
   calcGrand();
 }
 
+/* ================= PRODUCTS ================= */
 function saveProductsCache(list){
   localStorage.setItem(PROD_CACHE_KEY, JSON.stringify(list));
   localStorage.setItem(PROD_CACHE_TS, String(Date.now()));
 }
+
 function loadProductsFromCache(){
   try{
     const raw = localStorage.getItem(PROD_CACHE_KEY);
@@ -678,12 +725,16 @@ function loadProductsFromCache(){
     const list = JSON.parse(raw);
     if(!Array.isArray(list)) return null;
     return { list, ts };
-  }catch(e){ return null; }
+  }catch(e){
+    return null;
+  }
 }
+
 async function fetchProductsFromApi(){
   const data = await apiGetJson_({});
   return Array.isArray(data) ? data : [];
 }
+
 async function loadProductsSmart(){
   const cached = loadProductsFromCache();
   const now = Date.now();
@@ -729,8 +780,16 @@ function buildDataLists(){
   PRODUCTS.forEach(p=>{
     const id = String(p.id || "").trim();
     const name = String(p.name || "").trim();
-    if(id){ const o = document.createElement("option"); o.value = id; dlSku.appendChild(o); }
-    if(name){ const o2 = document.createElement("option"); o2.value = name; dlName.appendChild(o2); }
+    if(id){
+      const o = document.createElement("option");
+      o.value = id;
+      dlSku.appendChild(o);
+    }
+    if(name){
+      const o2 = document.createElement("option");
+      o2.value = name;
+      dlName.appendChild(o2);
+    }
   });
 }
 
@@ -739,6 +798,7 @@ function findBySku(sku){
   if(!s) return null;
   return PRODUCTS.find(p => String(p.id || "").trim().toLowerCase() === s) || null;
 }
+
 function findByName(name){
   const n = String(name || "").trim().toLowerCase();
   if(!n) return null;
@@ -747,12 +807,14 @@ function findByName(name){
   hit = PRODUCTS.find(p => String(p.name || "").trim().toLowerCase().includes(n));
   return hit || null;
 }
+
 function resolveImageBySku(sku){
   const s = String(sku || "").trim();
   if(!s) return IMG_PLACEHOLDER;
   return `images/${s}.webp`;
 }
 
+/* ================= TABLE ================= */
 function refreshRowNumbers(){
   const rows = Array.from(document.querySelectorAll("#itemsTable tbody tr"));
   rows.forEach((tr, i)=>{
@@ -797,6 +859,7 @@ function removeRowByTr(tr){
 }
 
 const itemsTbody = document.querySelector("#itemsTable tbody");
+
 itemsTbody.addEventListener("click", (ev)=>{
   const btn = ev.target.closest("[data-act='remove']");
   if(!btn) return;
@@ -810,26 +873,29 @@ itemsTbody.addEventListener("input", (ev)=>{
 
   const field = el.getAttribute("data-field");
   if(field === "qty" || field === "price" || field === "discount"){
-    calcRowByTr(tr); return;
+    calcRowByTr(tr);
+    return;
   }
+
   if(field === "sku"){
-    const sku = String(el.value||"").trim();
+    const sku = String(el.value || "").trim();
     const p = findBySku(sku);
     if(p){
-      tr.querySelector('[data-field="name"]').value = String(p.name||"").trim();
+      tr.querySelector('[data-field="name"]').value = String(p.name || "").trim();
       const priceEl = tr.querySelector('[data-field="price"]');
-      if(priceEl && !Number(priceEl.value||0)) priceEl.value = Number(p.price||0);
+      if(priceEl && !Number(priceEl.value || 0)) priceEl.value = Number(p.price || 0);
     }
     syncRowThumb(tr);
     calcRowByTr(tr);
     return;
   }
+
   if(field === "name"){
     const p2 = findByName(el.value);
     if(p2){
-      tr.querySelector('[data-field="sku"]').value = String(p2.id||"").trim();
+      tr.querySelector('[data-field="sku"]').value = String(p2.id || "").trim();
       const priceEl = tr.querySelector('[data-field="price"]');
-      if(priceEl && !Number(priceEl.value||0)) priceEl.value = Number(p2.price||0);
+      if(priceEl && !Number(priceEl.value || 0)) priceEl.value = Number(p2.price || 0);
     }
     syncRowThumb(tr);
     calcRowByTr(tr);
@@ -841,7 +907,7 @@ function syncRowThumb(tr){
   const img = tr.querySelector("img.thumbMini");
   if(!img) return;
   img.src = sku ? resolveImageBySku(sku) : IMG_PLACEHOLDER;
-  img.onerror = function(){ this.onerror=null; this.src=IMG_PLACEHOLDER; };
+  img.onerror = function(){ this.onerror = null; this.src = IMG_PLACEHOLDER; };
 }
 
 function syncRowsWithProducts(){
@@ -849,31 +915,38 @@ function syncRowsWithProducts(){
   rows.forEach(tr=>{
     const skuEl = tr.querySelector('[data-field="sku"]');
     const nameEl = tr.querySelector('[data-field="name"]');
-    const sku = String(skuEl?.value||"").trim();
-    const name = String(nameEl?.value||"").trim();
+    const sku = String(skuEl?.value || "").trim();
+    const name = String(nameEl?.value || "").trim();
 
     if(sku && (!name || name === "—")){
       const p = findBySku(sku);
       if(p){
-        nameEl.value = String(p.name||"").trim();
+        nameEl.value = String(p.name || "").trim();
         const priceEl = tr.querySelector('[data-field="price"]');
-        if(priceEl && !Number(priceEl.value||0)) priceEl.value = Number(p.price||0);
+        if(priceEl && !Number(priceEl.value || 0)) priceEl.value = Number(p.price || 0);
       }
     }else if(name && !sku){
       const p2 = findByName(name);
       if(p2){
-        skuEl.value = String(p2.id||"").trim();
+        skuEl.value = String(p2.id || "").trim();
         const priceEl = tr.querySelector('[data-field="price"]');
-        if(priceEl && !Number(priceEl.value||0)) priceEl.value = Number(p2.price||0);
+        if(priceEl && !Number(priceEl.value || 0)) priceEl.value = Number(p2.price || 0);
       }
     }
+
     syncRowThumb(tr);
   });
+
   refreshRowNumbers();
   calcGrand();
 }
 
-function money(n){ n = Number(n||0); return (isFinite(n)?n:0); }
+/* ================= CALC ================= */
+function money(n){
+  n = Number(n || 0);
+  return isFinite(n) ? n : 0;
+}
+
 function calcRowByTr(tr){
   const qty = Math.max(0, money(tr.querySelector('[data-field="qty"]')?.value));
   const price = Math.max(0, money(tr.querySelector('[data-field="price"]')?.value));
@@ -933,10 +1006,12 @@ function calcGrand(){
   }
 }
 
+/* ================= HELPERS ================= */
 function extractOrderIdSmart(text){
   const t = String(text || "");
   let m = t.match(/(?:رقم\s*(?:الطلب|الاوردَر|الاوردر|الأوردر)|طلب\s*رقم|order\s*(?:id|no|number))\s*(?:[:：#]?\s*)([A-Za-z0-9-_]{3,})/i);
   if(m && m[1]) return m[1].trim();
+
   const lines = t.split(/\r?\n/);
   for(const line of lines){
     if(/طلب|order/i.test(line)){
@@ -944,6 +1019,7 @@ function extractOrderIdSmart(text){
       if(hit) return hit[1];
     }
   }
+
   const fallback = t.match(/\b([0-9]{5,})\b/);
   return fallback ? fallback[1] : "";
 }
@@ -952,12 +1028,15 @@ function extractCustomerData(fullText){
   const t = String(fullText || "");
   const nameMatch = t.match(/(?:^|\n)\s*الاسم\s*[:：]\s*(.+)\s*(?:\n|$)/i);
   const name = nameMatch ? nameMatch[1].trim() : "";
+
   let phone = "";
   const phoneMatch = t.match(/(?:📞|الهاتف\s*[:：]?)\s*([+]?[\d\s-]{8,})/);
   if(phoneMatch) phone = phoneMatch[1].trim();
+
   let address = "";
   const addrMatch = t.match(/(?:📍|العنوان\s*[:：]?)\s*(.+)\s*(?:\n|$)/);
   if(addrMatch) address = addrMatch[1].trim();
+
   const orderId = extractOrderIdSmart(t);
   return { name, phone, address, orderId };
 }
@@ -986,6 +1065,7 @@ function parseWhatsAppLines(fullText){
 
     if(sku || name) out.push({ sku, name, qty: qty || 0 });
   }
+
   return out;
 }
 
@@ -1008,7 +1088,23 @@ function collectInvoiceItemsFromUI_(){
     const line_discount = Math.max(0, Number(tr.querySelector('[data-field="discount"]')?.value || 0));
     const line_total = Math.max(0, Number(tr.querySelector('[data-field="rowTotal"]')?.textContent || 0));
     return { sku, name, qty, unit_price, line_discount, line_total };
-  }).filter(x=>x.sku && x.qty > 0);
+  }).filter(x => x.sku && x.qty > 0);
+}
+
+function collectReturnItemsFromTable_(){
+  const rows = Array.from(document.querySelectorAll("#itemsTable tbody tr"));
+  return rows.map(tr=>{
+    const sku = String(tr.querySelector('[data-field="sku"]')?.value || "").trim();
+    const name = String(tr.querySelector('[data-field="name"]')?.value || "").trim();
+    const qty = Math.max(0, Math.floor(money(tr.querySelector('[data-field="qty"]')?.value || 0)));
+    const soldQty = Math.max(
+      0,
+      Math.floor(
+        money(tr.querySelector('[data-field="qty"]')?.dataset?.originalQty || 0)
+      )
+    );
+    return { sku, name, qty, soldQty };
+  }).filter(x => x.sku);
 }
 
 function buildInvoicePayloadFromUI_(){
@@ -1032,7 +1128,10 @@ function buildInvoicePayloadFromUI_(){
 
 async function fetchOrderFromSystem(){
   const orderId = String(document.getElementById("orderId")?.value || "").trim();
-  if(!orderId){ alert("اكتب رقم الطلب أولاً."); return; }
+  if(!orderId){
+    alert("اكتب رقم الطلب أولاً.");
+    return;
+  }
 
   const btn = document.getElementById("fetchOrderBtn");
   const oldText = btn ? btn.textContent : "";
@@ -1050,7 +1149,7 @@ async function fetchOrderFromSystem(){
     CURRENT_INVOICE_STATE = data.invoice || null;
     CURRENT_INVOICE_ID = data?.invoice?.invoice_id ? String(data.invoice.invoice_id) : "";
 
-    fillInvoiceFromOrder_(data.invoice || data.order, !!data.invoice);
+    fillInvoiceFromOrder_(data.invoice || data.order);
 
     if(CURRENT_INVOICE_ID){
       document.getElementById("invNo").value = CURRENT_INVOICE_ID;
@@ -1091,7 +1190,12 @@ function fillInvoiceFromOrder_(payload){
     const tr = addRow(true);
     tr.querySelector('[data-field="sku"]').value = String(item.sku || item.id || "").trim();
     tr.querySelector('[data-field="name"]').value = String(item.name || "").trim();
-    tr.querySelector('[data-field="qty"]').value = Math.max(0, Number(item.qty || 0));
+
+    const qtyEl = tr.querySelector('[data-field="qty"]');
+    const originalQty = Math.max(0, Number(item.qty || 0));
+    qtyEl.value = originalQty;
+    qtyEl.dataset.originalQty = String(originalQty);
+
     tr.querySelector('[data-field="price"]').value = Number(item.unit_price !== undefined ? item.unit_price : (item.price || 0));
     tr.querySelector('[data-field="discount"]').value = Number(item.line_discount !== undefined ? item.line_discount : (item.discount || 0));
     syncRowThumb(tr);
@@ -1107,23 +1211,44 @@ function fillInvoiceFromOrder_(payload){
   refreshRowNumbers();
   calcGrand();
 }
-
-async function confirmInvoiceFromSystem(){
+  async function confirmInvoiceFromSystem(){
   const orderId = String(document.getElementById("orderId")?.value || "").trim();
-  if(!orderId){ alert("اكتب رقم الطلب أولاً."); return; }
-  if(isQuoteMode()){ alert("وضع الكوتيشن لا يدعم تأكيد الفاتورة."); return; }
+  if(!orderId){
+    alert("اكتب رقم الطلب أولاً.");
+    return;
+  }
+  if(isQuoteMode()){
+    alert("وضع الكوتيشن لا يدعم تأكيد الفاتورة.");
+    return;
+  }
+
   const invoice = buildInvoicePayloadFromUI_();
-  if(!invoice.items.length){ alert("أضف صنفًا واحدًا على الأقل."); return; }
-  const ok = confirm(CURRENT_INVOICE_ID ? "سيتم حفظ التعديلات الحالية على نفس الفاتورة وتحديث المخزون بالفروق. هل تريد المتابعة؟" : "سيتم إنشاء/تأكيد الفاتورة وحفظ الشحن والخصومات وتحديث المخزون. هل تريد المتابعة؟");
+  if(!invoice.items.length){
+    alert("أضف صنفًا واحدًا على الأقل.");
+    return;
+  }
+
+  const ok = confirm(
+    CURRENT_INVOICE_ID
+      ? "سيتم حفظ التعديلات الحالية على نفس الفاتورة وتحديث المخزون بالفروق. هل تريد المتابعة؟"
+      : "سيتم إنشاء/تأكيد الفاتورة وحفظ الشحن والخصومات وتحديث المخزون. هل تريد المتابعة؟"
+  );
   if(!ok) return;
+
   const btn = document.getElementById("confirmInvoiceBtn");
   const oldText = btn ? btn.textContent : "";
+
   try{
     if(btn){ btn.disabled = true; btn.textContent = "جاري الحفظ..."; }
+
     const data = await apiPostJson_({ action: "confirmInvoice", orderId, invoice });
-    if(!data || !data.ok) throw new Error(data?.error || "تعذر حفظ الفاتورة.");
+    if(!data || !data.ok){
+      throw new Error(data?.error || "تعذر حفظ الفاتورة.");
+    }
+
     CURRENT_INVOICE_ID = String(data.invoice_id || CURRENT_INVOICE_ID || "");
     if(CURRENT_INVOICE_ID) document.getElementById("invNo").value = CURRENT_INVOICE_ID;
+
     await fetchOrderFromSystem();
     alert("تم حفظ/تأكيد الفاتورة بنجاح.");
   }catch(e){
@@ -1136,15 +1261,25 @@ async function confirmInvoiceFromSystem(){
 
 async function fullReturnInvoiceFromSystem(){
   const orderId = String(document.getElementById("orderId")?.value || "").trim();
-  if(!orderId){ alert("اكتب رقم الطلب أولاً."); return; }
+  if(!orderId){
+    alert("اكتب رقم الطلب أولاً.");
+    return;
+  }
+
   const ok = confirm("سيتم تنفيذ مرتجع كامل لهذه الفاتورة. هل تريد المتابعة؟");
   if(!ok) return;
+
   const btn = document.getElementById("fullReturnBtn");
   const oldText = btn ? btn.textContent : "";
+
   try{
     if(btn){ btn.disabled = true; btn.textContent = "جاري الإرجاع..."; }
+
     const data = await apiPostJson_({ action: "returnInvoice", orderId });
-    if(!data || !data.ok) throw new Error(data?.error || "تعذر تنفيذ المرتجع الكامل.");
+    if(!data || !data.ok){
+      throw new Error(data?.error || "تعذر تنفيذ المرتجع الكامل.");
+    }
+
     await fetchOrderFromSystem();
     alert(data.already_returned ? "الفاتورة مرتجعة بالكامل بالفعل." : "تم تنفيذ المرتجع الكامل بنجاح.");
   }catch(e){
@@ -1167,22 +1302,27 @@ async function partialReturnInvoiceFromSystem(){
     return;
   }
 
-  function collectReturnItemsFromTable_(){
-  const rows = Array.from(document.querySelectorAll("#itemsTable tbody tr"));
-  return rows.map(tr=>{
-    const sku = String(tr.querySelector('[data-field="sku"]')?.value || "").trim();
-    const name = String(tr.querySelector('[data-field="name"]')?.value || "").trim();
-    const qty = Math.max(0, Math.floor(money(tr.querySelector('[data-field="qty"]')?.value || 0)));
-    const soldQty = Math.max(0, Math.floor(qty));
-    return { sku, name, qty, soldQty };
-  }).filter(x => x.sku);
-}
+  const items = collectReturnItemsFromTable_().filter(x => x.qty > 0);
 
- const lines = items
-  .map(x => `${x.sku} | ${x.name} | qty: ${x.qty}`)
-  .join("\n");
+  if(!items.length){
+    document.getElementById("returnHint").style.display = "block";
+    alert("في المرتجع الجزئي عدّل كميات الأصناف في الجدول إلى الكميات المطلوب إرجاعها فقط، واترك غير المرتجع = 0.");
+    return;
+  }
 
-const ok = confirm("سيتم تنفيذ مرتجع جزئي لهذه الأصناف:\n\n" + lines);
+  for(const item of items){
+    if(item.qty > item.soldQty){
+      alert(`كمية المرتجع للصنف ${item.sku} أكبر من الكمية المباعة في الفاتورة.`);
+      return;
+    }
+  }
+
+  const lines = items
+    .map(x => `${x.sku} | ${x.name} | qty: ${x.qty}`)
+    .join("\n");
+
+  const ok = confirm("سيتم تنفيذ مرتجع جزئي لهذه الأصناف:\n\n" + lines);
+  if(!ok) return;
 
   const btn = document.getElementById("partialReturnBtn");
   const oldText = btn ? btn.textContent : "";
@@ -1193,25 +1333,18 @@ const ok = confirm("سيتم تنفيذ مرتجع جزئي لهذه الأصن�
       btn.textContent = "جاري المرتجع...";
     }
 
-    const res = await fetch(API_URL, {
-      method: "POST",
-      body: JSON.stringify({
-        action: "returnInvoicePartial",
-        orderId,
-        items
-      })
+    const data = await apiPostJson_({
+      action: "returnInvoicePartial",
+      orderId,
+      items
     });
 
-    if(!res.ok) throw new Error("HTTP " + res.status);
-
-    const data = await res.json();
     if(!data || !data.ok){
       throw new Error(data?.error || "تعذر تنفيذ المرتجع الجزئي.");
     }
 
     alert("تم تنفيذ المرتجع الجزئي بنجاح.");
     await fetchOrderFromSystem();
-
   }catch(e){
     console.error(e);
     alert("فشل المرتجع الجزئي: " + (e?.message || e));
@@ -1222,6 +1355,7 @@ const ok = confirm("سيتم تنفيذ مرتجع جزئي لهذه الأصن�
     }
   }
 }
+
 function importFromWhatsApp(){
   CURRENT_ORDER = null;
   CURRENT_ORDER_STATE = null;
@@ -1229,13 +1363,18 @@ function importFromWhatsApp(){
   CURRENT_INVOICE_ID = "";
   renderOrderStatusInfo_(null, null);
   document.getElementById("returnHint").style.display = "none";
+
   if(isQuoteMode()){
     alert("وضع الكوتيشن لا يدعم الاستيراد من واتساب.");
     return;
   }
+
   const ta = document.getElementById("waImport");
   const raw = String(ta.value || "").trim();
-  if(!raw){ alert("الصق رسالة واتساب أولاً."); return; }
+  if(!raw){
+    alert("الصق رسالة واتساب أولاً.");
+    return;
+  }
 
   const cust = extractCustomerData(raw);
   if(cust.name) document.getElementById("custName").value = cust.name;
@@ -1258,15 +1397,17 @@ function importFromWhatsApp(){
       if(it.sku){
         skuEl.value = it.sku;
         const p = findBySku(it.sku);
-        if(p) nameEl.value = String(p.name||"").trim();
+        if(p) nameEl.value = String(p.name || "").trim();
         else if(it.name) nameEl.value = it.name;
       }else if(it.name){
         nameEl.value = it.name;
         const p2 = findByName(it.name);
-        if(p2) skuEl.value = String(p2.id||"").trim();
+        if(p2) skuEl.value = String(p2.id || "").trim();
       }
 
       qtyEl.value = it.qty ? String(it.qty) : "1";
+      qtyEl.dataset.originalQty = String(it.qty ? Number(it.qty) : 1);
+
       syncRowThumb(tr);
       calcRowByTr(tr);
     });
@@ -1329,59 +1470,75 @@ function getInvoiceData(){
   };
 }
 
-function openPrintWindow(html, title){
-  const w = window.open("", "_blank");
-  if(!w){ alert("Pop-up blocked. اسمح بفتح النوافذ المنبثقة."); return; }
-  w.document.open(); w.document.write(html); w.document.close();
-  try{ w.document.title = title || "فاتورة"; }catch(e){}
-  w.onload = function(){ w.focus(); setTimeout(()=> w.print(), 250); };
-}
 function escapeHtml(str){
   return String(str || "")
-    .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+    .replace(/&/g,"&amp;")
+    .replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;")
+    .replace(/"/g,"&quot;");
 }
+
 function numberToArabicWords(number){
   number = Number(number) || 0;
   if(number === 0) return "صفر جنيه مصري فقط لا غير";
+
   const ones = ["","واحد","اثنان","ثلاثة","أربعة","خمسة","ستة","سبعة","ثمانية","تسعة","عشرة","أحد عشر","اثنا عشر","ثلاثة عشر","أربعة عشر","خمسة عشر","ستة عشر","سبعة عشر","ثمانية عشر","تسعة عشر"];
   const tens = ["","عشرة","عشرون","ثلاثون","أربعون","خمسون","ستون","سبعون","ثمانون","تسعون"];
   const hundreds = ["","مائة","مائتان","ثلاثمائة","أربعمائة","خمسمائة","ستمائة","سبعمائة","ثمانمائة","تسعمائة"];
+
   function subThousand(n){
-    n = Number(n); if(n===0) return "";
-    let res=[]; const h=Math.floor(n/100); const rest=n%100;
+    n = Number(n);
+    if(n === 0) return "";
+    let res = [];
+    const h = Math.floor(n/100);
+    const rest = n % 100;
     if(h) res.push(hundreds[h]);
     if(rest){
-      if(rest<20) res.push(ones[rest]);
+      if(rest < 20) res.push(ones[rest]);
       else{
-        const t=Math.floor(rest/10), o=rest%10;
-        if(o) res.push(ones[o]+" و "+tens[t]); else res.push(tens[t]);
+        const t = Math.floor(rest/10), o = rest%10;
+        if(o) res.push(ones[o] + " و " + tens[t]);
+        else res.push(tens[t]);
       }
     }
     return res.join(" و ");
   }
-  let parts=[];
-  const million=Math.floor(number/1000000);
-  const thousand=Math.floor((number%1000000)/1000);
-  const rest=number%1000;
-  if(million){ if(million===1) parts.push("مليون"); else if(million===2) parts.push("مليونان"); else parts.push(subThousand(million)+" مليون"); }
-  if(thousand){ if(thousand===1) parts.push("ألف"); else if(thousand===2) parts.push("ألفان"); else parts.push(subThousand(thousand)+" ألف"); }
+
+  let parts = [];
+  const million = Math.floor(number/1000000);
+  const thousand = Math.floor((number%1000000)/1000);
+  const rest = number%1000;
+
+  if(million){
+    if(million === 1) parts.push("مليون");
+    else if(million === 2) parts.push("مليونان");
+    else parts.push(subThousand(million) + " مليون");
+  }
+  if(thousand){
+    if(thousand === 1) parts.push("ألف");
+    else if(thousand === 2) parts.push("ألفان");
+    else parts.push(subThousand(thousand) + " ألف");
+  }
   if(rest) parts.push(subThousand(rest));
+
   return `${parts.join(" و ")} جنيه مصري فقط لا غير`;
 }
 
+/* ================= PRINT / PDF ================= */
 function buildA4Html(d, mode){
-  const isQuote = (mode==="quote");
+  const isQuote = (mode === "quote");
   const docTitle = isQuote ? "عرض سعر" : "فاتورة";
-  const deliveryText = (Number(d.deliveryFee||0) > 0) ? `${Number(d.deliveryFee).toFixed(2)} جنيه` : "توصيل مجاني";
+  const deliveryText = (Number(d.deliveryFee || 0) > 0) ? `${Number(d.deliveryFee).toFixed(2)} جنيه` : "توصيل مجاني";
   const noteHtml = d.note ? `<div class="note">${escapeHtml(d.note)}</div>` : "";
+
   const itemsHtml = d.items.length ? d.items.map(it => `
     <tr>
       <td>${it.idx}</td>
       <td>${escapeHtml(it.skuName)}</td>
-      <td>${Number(it.qty||0)}</td>
-      <td>${Number(it.price||0).toFixed(2)}</td>
-      <td>${Number(it.disc||0).toFixed(2)}</td>
-      <td>${Number(it.sub||0).toFixed(2)}</td>
+      <td>${Number(it.qty || 0)}</td>
+      <td>${Number(it.price || 0).toFixed(2)}</td>
+      <td>${Number(it.disc || 0).toFixed(2)}</td>
+      <td>${Number(it.sub || 0).toFixed(2)}</td>
     </tr>
   `).join("") : `<tr><td colspan="6" style="padding:18px;text-align:center;color:#64748b">لا توجد أصناف</td></tr>`;
 
@@ -1423,8 +1580,9 @@ function buildA4Html(d, mode){
 
 function buildThermalHtml(mm, d, mode){
   const widthMm = (mm === 58) ? 58 : 80;
-  const isQuote = (mode==="quote");
+  const isQuote = (mode === "quote");
   const titleText = isQuote ? "عرض سعر" : "فاتورة";
+
   const items = d.items.length ? d.items.map(it=>{
     const name = (it.name || it.skuName || it.sku || "").trim();
     const qty  = Number(it.qty || 0);
@@ -1435,6 +1593,7 @@ function buildThermalHtml(mm, d, mode){
     const right = (disc > 0.00001) ? `Disc: ${disc.toFixed(2)}` : "";
     return `<div class="item"><div class="itemName">${it.idx}) ${escapeHtml(name)}</div><div class="itemMeta"><span class="l">${left}</span>${right ? `<span class="r">${right}</span>` : `<span class="r"></span>`}</div><div class="itemTotal"><span>Total</span><span>${sub.toFixed(2)}</span></div></div><div class="sep"></div>`;
   }).join("") : `<div class="m" style="text-align:center;margin:10px 0">لا توجد أصناف</div>`;
+
   const noteBlock = d.note ? `<div class="sep"></div><div class="m">${escapeHtml(d.note)}</div>` : "";
 
   return `<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${titleText} ${escapeHtml(d.invNo)}</title><style>
@@ -1463,8 +1622,11 @@ async function toDataURL(url){
       r.onerror = reject;
       r.readAsDataURL(blob);
     });
-  }catch(e){ return null; }
+  }catch(e){
+    return null;
+  }
 }
+
 async function inlineAllImages(root){
   const imgs = Array.from(root.querySelectorAll("img"));
   for(const img of imgs){
@@ -1475,31 +1637,45 @@ async function inlineAllImages(root){
     if(dataUrl) img.setAttribute("src", dataUrl);
   }
 }
+
 function buildA4FragmentForPdf(d, mode){
   const full = buildA4Html(d, mode);
   const style = (full.match(/<style>([\s\S]*?)<\/style>/i) || [,""])[1];
   const body  = (full.match(/<body[^>]*>([\s\S]*?)<\/body>/i) || [,""])[1];
   return `<div><style>${style}</style>${body}</div>`;
 }
+
 function openPrintWindowSafe(html, title){
   const w = window.open("", "_blank");
-  if(!w){ alert("Pop-up blocked. اسمح بفتح النوافذ المنبثقة."); return; }
-  w.document.open(); w.document.write(html); w.document.close();
+  if(!w){
+    alert("Pop-up blocked. اسمح بفتح النوافذ المنبثقة.");
+    return;
+  }
+  w.document.open();
+  w.document.write(html);
+  w.document.close();
   try{ w.document.title = title || "فاتورة"; }catch(e){}
-  w.onload = function(){ w.focus(); setTimeout(()=> w.print(), 250); };
+  w.onload = function(){
+    w.focus();
+    setTimeout(()=> w.print(), 250);
+  };
 }
+
 function exportA4(){
   const d = getInvoiceData();
   openPrintWindowSafe(buildA4Html(d, isQuoteMode() ? "quote" : "invoice"), `${isQuoteMode() ? "عرض سعر" : "فاتورة"} ${d.invNo}`);
 }
+
 function printThermal(mm){
   const d = getInvoiceData();
   openPrintWindowSafe(buildThermalHtml(mm, d, isQuoteMode() ? "quote" : "invoice"), `${isQuoteMode() ? "عرض سعر" : "فاتورة"} ${d.invNo}`);
 }
+
 async function savePdfA4(mode){
   const d = getInvoiceData();
   const safeKey = (d.orderId || d.invNo || "BS").replace(/[^\w-]+/g,"_");
   const filename = `${mode==="quote" ? "quotation" : "invoice"}_${safeKey}.pdf`;
+
   const holder = document.createElement("div");
   holder.style.position = "fixed";
   holder.style.left = "-99999px";
@@ -1509,8 +1685,10 @@ async function savePdfA4(mode){
   holder.style.zIndex = "-1";
   holder.innerHTML = buildA4FragmentForPdf(d, mode);
   document.body.appendChild(holder);
+
   await new Promise(r=> setTimeout(r, 150));
   await inlineAllImages(holder);
+
   const opt = {
     margin: 10,
     filename,
@@ -1518,28 +1696,42 @@ async function savePdfA4(mode){
     html2canvas: { scale: 2, useCORS: true, allowTaint: true, backgroundColor: "#ffffff" },
     jsPDF: { unit: "mm", format: "a4", orientation: "portrait" }
   };
-  try{ await html2pdf().set(opt).from(holder).save(); }
-  catch(e){ console.error(e); alert("فشل حفظ PDF"); }
-  finally{ holder.remove(); }
+
+  try{
+    await html2pdf().set(opt).from(holder).save();
+  }catch(e){
+    console.error(e);
+    alert("فشل حفظ PDF");
+  }finally{
+    holder.remove();
+  }
 }
 
-document.getElementById('addRowBtn')?.addEventListener('click', ()=> addRow(false));
+/* ================= EVENTS ================= */
+document.getElementById("addRowBtn")?.addEventListener("click", ()=> addRow(false));
 document.getElementById("deliveryFee")?.addEventListener("input", calcGrand);
 document.getElementById("globalDiscount")?.addEventListener("input", calcGrand);
 document.getElementById("invoiceNote")?.addEventListener("input", calcGrand);
-document.getElementById('importBtn')?.addEventListener("click", importFromWhatsApp);
-document.getElementById('clearImportBtn')?.addEventListener("click", ()=>{ document.getElementById("waImport").value=""; });
-document.getElementById('fetchOrderBtn')?.addEventListener("click", fetchOrderFromSystem);
-document.getElementById('confirmInvoiceBtn')?.addEventListener("click", confirmInvoiceFromSystem);
-document.getElementById('fullReturnBtn')?.addEventListener("click", fullReturnInvoiceFromSystem);
-document.getElementById('partialReturnBtn')?.addEventListener("click", partialReturnInvoiceFromSystem);
-document.getElementById('printA4Btn')?.addEventListener('click', exportA4);
-document.getElementById('savePdfA4Btn')?.addEventListener('click', ()=> savePdfA4("invoice"));
-document.getElementById('saveQuotePdfBtn')?.addEventListener('click', ()=> savePdfA4("quote"));
-document.getElementById('thermal80Btn')?.addEventListener('click', ()=> printThermal(80));
-document.getElementById('thermal58Btn')?.addEventListener('click', ()=> printThermal(58));
 
+document.getElementById("importBtn")?.addEventListener("click", importFromWhatsApp);
+document.getElementById("clearImportBtn")?.addEventListener("click", ()=>{
+  document.getElementById("waImport").value = "";
+});
+
+document.getElementById("fetchOrderBtn")?.addEventListener("click", fetchOrderFromSystem);
+document.getElementById("confirmInvoiceBtn")?.addEventListener("click", confirmInvoiceFromSystem);
+document.getElementById("fullReturnBtn")?.addEventListener("click", fullReturnInvoiceFromSystem);
+document.getElementById("partialReturnBtn")?.addEventListener("click", partialReturnInvoiceFromSystem);
+
+document.getElementById("printA4Btn")?.addEventListener("click", exportA4);
+document.getElementById("savePdfA4Btn")?.addEventListener("click", ()=> savePdfA4("invoice"));
+document.getElementById("saveQuotePdfBtn")?.addEventListener("click", ()=> savePdfA4("quote"));
+document.getElementById("thermal80Btn")?.addEventListener("click", ()=> printThermal(80));
+document.getElementById("thermal58Btn")?.addEventListener("click", ()=> printThermal(58));
+
+/* ================= BOOT ================= */
 applyModeUI();
+
 if(sessionStorage.getItem("BS_ADMIN_OK") === "1"){
   setLoggedIn(true);
   applyModeUI();
@@ -1549,6 +1741,7 @@ if(sessionStorage.getItem("BS_ADMIN_OK") === "1"){
   setLoggedIn(false);
   try{ passInput.focus(); }catch(e){}
 }
+
 addRow(true);
 refreshRowNumbers();
 calcGrand();
