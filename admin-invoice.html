@@ -248,6 +248,8 @@
     </div>
     <div style="display:flex;gap:12px;margin-top:12px;align-items:center;flex-wrap:wrap">
       <button class="btn" id="addRowBtn">+ إضافة صنف</button>
+      <button class="btn secondary" id="newInvoiceBtn" type="button">🧹 فاتورة جديدة</button>
+      <button class="btn secondary" id="reloadProductsBtn" type="button">🔄 تحديث الأصناف</button>
     </div>
 
     <div class="extraBox">
@@ -306,6 +308,34 @@ const CACHE_TTL_MS   = 60 * 1000;
 let PRODUCTS = [];
 let ROW_ID = 0;
 let CURRENT_ORDER = null;
+
+async function apiFetchJson(pathOrQuery = "", options = {}){
+  const urls = Array.from(new Set(API_URLS.filter(Boolean)));
+  let lastErr = null;
+
+  for(const base of urls){
+    try{
+      const sep = pathOrQuery && String(pathOrQuery).startsWith("?") ? "" : "";
+      const url = `${base}${pathOrQuery || ""}`;
+      const res = await fetch(url, { cache: "no-store", ...options });
+      if(!res.ok) throw new Error("HTTP " + res.status);
+      const data = await res.json();
+      return { data, usedUrl: base };
+    }catch(err){
+      lastErr = err;
+      console.warn("API fallback failed:", base, err);
+    }
+  }
+  throw lastErr || new Error("تعذر الاتصال بالـ API");
+}
+
+function clearProductCache_(){
+  try{
+    localStorage.removeItem(PROD_CACHE_KEY);
+    localStorage.removeItem(PROD_CACHE_TS);
+  }catch(e){}
+}
+
 
 function isQuoteMode(){ try{ return new URLSearchParams(location.search).get("quote") === "1"; } catch(e){ return false; } }
 function applyModeUI(){
@@ -482,9 +512,7 @@ function loadProductsFromCache(){
   }catch(e){ return null; }
 }
 async function fetchProductsFromApi(){
-  const res = await fetch(API_URL,{cache:"no-store"});
-  if(!res.ok) throw new Error("HTTP " + res.status);
-  const data = await res.json();
+  const { data } = await apiFetchJson("");
   return Array.isArray(data) ? data : [];
 }
 async function loadProductsSmart(){
@@ -713,7 +741,8 @@ function extractOrderIdSmart(text){
   const t = String(text || "");
   let m = t.match(/(?:رقم\s*(?:الطلب|الاوردَر|الاوردر|الأوردر)|طلب\s*رقم|order\s*(?:id|no|number))\s*(?:[:：#]?\s*)([A-Za-z0-9-_]{3,})/i);
   if(m && m[1]) return m[1].trim();
-  const lines = t.split(/?
+  const lines = t.split(/
+?
 /);
   for(const line of lines){
     if(/طلب|order/i.test(line)){
@@ -744,7 +773,8 @@ function extractCustomerData(fullText){
 function parseWhatsAppLines(fullText){
   const text = String(fullText || "").trim();
   if(!text) return [];
-  const lines = text.split(/?
+  const lines = text.split(/
+?
 /).map(l=>l.trim()).filter(Boolean);
   const out = [];
   for(const line of lines){
@@ -800,13 +830,16 @@ function renderOrderStatusInfo_(order){
 }
 async function fetchOrderFromSystem(){
   const orderId = String(document.getElementById("orderId")?.value || "").trim();
-  if(!orderId){ alert("اكتب رقم الطلب أولاً."); return; }
+  if(!orderId){
+    alert("اكتب رقم الطلب أولاً.");
+    return;
+  }
+
   try{
-    const url = `${API_URL}?action=getOrder&orderId=${encodeURIComponent(orderId)}`;
-    const res = await fetch(url, { cache: "no-store" });
-    if(!res.ok) throw new Error("HTTP " + res.status);
-    const data = await res.json();
-    if(!data || !data.ok || !data.order){ throw new Error(data?.error || "تعذر جلب الطلب."); }
+    const { data } = await apiFetchJson(`?action=getOrder&orderId=${encodeURIComponent(orderId)}`);
+    if(!data || !data.ok || !data.order){
+      throw new Error(data?.error || "تعذر جلب الطلب.");
+    }
     fillInvoiceFromOrder_(data.order);
     alert("تم جلب الطلب بنجاح.");
   }catch(e){
@@ -862,13 +895,15 @@ async function fullReturnInvoiceFromSystem(){
   if(!CURRENT_ORDER){ alert("اجلب الطلب من النظام أولاً."); return; }
   const ok = confirm("سيتم إرجاع الفاتورة بالكامل وإضافة كل الكميات مرة أخرى إلى المخزون. هل تريد المتابعة؟");
   if(!ok) return;
+
   const btn = document.getElementById("fullReturnBtn");
   const oldText = btn ? btn.textContent : "";
   try{
     if(btn){ btn.disabled = true; btn.textContent = "جاري الإرجاع..."; }
-    const res = await fetch(API_URL, { method: "POST", body: JSON.stringify({ action: "returnInvoice", orderId }) });
-    if(!res.ok) throw new Error("HTTP " + res.status);
-    const data = await res.json();
+    const { data } = await apiFetchJson("", {
+      method: "POST",
+      body: JSON.stringify({ action: "returnInvoice", orderId })
+    });
     if(!data || !data.ok) throw new Error(data?.error || "تعذر تنفيذ المرتجع الكامل.");
     alert(data.already_returned ? "الفاتورة مرتجعة بالكامل بالفعل." : "تم تنفيذ المرتجع الكامل بنجاح.");
     await fetchOrderFromSystem();
@@ -883,28 +918,36 @@ async function partialReturnInvoiceFromSystem(){
   const orderId = String(document.getElementById("orderId")?.value || "").trim();
   if(!orderId){ alert("اكتب رقم الطلب أولاً."); return; }
   if(!CURRENT_ORDER){ alert("اجلب الطلب من النظام أولاً."); return; }
+
   const items = collectReturnItemsFromTable_().filter(x=>x.qty > 0);
   if(!items.length){
     document.getElementById("returnHint").style.display = "block";
     alert("في المرتجع الجزئي عدّل كميات الأصناف في الجدول إلى الكميات المطلوب إرجاعها ثم اضغط الزر مرة أخرى.");
     return;
   }
+
   for(const item of items){
     if(item.qty > item.soldQty){
       alert(`كمية المرتجع للصنف ${item.sku} أكبر من الكمية المباعة في الفاتورة.`);
       return;
     }
   }
-  const lines = items.map(x=>`${x.sku} | ${x.name} | qty: ${x.qty}`).join("\n");
-  const ok = confirm("سيتم تنفيذ مرتجع جزئي لهذه الأصناف:\n\n" + lines);
+
+  const lines = items.map(x=>`${x.sku} | ${x.name} | qty: ${x.qty}`).join("
+");
+  const ok = confirm("سيتم تنفيذ مرتجع جزئي لهذه الأصناف:
+
+" + lines);
   if(!ok) return;
+
   const btn = document.getElementById("partialReturnBtn");
   const oldText = btn ? btn.textContent : "";
   try{
     if(btn){ btn.disabled = true; btn.textContent = "جاري المرتجع..."; }
-    const res = await fetch(API_URL, { method: "POST", body: JSON.stringify({ action: "returnInvoicePartial", orderId, items }) });
-    if(!res.ok) throw new Error("HTTP " + res.status);
-    const data = await res.json();
+    const { data } = await apiFetchJson("", {
+      method: "POST",
+      body: JSON.stringify({ action: "returnInvoicePartial", orderId, items })
+    });
     if(!data || !data.ok) throw new Error(data?.error || "تعذر تنفيذ المرتجع الجزئي.");
     alert("تم تنفيذ المرتجع الجزئي بنجاح.");
     await fetchOrderFromSystem();
@@ -917,19 +960,31 @@ async function partialReturnInvoiceFromSystem(){
 }
 async function confirmInvoiceFromSystem(){
   const orderId = String(document.getElementById("orderId")?.value || "").trim();
-  if(!orderId){ alert("اكتب رقم الطلب أولاً."); return; }
-  if(isQuoteMode()){ alert("وضع الكوتيشن لا يدعم تأكيد الفاتورة."); return; }
+  if(!orderId){
+    alert("اكتب رقم الطلب أولاً.");
+    return;
+  }
+  if(isQuoteMode()){
+    alert("وضع الكوتيشن لا يدعم تأكيد الفاتورة.");
+    return;
+  }
   const ok = confirm("سيتم خصم الكميات من المخزون وتأكيد الفاتورة لهذا الطلب. هل تريد المتابعة؟");
   if(!ok) return;
+
   const btn = document.getElementById("confirmInvoiceBtn");
   const oldText = btn ? btn.textContent : "";
   try{
     if(btn){ btn.disabled = true; btn.textContent = "جاري التأكيد..."; }
-    const res = await fetch(API_URL, { method: "POST", body: JSON.stringify({ action: "confirmInvoice", orderId }) });
-    if(!res.ok) throw new Error("HTTP " + res.status);
-    const data = await res.json();
-    if(!data || !data.ok){ throw new Error(data?.error || "تعذر تأكيد الفاتورة."); }
-    const msg = data.already_confirmed ? "الفاتورة مؤكدة بالفعل من قبل." : "تم تأكيد الفاتورة وخصم المخزون بنجاح.";
+    const { data } = await apiFetchJson("", {
+      method: "POST",
+      body: JSON.stringify({ action: "confirmInvoice", orderId: orderId })
+    });
+    if(!data || !data.ok){
+      throw new Error(data?.error || "تعذر تأكيد الفاتورة.");
+    }
+    const msg = data.already_confirmed
+      ? "الفاتورة مؤكدة بالفعل من قبل."
+      : "تم تأكيد الفاتورة وخصم المخزون بنجاح.";
     alert(msg);
     await fetchOrderFromSystem();
   }catch(e){
@@ -1063,6 +1118,12 @@ function numberToArabicWords(number){
 }
 
 document.getElementById('addRowBtn')?.addEventListener('click', ()=> addRow(false));
+document.getElementById('newInvoiceBtn')?.addEventListener('click', ()=> newInvoiceReset_());
+document.getElementById('reloadProductsBtn')?.addEventListener('click', async ()=>{
+  clearProductCache_();
+  await loadProductsSmart();
+  alert("تم تحديث قائمة الأصناف.");
+});
 document.getElementById("deliveryFee")?.addEventListener("input", calcGrand);
 document.getElementById("globalDiscount")?.addEventListener("input", calcGrand);
 document.getElementById("invoiceNote")?.addEventListener("input", calcGrand);
