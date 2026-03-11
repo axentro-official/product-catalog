@@ -1145,36 +1145,77 @@ async function fullReturnInvoiceFromSystem(){
 
 async function partialReturnInvoiceFromSystem(){
   const orderId = String(document.getElementById("orderId")?.value || "").trim();
-  if(!orderId){ alert("اكتب رقم الطلب أولاً."); return; }
-  const items = collectInvoiceItemsFromUI_().map(x=>({ sku:x.sku, qty:Number(x.qty||0), name:x.name })).filter(x=>x.qty > 0);
-  if(!items.length){
-    document.getElementById("returnHint").style.display = "block";
-    alert("في المرتجع الجزئي: اجعل الكمية في كل صف = الكمية المطلوب إرجاعها فقط، واترك غير المرتجع = 0.");
+  if(!orderId){
+    alert("اكتب رقم الطلب أولاً.");
     return;
   }
-  const lines = items.map(x=>`${x.sku} | ${x.name || ''} | qty: ${x.qty}`).join("
-");
-  const ok = confirm("سيتم تنفيذ مرتجع جزئي بالكميات الحالية الظاهرة في الجدول:
 
-" + lines);
+  if(!CURRENT_ORDER){
+    alert("اجلب الطلب من النظام أولاً.");
+    return;
+  }
+
+  const items = collectReturnItemsFromTable_().filter(x => x.qty > 0);
+
+  if(!items.length){
+    document.getElementById("returnHint").style.display = "block";
+    alert("في المرتجع الجزئي عدّل كميات الأصناف في الجدول إلى الكميات المطلوب إرجاعها ثم اضغط الزر مرة أخرى.");
+    return;
+  }
+
+  for(const item of items){
+    if(item.qty > item.soldQty){
+      alert(`كمية المرتجع للصنف ${item.sku} أكبر من الكمية المباعة في الفاتورة.`);
+      return;
+    }
+  }
+
+  const lines = items
+    .map(x => `${x.sku} | ${x.name} | qty: ${x.qty}`)
+    .join("\\n");
+
+  const ok = confirm("سيتم تنفيذ مرتجع جزئي لهذه الأصناف:\\n\\n" + lines);
   if(!ok) return;
+
   const btn = document.getElementById("partialReturnBtn");
   const oldText = btn ? btn.textContent : "";
+
   try{
-    if(btn){ btn.disabled = true; btn.textContent = "جاري المرتجع..."; }
-    const data = await apiPostJson_({ action: "returnInvoicePartial", orderId, items });
-    if(!data || !data.ok) throw new Error(data?.error || "تعذر تنفيذ المرتجع الجزئي.");
-    await fetchOrderFromSystem();
+    if(btn){
+      btn.disabled = true;
+      btn.textContent = "جاري المرتجع...";
+    }
+
+    const res = await fetch(API_URL, {
+      method: "POST",
+      body: JSON.stringify({
+        action: "returnInvoicePartial",
+        orderId,
+        items
+      })
+    });
+
+    if(!res.ok) throw new Error("HTTP " + res.status);
+
+    const data = await res.json();
+    if(!data || !data.ok){
+      throw new Error(data?.error || "تعذر تنفيذ المرتجع الجزئي.");
+    }
+
     alert("تم تنفيذ المرتجع الجزئي بنجاح.");
+    await fetchOrderFromSystem();
+
   }catch(e){
     console.error(e);
     alert("فشل المرتجع الجزئي: " + (e?.message || e));
   }finally{
-    if(btn){ btn.disabled = false; btn.textContent = oldText || "↩️ مرتجع جزئي"; }
+    if(btn){
+      btn.disabled = false;
+      btn.textContent = oldText || "↩️ مرتجع جزئي";
+    }
   }
 }
-
-function importFromWhatsApp(){
+function importFromWhatsApp()
   CURRENT_ORDER = null;
   CURRENT_ORDER_STATE = null;
   CURRENT_INVOICE_STATE = null;
