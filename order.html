@@ -104,34 +104,51 @@
     .back{
       padding:11px 16px;
       border-radius:16px;
-      border:1px solid rgba(212,175,55,.42);
-      background: linear-gradient(135deg, rgba(255,255,255,.98), rgba(212,175,55,.10));
+      border:1px solid rgba(212,175,55,.55);
+      background: linear-gradient(135deg, rgba(212,175,55,.22), rgba(184,134,11,.18));
+      color:#0f172a;
       display:inline-flex;
       align-items:center;
       justify-content:center;
-      gap:8px;
+      gap:9px;
       font-weight:1000;
-      box-shadow: 0 10px 24px rgba(15,23,42,.08);
+      box-shadow: 0 12px 22px rgba(212,175,55,.14);
       transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease;
       white-space:nowrap;
+      min-height:46px;
     }
 
     .back:hover{
-      transform: translateY(-1px);
-      border-color: rgba(212,175,55,.65);
-      box-shadow: 0 14px 28px rgba(15,23,42,.10);
+      border-color: rgba(212,175,55,.75);
+      box-shadow: 0 16px 30px rgba(212,175,55,.18);
     }
 
-    .back-icon{
-      font-size:15px;
-      line-height:1;
+    .back:active{
+      transform: translateY(1px);
+    }
+
+    .backIcon{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      width:24px;
+      height:24px;
+      border-radius:999px;
+      background: rgba(255,255,255,.70);
+      border:1px solid rgba(212,175,55,.40);
+      font-size:13px;
+      flex:0 0 auto;
     }
 
     main{ padding:18px; }
 
     @media (max-width:720px){
       main{ padding:12px; }
-      .topbar{ flex-direction:column; align-items:stretch; gap:10px; }
+      .topbar{
+        flex-direction:column;
+        align-items:stretch;
+        gap:10px;
+      }
       .actions{ justify-content:stretch; }
       .back{ width:100%; }
     }
@@ -185,9 +202,7 @@
       box-shadow: 0 12px 22px rgba(212,175,55,.14);
     }
 
-    .copyBtn:active{
-      transform: translateY(1px);
-    }
+    .copyBtn:active{transform: translateY(1px)}
 
     .note{
       margin-top:12px;
@@ -226,10 +241,7 @@
       user-select:none;
     }
 
-    .seg input{
-      width:auto;
-      margin:0;
-    }
+    .seg input{width:auto; margin:0}
 
     label{
       display:block;
@@ -324,10 +336,7 @@
       flex:0 0 auto;
     }
 
-    .iInfo{
-      flex:1;
-      min-width:0;
-    }
+    .iInfo{flex:1; min-width:0}
 
     .iName{
       font-weight:1000;
@@ -394,7 +403,7 @@
       touch-action: manipulation;
       box-shadow:none;
       padding:0;
-      flex:unset;
+      flex:0 0 auto;
     }
 
     .btns{
@@ -418,9 +427,7 @@
       box-shadow: 0 10px 22px rgba(15,23,42,.06);
     }
 
-    button:active{
-      transform: translateY(1px);
-    }
+    button:active{transform: translateY(1px)}
 
     button:disabled{
       opacity:.45;
@@ -511,13 +518,13 @@
 
     .site-footer{
       margin-top:auto;
-      padding:16px 16px 22px;
+      padding:18px 16px 24px;
       text-align:center;
       color:var(--muted);
       border-top:1px solid var(--stroke);
       background: rgba(255,255,255,.78);
       backdrop-filter: blur(10px);
-      padding-bottom: calc(22px + env(safe-area-inset-bottom));
+      padding-bottom: calc(24px + env(safe-area-inset-bottom));
     }
 
     .site-footer .line1{
@@ -528,6 +535,47 @@
     .site-footer .line2{
       margin-top:6px;
       font-weight:900;
+    }
+
+    .footerQrWrap{
+      margin-top:14px;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap:8px;
+    }
+
+    .footerQrLink{
+      display:inline-flex;
+      flex-direction:column;
+      align-items:center;
+      gap:8px;
+      text-decoration:none;
+      color:inherit;
+    }
+
+    .footerQrImage{
+      width:92px;
+      height:92px;
+      object-fit:cover;
+      border-radius:16px;
+      border:1px solid rgba(212,175,55,.35);
+      background:#fff;
+      padding:6px;
+      box-shadow: 0 10px 22px rgba(15,23,42,.08);
+      transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease;
+    }
+
+    .footerQrLink:hover .footerQrImage{
+      transform: translateY(-1px);
+      border-color: rgba(212,175,55,.65);
+      box-shadow: 0 14px 28px rgba(212,175,55,.14);
+    }
+
+    .footerQrText{
+      font-size:12px;
+      font-weight:1000;
+      color:#475569;
     }
   </style>
 </head>
@@ -547,7 +595,7 @@
 
     <div class="actions">
       <a class="back" href="./" aria-label="رجوع للكتالوج">
-        <span class="back-icon">←</span>
+        <span class="backIcon">←</span>
         <span>رجوع للكتالوج</span>
       </a>
     </div>
@@ -586,6 +634,7 @@
             <input id="name" placeholder="اكتب اسمك" autocomplete="name" />
             <div class="fieldError" id="err_name">⚠️ من فضلك اكتب الاسم</div>
           </div>
+
           <div>
             <label for="phone">رقم الموبايل</label>
             <input id="phone" placeholder="مثال: 01xxxxxxxxx أو +201xxxxxxxxx" inputmode="tel" autocomplete="tel" />
@@ -619,12 +668,32 @@
   <footer class="site-footer">
     <div class="line1">Axentro – All Rights Reserved 2024 ©</div>
     <div class="line2">By Ahmed Hamouda</div>
+
+    <div class="footerQrWrap">
+      <a
+        class="footerQrLink"
+        href="https://axentro-official.github.io/axentro-website/links.html"
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label="Open links page"
+      >
+        <img
+          class="footerQrImage"
+          src="images/qr-links.png"
+          alt="QR Links"
+          onerror="this.onerror=null;this.src='qr-links.png'"
+        >
+        <span class="footerQrText">Scan me</span>
+      </a>
+    </div>
   </footer>
 
 <script>
   const API_URL  = "https://script.google.com/macros/s/AKfycbwA-TDjlHKaqeTneXqCYxDQqJFht8uuk2J1wVEx8K6UVdgHGGmTQxXhlekxrmF3erO-/exec";
-
   const LS_KEY   = "AX_CART_V1";
+
+  const THANKS_URL = "./thanks.html";
+
   const cartBox  = document.getElementById("cartBox");
   const note     = document.getElementById("note");
   const ok       = document.getElementById("ok");
@@ -685,8 +754,8 @@
   function setNote(){
     note.textContent =
       getType() === "جملة"
-      ? "✅ تم تجهيز طلب الجملة. بعد الإتمام سيتم تسجيل البيانات وتحويلك لصفحة التأكيد."
-      : "✅ تم تجهيز طلبك. بعد الإتمام سيتم تسجيل البيانات وتحويلك لصفحة التأكيد.";
+      ? "✅ تم استلام طلب الجملة بنجاح. بعد إتمام تسجيل البيانات سنحوّلك لصفحة التأكيد."
+      : "✅ تم تجهيز طلبك. بعد إتمام تسجيل البيانات سنحوّلك لصفحة التأكيد.";
   }
 
   function showToast(msg){
@@ -844,6 +913,23 @@
     btn.click();
   });
 
+  function formatDateOnly(d){
+    const dd = String(d.getDate()).padStart(2,"0");
+    const mm = String(d.getMonth()+1).padStart(2,"0");
+    const yyyy = d.getFullYear();
+    return `${dd}-${mm}-${yyyy}`;
+  }
+
+  function formatTimeOnly12(d){
+    let h = d.getHours();
+    const min = String(d.getMinutes()).padStart(2,"0");
+    const ampm = h >= 12 ? "PM" : "AM";
+    h = h % 12;
+    if(h === 0) h = 12;
+    const hh = String(h).padStart(2,"0");
+    return `${hh}:${min} ${ampm}`;
+  }
+
   function generateOrderId(){
     const d = new Date();
     const y = d.getFullYear();
@@ -903,8 +989,8 @@
       errEl.style.display = "block";
     }
 
-    try{ el.focus({preventScroll:true}); }catch(e){ try{ el.focus(); }catch(_){ } }
-    try{ el.scrollIntoView({behavior:"smooth", block:"center"}); }catch(e){ }
+    try{ el.focus({preventScroll:true}); }catch(e){ try{ el.focus(); }catch(_e){} }
+    try{ el.scrollIntoView({behavior:"smooth", block:"center"}); }catch(e){}
   }
 
   ["input","change","blur"].forEach(evt=>{
@@ -959,39 +1045,43 @@
 
     return { ok:true, msg:"" };
   }
+
   function buildOrderPayload(){
     const cart = getCart();
     const orderId = getStableOrderId();
     const type = getType();
 
-    const name = (nameEl.value || "").trim();
-    const phone = (phoneEl.value || "").trim();
-    const address = (addressEl.value || "").trim();
+    const name = (nameEl.value||"").trim();
+    const phone = (phoneEl.value||"").trim();
+    const address = (addressEl.value||"").trim();
 
-    const items = cart.map((it)=>{
+    const now = new Date();
+    const dateOnly = formatDateOnly(now);
+    const timeOnly = formatTimeOnly12(now);
+
+    const items = cart.map(it=>{
       const pr = findProduct(it.id);
       return {
         id: String(it.id),
         sku: String(it.id),
         name: pr?.name ? String(pr.name).trim() : "اسم المنتج",
-        category: pr?.category ? String(pr.category).trim() : "",
-        availability: pr?.availability ? String(pr.availability).trim() : "",
-        qty: Number(it.qty) || 1,
+        qty: Number(it.qty)||1,
         price: Number(pr?.price || 0)
       };
     });
 
     return {
+      action: "createOrder",
       orderId,
-      orderType: type,
       name,
       phone,
       address,
-      items,
-      createdAt: new Date().toISOString()
+      orderType: type,
+      createdDate: dateOnly,
+      createdTime: timeOnly,
+      items
     };
   }
-
   function saveProductsCache(list){
     localStorage.setItem(PROD_CACHE_KEY, JSON.stringify(list));
     localStorage.setItem(PROD_CACHE_TS, String(Date.now()));
@@ -1029,13 +1119,16 @@
       products = [];
       renderCart();
       if(getCart().length){
-        cartBox.insertAdjacentHTML("afterbegin", `<div class="empty" style="margin-bottom:10px">جارٍ تحميل بيانات المنتجات...</div>`);
+        cartBox.insertAdjacentHTML(
+          "afterbegin",
+          `<div class="empty" style="margin-bottom:10px">جارٍ تحميل بيانات المنتجات...</div>`
+        );
       }
     }
 
     const cacheFresh = hasCache && (now - cached.ts) < CACHE_TTL_MS;
 
-    const doFetch = async () => {
+    const doFetch = async ()=>{
       try{
         const freshList = await fetchProductsFromApi();
         products = freshList;
@@ -1044,7 +1137,7 @@
       }catch(err){
         console.error(err);
         if(!hasCache && getCart().length){
-          note.textContent = "⚠️ ملاحظة: لم يتم تحميل بيانات المنتجات من الشيت الآن. يمكنك إتمام الطلب، لكن بعض أسماء/حالات الأصناف قد لا تكون محدثة.";
+          note.textContent = "⚠️ ملاحظة: لم يتم تحميل بيانات المنتجات من الشيت الآن. يمكنك إتمام الطلب، لكن بعض أسماء أو حالات الأصناف قد لا تكون محدثة.";
         }else{
           showToast("تعذر تحديث بيانات الكتالوج، يتم عرض النسخة المخزنة إن وُجدت.");
         }
@@ -1063,9 +1156,30 @@
     renderCart();
     ok.style.display = "none";
     sessionStorage.removeItem("BS_ORDER_ID");
-    sessionStorage.removeItem("BS_LAST_ORDER");
     refreshOrderIdUI();
     showToast("تم تفريغ السلة");
+  }
+
+  async function submitOrderToSystem(payload){
+    const res = await fetch(API_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "text/plain;charset=utf-8",
+        "Accept": "application/json"
+      },
+      body: JSON.stringify(payload)
+    });
+
+    if(!res.ok){
+      throw new Error("HTTP " + res.status);
+    }
+
+    const data = await res.json();
+    if(!data || !data.ok){
+      throw new Error(data?.error || "تعذر إتمام الطلب.");
+    }
+
+    return data;
   }
 
   async function sendOrderFlow(btnRef){
@@ -1077,34 +1191,48 @@
 
     const oldText = btnRef.textContent;
     btnRef.disabled = true;
-    btnRef.textContent = "جارٍ الإتمام...";
+    btnRef.textContent = "جارٍ إتمام الطلب...";
 
-    const payload = buildOrderPayload();
+    if(sendBtnDesktop && sendBtnDesktop !== btnRef){
+      sendBtnDesktop.disabled = true;
+    }
+    if(sendBtnMobile && sendBtnMobile !== btnRef){
+      sendBtnMobile.disabled = true;
+    }
 
     try{
-      sessionStorage.setItem("BS_LAST_ORDER", JSON.stringify(payload));
+      const payload = buildOrderPayload();
+      const data = await submitOrderToSystem(payload);
 
       ok.style.display = "block";
       ok.textContent =
-        (getType() === "جملة")
-        ? "✅ تم تسجيل طلب الجملة بنجاح. سيتم تحويلك الآن إلى صفحة التأكيد."
-        : "✅ تم تسجيل الطلب بنجاح. سيتم تحويلك الآن إلى صفحة التأكيد.";
+        getType() === "جملة"
+          ? "✅ تم تسجيل طلب الجملة بنجاح، وسيتم تحويلك الآن لصفحة التأكيد."
+          : "✅ تم تسجيل الطلب بنجاح، وسيتم تحويلك الآن لصفحة التأكيد.";
+
+      try{
+        sessionStorage.setItem("BS_LAST_ORDER_ID", String(data.order_id || payload.orderId || ""));
+        sessionStorage.setItem("BS_LAST_CUSTOMER_NAME", String(payload.name || ""));
+      }catch(e){}
 
       setCart([]);
       renderCart();
       sessionStorage.removeItem("BS_ORDER_ID");
+      refreshOrderIdUI();
 
       setTimeout(()=>{
-        btnRef.disabled = false;
-        btnRef.textContent = oldText;
-        window.location.href = "thanks.html";
+        window.location.href = THANKS_URL;
       }, 900);
 
     }catch(e){
       console.error(e);
+      showToast("فشل إتمام الطلب: " + (e?.message || e));
+
       btnRef.disabled = false;
       btnRef.textContent = oldText;
-      showToast("حدث خطأ أثناء إتمام الطلب.");
+
+      if(sendBtnDesktop) sendBtnDesktop.disabled = false;
+      if(sendBtnMobile) sendBtnMobile.disabled = false;
     }
   }
 
