@@ -14,10 +14,13 @@
       --stroke:rgba(15,23,42,.10);
       --shadow: 0 18px 50px rgba(2,6,23,.12);
       --radius:18px;
+
       --gold:#b08d57;
       --gold2:#d7b97a;
+
       --primary:#0b3a7a;
       --primary2:#124da3;
+
       --container-max:1100px;
     }
     *{box-sizing:border-box}
@@ -35,25 +38,32 @@
       display:flex;
       flex-direction:column;
     }
+
     .wrap{max-width:var(--container-max);margin:0 auto;width:100%;flex:1}
+
     .topbar{
       display:flex;align-items:center;justify-content:space-between;gap:12px;
       padding:12px 14px;border:1px solid var(--stroke);
       border-radius:18px;background:rgba(255,255,255,.86);
       box-shadow:var(--shadow);backdrop-filter:blur(10px);
-      flex-wrap:wrap;margin-bottom:16px;
+      flex-wrap:wrap;
+      margin-bottom:16px;
     }
     .brand{display:flex; align-items:center; gap:12px; min-width:220px;}
     .logo{
-      width:44px;height:44px;border-radius:999px;display:grid;place-items:center;
+      width:44px;height:44px;border-radius:999px;
+      display:grid;place-items:center;
       background: linear-gradient(135deg, rgba(176,141,87,.22), rgba(215,185,122,.18));
       border:1px solid rgba(176,141,87,.35);
       box-shadow: 0 10px 24px rgba(2,6,23,.10);
-      overflow:hidden;padding:6px;flex:0 0 auto;
+      overflow:hidden;
+      padding:6px;
+      flex:0 0 auto;
     }
     .logo img{width:100%;height:100%;object-fit:contain;display:block}
     .brandTitle{font-weight:900}
     .brandSub{font-size:12px;color:var(--muted);margin-top:2px}
+
     .card{
       background:rgba(255,255,255,.92);
       border:1px solid var(--stroke);
@@ -62,69 +72,167 @@
       padding:16px;
       margin-bottom:16px;
     }
+
     h2{margin:0 0 10px;font-weight:900}
     label{font-size:12px;color:var(--muted)}
     input, textarea{
-      width:100%;padding:10px;border-radius:12px;border:1px solid rgba(15,23,42,.14);
-      background:#fff;color:var(--text);outline:none;
+      width:100%;
+      padding:10px;
+      border-radius:12px;
+      border:1px solid rgba(15,23,42,.14);
+      background:#fff;
+      color:var(--text);
+      outline:none;
     }
     input::placeholder, textarea::placeholder{color:#94a3b8}
     #invNo, #invDate, #invTime{ font-weight:900; }
     #orderId{ font-weight:900; }
+
     .row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
     .row2{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
     .row1{display:grid;grid-template-columns:1fr;gap:10px}
-    @media (max-width:920px){ .row{grid-template-columns:repeat(2,1fr);} .row2{grid-template-columns:repeat(1,1fr);} }
-    @media (max-width:520px){ .row{grid-template-columns:repeat(1,1fr);} input, textarea{ font-size:16px; } }
+
+    @media (max-width:920px){
+      .row{grid-template-columns:repeat(2,1fr);}
+      .row2{grid-template-columns:repeat(1,1fr);}
+    }
+    @media (max-width:520px){
+      .row{grid-template-columns:repeat(1,1fr);}
+      input, textarea{ font-size:16px; }
+    }
+
     .table-wrap{overflow:auto;margin-top:10px;border-radius:12px}
-    table{width:100%;border-collapse:collapse;font-size:13px;min-width:980px;background:#fff;border-radius:12px;overflow:hidden;}
-    th, td{border:1px solid rgba(15,23,42,.10);padding:8px;text-align:center;vertical-align:middle;}
-    th{background: linear-gradient(180deg, rgba(176,141,87,.10), rgba(215,185,122,.06));font-weight:900;}
+    table{
+      width:100%;
+      border-collapse:collapse;
+      font-size:13px;
+      min-width:980px;
+      background:#fff;
+      border-radius:12px;
+      overflow:hidden;
+    }
+    th, td{
+      border:1px solid rgba(15,23,42,.10);
+      padding:8px;
+      text-align:center;
+      vertical-align:middle;
+    }
+    th{
+      background: linear-gradient(180deg, rgba(176,141,87,.10), rgba(215,185,122,.06));
+      font-weight:900;
+    }
+
     .btn{
-      padding:12px;border-radius:14px;border:1px solid rgba(176,141,87,.35);
+      padding:12px;
+      border-radius:14px;
+      border:1px solid rgba(176,141,87,.35);
       background:linear-gradient(135deg, rgba(176,141,87,.18), rgba(215,185,122,.14));
-      color:var(--text);font-weight:900;cursor:pointer;
+      color:var(--text);
+      font-weight:900;
+      cursor:pointer;
     }
     .btn:hover{filter:brightness(1.02)}
-    .btn.secondary{border-color: rgba(15,23,42,.14);background:#fff;opacity:.95;}
+    .btn.secondary{
+      border-color: rgba(15,23,42,.14);
+      background:#fff;
+      opacity:.95;
+    }
+
     .prod-cell{display:flex;gap:8px;align-items:center;justify-content:flex-start;flex-wrap:nowrap;}
     .skuInput{width:140px;min-width:120px;text-align:center;font-weight:900;}
     .nameInput{flex:1;min-width:280px;}
-    .thumbMini{width:44px;height:44px;border-radius:12px;border:1px solid rgba(15,23,42,.12);object-fit:cover;background:#fff;flex:0 0 auto;}
-    .delBtn{padding:10px 12px;border-radius:12px;border:1px solid rgba(15,23,42,.14);background:#fff;color:var(--text);cursor:pointer;font-weight:900;}
+    .thumbMini{
+      width:44px;height:44px;border-radius:12px;
+      border:1px solid rgba(15,23,42,.12);
+      object-fit:cover;background:#fff;
+      flex:0 0 auto;
+    }
+    .delBtn{
+      padding:10px 12px;border-radius:12px;
+      border:1px solid rgba(15,23,42,.14);
+      background:#fff;color:var(--text);
+      cursor:pointer;font-weight:900;
+    }
+
     .totalBox{ margin-top:10px; width:100%; }
-    .totalLine{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border:1px solid rgba(15,23,42,.10);border-radius:12px;background:#fff;margin-top:8px;font-weight:900;}
+    .totalLine{
+      display:flex;align-items:center;justify-content:space-between;gap:10px;
+      padding:10px 12px;border:1px solid rgba(15,23,42,.10);
+      border-radius:12px;background:#fff;margin-top:8px;font-weight:900;
+    }
     .totalLine .k{color:var(--muted);font-weight:800}
-    .totalLine.primary{border-color: rgba(176,141,87,.35);background: linear-gradient(135deg, rgba(176,141,87,.10), rgba(215,185,122,.08));}
-    .amount-words{margin-top:10px;font-weight:900;color:var(--muted);border-top:1px dashed rgba(15,23,42,.14);padding-top:10px;}
-    .noteBox{margin-top:10px;padding-top:10px;border-top:1px dashed rgba(15,23,42,.14);font-weight:900;color:#334155;}
-    .extraBox{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:10px;}
-    @media (max-width:920px){ .extraBox{grid-template-columns:1fr;} }
+    .totalLine.primary{
+      border-color: rgba(176,141,87,.35);
+      background: linear-gradient(135deg, rgba(176,141,87,.10), rgba(215,185,122,.08));
+    }
+
+    .amount-words{
+      margin-top:10px;font-weight:900;color:var(--muted);
+      border-top:1px dashed rgba(15,23,42,.14);
+      padding-top:10px;
+    }
+    .noteBox{
+      margin-top:10px;
+      padding-top:10px;
+      border-top:1px dashed rgba(15,23,42,.14);
+      font-weight:900;
+      color:#334155;
+    }
+
+    .extraBox{
+      display:grid;
+      grid-template-columns:1fr 1fr 1fr;
+      gap:10px;
+      margin-top:10px;
+    }
+    @media (max-width:920px){
+      .extraBox{grid-template-columns:1fr;}
+    }
+
     #loginBox{
-      position:fixed; inset:0;background:rgba(2,6,23,.55);
-      display:flex; align-items:center; justify-content:center;z-index:999;padding:14px;backdrop-filter: blur(10px);
+      position:fixed; inset:0;
+      background:rgba(2,6,23,.55);
+      display:flex; align-items:center; justify-content:center;
+      z-index:999;
+      padding:14px;
+      backdrop-filter: blur(10px);
     }
     #loginBox .card{max-width:520px;width:min(92vw,520px)}
     .loginTitle{display:flex;align-items:center;gap:12px;margin-bottom:12px}
     .loginMainTitle{font-weight:1000;font-size:22px;color: var(--gold);letter-spacing:.2px;}
+
     .site-footer{
-      margin-top:auto;padding:16px 16px 22px;text-align:center;color:var(--muted);
-      border-top:1px solid rgba(15,23,42,.10);background: rgba(255,255,255,.75);backdrop-filter: blur(10px);
+      margin-top:auto;
+      padding:16px 16px 22px;
+      text-align:center;
+      color:var(--muted);
+      border-top:1px solid rgba(15,23,42,.10);
+      background: rgba(255,255,255,.75);
+      backdrop-filter: blur(10px);
     }
     .site-footer .line1{ font-weight:900; color:#334155; }
     .site-footer .line2{ margin-top:6px; font-weight:800; }
+
     @media (max-width: 820px){
-      .table-wrap{ overflow:visible; } table{ min-width:0; }
+      .table-wrap{ overflow:visible; }
+      table{ min-width:0; }
       table, thead, tbody, th, td, tr{ display:block; width:100%; }
       thead{ display:none; }
       tbody tr{
-        border:1px solid rgba(15,23,42,.12);background:#fff;border-radius:16px;
-        padding:10px;margin-bottom:10px;box-shadow: 0 10px 28px rgba(2,6,23,.06);
+        border:1px solid rgba(15,23,42,.12);
+        background: #fff;
+        border-radius: 16px;
+        padding:10px;
+        margin-bottom:10px;
+        box-shadow: 0 10px 28px rgba(2,6,23,.06);
       }
       tbody td{ border:none; padding:8px 0; text-align:right; }
       tbody td + td{ border-top:1px dashed rgba(15,23,42,.12); }
       tbody td[data-label]::before{
-        content: attr(data-label);display:block;font-size:12px;color: var(--muted);font-weight:900;margin-bottom:6px;
+        content: attr(data-label);
+        display:block;
+        font-size:12px;color: var(--muted);
+        font-weight:900;margin-bottom:6px;
       }
       .prod-cell{ flex-wrap:wrap; }
       .nameInput{ min-width: 100%; }
@@ -147,8 +255,10 @@
         <div style="font-weight:900;font-size:12px;color:#334155;margin-top:4px">B.S Medical &amp; Aesthetic</div>
       </div>
     </div>
+
     <label for="passInput">رمز الدخول</label>
     <input type="password" id="passInput" placeholder="••••••••" aria-label="رمز الدخول"/>
+
     <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
       <button id="loginBtn" class="btn" style="flex:1">دخول</button>
     </div>
@@ -166,6 +276,7 @@
         <div class="brandSub" id="brandSub">إدارة وإنشاء فواتير</div>
       </div>
     </div>
+
     <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
       <div id="sessionTimer" style="font-weight:900;color:var(--muted);white-space:nowrap">⏳ متبقي: --</div>
       <button class="btn secondary" id="logoutTopBtn" style="white-space:nowrap">🚪 تسجيل خروج</button>
@@ -246,10 +357,9 @@
         <tbody></tbody>
       </table>
     </div>
+
     <div style="display:flex;gap:12px;margin-top:12px;align-items:center;flex-wrap:wrap">
       <button class="btn" id="addRowBtn">+ إضافة صنف</button>
-      <button class="btn secondary" id="newInvoiceBtn" type="button">🧹 فاتورة جديدة</button>
-      <button class="btn secondary" id="reloadProductsBtn" type="button">🔄 تحديث الأصناف</button>
     </div>
 
     <div class="extraBox">
@@ -277,10 +387,12 @@
       <button class="btn" id="thermal80Btn">🧾 طباعة حراري 80mm</button>
       <button class="btn" id="thermal58Btn">🧾 طباعة حراري 58mm</button>
     </div>
+
     <div style="margin-top:10px;display:flex;gap:10px;flex-wrap:wrap" id="a4Row">
       <button class="btn" id="printA4Btn" style="flex:1">🖨️ طباعة A4</button>
       <button class="btn" id="savePdfA4Btn" style="flex:1">📄 حفظ PDF لـ A4</button>
     </div>
+
     <div style="margin-top:10px;display:none" id="quoteRow">
       <button class="btn" id="saveQuotePdfBtn" style="width:100%">📄 حفظ PDF (عرض سعر)</button>
     </div>
@@ -308,34 +420,6 @@ const CACHE_TTL_MS   = 60 * 1000;
 let PRODUCTS = [];
 let ROW_ID = 0;
 let CURRENT_ORDER = null;
-
-async function apiFetchJson(pathOrQuery = "", options = {}){
-  const urls = Array.from(new Set(API_URLS.filter(Boolean)));
-  let lastErr = null;
-
-  for(const base of urls){
-    try{
-      const sep = pathOrQuery && String(pathOrQuery).startsWith("?") ? "" : "";
-      const url = `${base}${pathOrQuery || ""}`;
-      const res = await fetch(url, { cache: "no-store", ...options });
-      if(!res.ok) throw new Error("HTTP " + res.status);
-      const data = await res.json();
-      return { data, usedUrl: base };
-    }catch(err){
-      lastErr = err;
-      console.warn("API fallback failed:", base, err);
-    }
-  }
-  throw lastErr || new Error("تعذر الاتصال بالـ API");
-}
-
-function clearProductCache_(){
-  try{
-    localStorage.removeItem(PROD_CACHE_KEY);
-    localStorage.removeItem(PROD_CACHE_TS);
-  }catch(e){}
-}
-
 
 function isQuoteMode(){ try{ return new URLSearchParams(location.search).get("quote") === "1"; } catch(e){ return false; } }
 function applyModeUI(){
@@ -427,15 +511,11 @@ function stopIdleGuard(){
   idleLeftMs = IDLE_MINUTES * 60000;
   renderSessionTimer();
 }
-function bumpIdle(){
-  if(sessionStorage.getItem("BS_ADMIN_OK") === "1") startIdleGuard();
-}
+function bumpIdle(){ if(sessionStorage.getItem("BS_ADMIN_OK") === "1") startIdleGuard(); }
 ["click","keydown","mousemove","touchstart","scroll"].forEach(ev=>{
   window.addEventListener(ev, ()=> bumpIdle(), {passive:true});
 });
-document.addEventListener("visibilitychange", ()=>{
-  if(document.visibilityState === "visible") bumpIdle();
-});
+document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState === "visible") bumpIdle(); });
 
 const loginBox  = document.getElementById('loginBox');
 const loginBtn  = document.getElementById('loginBtn');
@@ -471,8 +551,7 @@ function checkPass(){
     if(isLocked()) alert(lockRemainingText());
     else{
       const left = Math.max(0, MAX_FAILS - tries);
-      alert(`رمز الدخول غير صحيح
-المتبقي قبل القفل: ${left}`);
+      alert(`رمز الدخول غير صحيح\nالمتبقي قبل القفل: ${left}`);
     }
   }
 }
@@ -512,7 +591,9 @@ function loadProductsFromCache(){
   }catch(e){ return null; }
 }
 async function fetchProductsFromApi(){
-  const { data } = await apiFetchJson("");
+  const res = await fetch(API_URL,{cache:"no-store"});
+  if(!res.ok) throw new Error("HTTP " + res.status);
+  const data = await res.json();
   return Array.isArray(data) ? data : [];
 }
 async function loadProductsSmart(){
@@ -520,10 +601,8 @@ async function loadProductsSmart(){
   const now = Date.now();
   const hasCache = cached && cached.list && cached.list.length;
   const cacheFresh = hasCache && (now - cached.ts) < CACHE_TTL_MS;
-
   PRODUCTS = hasCache ? cached.list : [];
   buildDataLists();
-
   const doFetch = async ()=>{
     try{
       const fresh = await fetchProductsFromApi();
@@ -531,31 +610,17 @@ async function loadProductsSmart(){
       saveProductsCache(fresh);
       buildDataLists();
       syncRowsWithProducts();
-    }catch(e){
-      console.warn("فشل تحميل الكتالوج", e);
-    }
+    }catch(e){ console.warn("فشل تحميل الكتالوج", e); }
   };
-
-  if(cacheFresh) setTimeout(doFetch, 400);
-  else await doFetch();
+  if(cacheFresh) setTimeout(doFetch, 400); else await doFetch();
 }
 function buildDataLists(){
   let dlSku = document.getElementById("skuList");
-  if(!dlSku){
-    dlSku = document.createElement("datalist");
-    dlSku.id = "skuList";
-    document.body.appendChild(dlSku);
-  }
+  if(!dlSku){ dlSku = document.createElement("datalist"); dlSku.id = "skuList"; document.body.appendChild(dlSku); }
   dlSku.innerHTML = "";
-
   let dlName = document.getElementById("nameList");
-  if(!dlName){
-    dlName = document.createElement("datalist");
-    dlName.id = "nameList";
-    document.body.appendChild(dlName);
-  }
+  if(!dlName){ dlName = document.createElement("datalist"); dlName.id = "nameList"; document.body.appendChild(dlName); }
   dlName.innerHTML = "";
-
   PRODUCTS.forEach(p=>{
     const id = String(p.id || "").trim();
     const name = String(p.name || "").trim();
@@ -615,11 +680,7 @@ function addRow(silentFocus=false){
   calcRowByTr(tr);
   return tr;
 }
-function removeRowByTr(tr){
-  tr?.remove();
-  refreshRowNumbers();
-  calcGrand();
-}
+function removeRowByTr(tr){ tr?.remove(); refreshRowNumbers(); calcGrand(); }
 const itemsTbody = document.querySelector("#itemsTable tbody");
 itemsTbody.addEventListener("click", (ev)=>{
   const btn = ev.target.closest("[data-act='remove']");
@@ -639,9 +700,7 @@ itemsTbody.addEventListener("input", (ev)=>{
       tr.querySelector('[data-field="name"]').value = String(p.name||"").trim();
       tr.querySelector('[data-field="price"]').value = Number(p.price||0);
     }
-    syncRowThumb(tr);
-    calcRowByTr(tr);
-    return;
+    syncRowThumb(tr); calcRowByTr(tr); return;
   }
   if(field === "name"){
     const p2 = findByName(el.value);
@@ -649,9 +708,7 @@ itemsTbody.addEventListener("input", (ev)=>{
       tr.querySelector('[data-field="sku"]').value = String(p2.id||"").trim();
       tr.querySelector('[data-field="price"]').value = Number(p2.price||0);
     }
-    syncRowThumb(tr);
-    calcRowByTr(tr);
-    return;
+    syncRowThumb(tr); calcRowByTr(tr); return;
   }
 });
 function syncRowThumb(tr){
@@ -668,7 +725,6 @@ function syncRowsWithProducts(){
     const nameEl = tr.querySelector('[data-field="name"]');
     const sku = String(skuEl?.value||"").trim();
     const name = String(nameEl?.value||"").trim();
-
     if(sku && (!name || name === "—")){
       const p = findBySku(sku);
       if(p){
@@ -741,31 +797,26 @@ function extractOrderIdSmart(text){
   const t = String(text || "");
   let m = t.match(/(?:رقم\s*(?:الطلب|الاوردَر|الاوردر|الأوردر)|طلب\s*رقم|order\s*(?:id|no|number))\s*(?:[:：#]?\s*)([A-Za-z0-9-_]{3,})/i);
   if(m && m[1]) return m[1].trim();
-  const lines = t.split(/
-?
-/);
+  const lines = t.split(/\r?\n/);
   for(const line of lines){
     if(/طلب|order/i.test(line)){
       const hit = line.match(/([0-9]{4,})/);
       if(hit) return hit[1];
     }
   }
-  const fallback = t.match(/([0-9]{5,})/);
+  const fallback = t.match(/\b([0-9]{5,})\b/);
   if(fallback) return fallback[1];
   return "";
 }
 function extractCustomerData(fullText){
   const t = String(fullText || "");
-  const nameMatch = t.match(/(?:^|
-)\s*الاسم\s*[:：]\s*(.+)\s*(?:
-|$)/i);
+  const nameMatch = t.match(/(?:^|\n)\s*الاسم\s*[:：]\s*(.+)\s*(?:\n|$)/i);
   const name = nameMatch ? nameMatch[1].trim() : "";
   let phone = "";
   const phoneMatch = t.match(/(?:📞|الهاتف\s*[:：]?)\s*([+]?[\d\s-]{8,})/);
   if(phoneMatch) phone = phoneMatch[1].trim();
   let address = "";
-  const addrMatch = t.match(/(?:📍|العنوان\s*[:：]?)\s*(.+)\s*(?:
-|$)/);
+  const addrMatch = t.match(/(?:📍|العنوان\s*[:：]?)\s*(.+)\s*(?:\n|$)/);
   if(addrMatch) address = addrMatch[1].trim();
   const orderId = extractOrderIdSmart(t);
   return { name, phone, address, orderId };
@@ -773,9 +824,7 @@ function extractCustomerData(fullText){
 function parseWhatsAppLines(fullText){
   const text = String(fullText || "").trim();
   if(!text) return [];
-  const lines = text.split(/
-?
-/).map(l=>l.trim()).filter(Boolean);
+  const lines = text.split(/\r?\n/).map(l=>l.trim()).filter(Boolean);
   const out = [];
   for(const line of lines){
     if(/^\s*الاسم\s*[:：]/i.test(line)) continue;
@@ -784,15 +833,12 @@ function parseWhatsAppLines(fullText){
     if(line.includes("التاريخ") || line.includes("الوقت")) continue;
     const qtyMatch = line.match(/الكمية\s*[:：]\s*(\d+)/i);
     const qty = qtyMatch ? Number(qtyMatch[1]) : 0;
-    const skuMatch = line.match(/([A-Z]{2,}\d{1,})/i);
+    const skuMatch = line.match(/\b([A-Z]{2,}\d{1,})\b/i);
     const sku = skuMatch ? skuMatch[1].toUpperCase() : "";
     let name = "";
     const pipeParts = line.split("|").map(s=>s.trim()).filter(Boolean);
-    if(pipeParts.length >= 2){
-      name = (pipeParts[1] || "").replace(/^•\s*/,"").trim();
-    }else if(sku){
-      name = line.replace(sku, "").replace(/^•\s*/,"").trim();
-    }
+    if(pipeParts.length >= 2){ name = (pipeParts[1] || "").replace(/^•\s*/,"").trim(); }
+    else if(sku){ name = line.replace(sku, "").replace(/^•\s*/,"").trim(); }
     if(sku || name){ out.push({ sku, name, qty: qty || 0 }); }
   }
   return out;
@@ -830,16 +876,13 @@ function renderOrderStatusInfo_(order){
 }
 async function fetchOrderFromSystem(){
   const orderId = String(document.getElementById("orderId")?.value || "").trim();
-  if(!orderId){
-    alert("اكتب رقم الطلب أولاً.");
-    return;
-  }
-
+  if(!orderId){ alert("اكتب رقم الطلب أولاً."); return; }
   try{
-    const { data } = await apiFetchJson(`?action=getOrder&orderId=${encodeURIComponent(orderId)}`);
-    if(!data || !data.ok || !data.order){
-      throw new Error(data?.error || "تعذر جلب الطلب.");
-    }
+    const url = `${API_URL}?action=getOrder&orderId=${encodeURIComponent(orderId)}`;
+    const res = await fetch(url, { cache: "no-store" });
+    if(!res.ok) throw new Error("HTTP " + res.status);
+    const data = await res.json();
+    if(!data || !data.ok || !data.order){ throw new Error(data?.error || "تعذر جلب الطلب."); }
     fillInvoiceFromOrder_(data.order);
     alert("تم جلب الطلب بنجاح.");
   }catch(e){
@@ -888,22 +931,19 @@ function collectReturnItemsFromTable_(){
     return { sku, name, qty, price, soldQty };
   }).filter(x=>x.sku);
 }
-
 async function fullReturnInvoiceFromSystem(){
   const orderId = String(document.getElementById("orderId")?.value || "").trim();
   if(!orderId){ alert("اكتب رقم الطلب أولاً."); return; }
   if(!CURRENT_ORDER){ alert("اجلب الطلب من النظام أولاً."); return; }
   const ok = confirm("سيتم إرجاع الفاتورة بالكامل وإضافة كل الكميات مرة أخرى إلى المخزون. هل تريد المتابعة؟");
   if(!ok) return;
-
   const btn = document.getElementById("fullReturnBtn");
   const oldText = btn ? btn.textContent : "";
   try{
     if(btn){ btn.disabled = true; btn.textContent = "جاري الإرجاع..."; }
-    const { data } = await apiFetchJson("", {
-      method: "POST",
-      body: JSON.stringify({ action: "returnInvoice", orderId })
-    });
+    const res = await fetch(API_URL, { method: "POST", body: JSON.stringify({ action: "returnInvoice", orderId }) });
+    if(!res.ok) throw new Error("HTTP " + res.status);
+    const data = await res.json();
     if(!data || !data.ok) throw new Error(data?.error || "تعذر تنفيذ المرتجع الكامل.");
     alert(data.already_returned ? "الفاتورة مرتجعة بالكامل بالفعل." : "تم تنفيذ المرتجع الكامل بنجاح.");
     await fetchOrderFromSystem();
@@ -918,36 +958,28 @@ async function partialReturnInvoiceFromSystem(){
   const orderId = String(document.getElementById("orderId")?.value || "").trim();
   if(!orderId){ alert("اكتب رقم الطلب أولاً."); return; }
   if(!CURRENT_ORDER){ alert("اجلب الطلب من النظام أولاً."); return; }
-
   const items = collectReturnItemsFromTable_().filter(x=>x.qty > 0);
   if(!items.length){
     document.getElementById("returnHint").style.display = "block";
     alert("في المرتجع الجزئي عدّل كميات الأصناف في الجدول إلى الكميات المطلوب إرجاعها ثم اضغط الزر مرة أخرى.");
     return;
   }
-
   for(const item of items){
     if(item.qty > item.soldQty){
       alert(`كمية المرتجع للصنف ${item.sku} أكبر من الكمية المباعة في الفاتورة.`);
       return;
     }
   }
-
-  const lines = items.map(x=>`${x.sku} | ${x.name} | qty: ${x.qty}`).join("
-");
-  const ok = confirm("سيتم تنفيذ مرتجع جزئي لهذه الأصناف:
-
-" + lines);
+  const lines = items.map(x=>`${x.sku} | ${x.name} | qty: ${x.qty}`).join("\n");
+  const ok = confirm("سيتم تنفيذ مرتجع جزئي لهذه الأصناف:\n\n" + lines);
   if(!ok) return;
-
   const btn = document.getElementById("partialReturnBtn");
   const oldText = btn ? btn.textContent : "";
   try{
     if(btn){ btn.disabled = true; btn.textContent = "جاري المرتجع..."; }
-    const { data } = await apiFetchJson("", {
-      method: "POST",
-      body: JSON.stringify({ action: "returnInvoicePartial", orderId, items })
-    });
+    const res = await fetch(API_URL, { method: "POST", body: JSON.stringify({ action: "returnInvoicePartial", orderId, items }) });
+    if(!res.ok) throw new Error("HTTP " + res.status);
+    const data = await res.json();
     if(!data || !data.ok) throw new Error(data?.error || "تعذر تنفيذ المرتجع الجزئي.");
     alert("تم تنفيذ المرتجع الجزئي بنجاح.");
     await fetchOrderFromSystem();
@@ -960,31 +992,19 @@ async function partialReturnInvoiceFromSystem(){
 }
 async function confirmInvoiceFromSystem(){
   const orderId = String(document.getElementById("orderId")?.value || "").trim();
-  if(!orderId){
-    alert("اكتب رقم الطلب أولاً.");
-    return;
-  }
-  if(isQuoteMode()){
-    alert("وضع الكوتيشن لا يدعم تأكيد الفاتورة.");
-    return;
-  }
+  if(!orderId){ alert("اكتب رقم الطلب أولاً."); return; }
+  if(isQuoteMode()){ alert("وضع الكوتيشن لا يدعم تأكيد الفاتورة."); return; }
   const ok = confirm("سيتم خصم الكميات من المخزون وتأكيد الفاتورة لهذا الطلب. هل تريد المتابعة؟");
   if(!ok) return;
-
   const btn = document.getElementById("confirmInvoiceBtn");
   const oldText = btn ? btn.textContent : "";
   try{
     if(btn){ btn.disabled = true; btn.textContent = "جاري التأكيد..."; }
-    const { data } = await apiFetchJson("", {
-      method: "POST",
-      body: JSON.stringify({ action: "confirmInvoice", orderId: orderId })
-    });
-    if(!data || !data.ok){
-      throw new Error(data?.error || "تعذر تأكيد الفاتورة.");
-    }
-    const msg = data.already_confirmed
-      ? "الفاتورة مؤكدة بالفعل من قبل."
-      : "تم تأكيد الفاتورة وخصم المخزون بنجاح.";
+    const res = await fetch(API_URL, { method: "POST", body: JSON.stringify({ action: "confirmInvoice", orderId: orderId }) });
+    if(!res.ok) throw new Error("HTTP " + res.status);
+    const data = await res.json();
+    if(!data || !data.ok){ throw new Error(data?.error || "تعذر تأكيد الفاتورة."); }
+    const msg = data.already_confirmed ? "الفاتورة مؤكدة بالفعل من قبل." : "تم تأكيد الفاتورة وخصم المخزون بنجاح.";
     alert(msg);
     await fetchOrderFromSystem();
   }catch(e){
@@ -1005,7 +1025,6 @@ function importFromWhatsApp(){
   if(cust.phone) document.getElementById("custPhone").value = cust.phone;
   if(cust.address) document.getElementById("custAddress").value = cust.address;
   if(cust.orderId) document.getElementById("orderId").value = cust.orderId;
-
   const items = parseWhatsAppLines(raw);
   if(items.length){
     const tbody = document.querySelector("#itemsTable tbody");
@@ -1047,7 +1066,6 @@ function getInvoiceData(){
   const deliveryFee = Math.max(0, money(document.getElementById("deliveryFee")?.value));
   const globalDiscountIn = Math.max(0, money(document.getElementById("globalDiscount")?.value));
   const note = String(document.getElementById("invoiceNote")?.value || "").trim();
-
   const rows = Array.from(document.querySelectorAll("#itemsTable tbody tr"));
   const items = rows.map((tr, idx)=>{
     const sku = (tr.querySelector('[data-field="sku"]')?.value || "").trim();
@@ -1061,7 +1079,6 @@ function getInvoiceData(){
     const skuName = (sku && name) ? `${sku} | ${name}` : (sku || name);
     return { idx: idx + 1, sku, name, skuName, qty, price, disc, sub, subRaw };
   }).filter(i => i.skuName || i.qty || i.price || i.disc);
-
   const totalBefore = items.reduce((s,i)=> s + money(i.subRaw), 0);
   const rowDiscountSum = items.reduce((s,i)=> s + money(i.disc), 0);
   const afterRowDiscount = Math.max(0, totalBefore - rowDiscountSum);
@@ -1069,7 +1086,6 @@ function getInvoiceData(){
   const afterAllDiscount = Math.max(0, afterRowDiscount - globalDiscount);
   const finalTotal = afterAllDiscount + deliveryFee;
   const words = numberToArabicWords(Math.round(finalTotal));
-
   return {
     invNo, invDate, invTime, orderId,
     custName, custPhone, custAddress,
@@ -1117,13 +1133,128 @@ function numberToArabicWords(number){
   return `${parts.join(" و ")} جنيه مصري فقط لا غير`;
 }
 
+function buildA4Html(d, mode){
+  const isQuote = (mode==="quote");
+  const docTitle = isQuote ? "عرض سعر" : "فاتورة";
+  const deliveryText = (Number(d.deliveryFee||0) > 0) ? `${Number(d.deliveryFee).toFixed(2)} جنيه` : "توصيل مجاني";
+  const noteHtml = d.note ? `<div class="note">${escapeHtml(d.note)}</div>` : "";
+  const itemsHtml = d.items.length ? d.items.map(it => `
+    <tr>
+      <td>${it.idx}</td>
+      <td>${escapeHtml(it.skuName)}</td>
+      <td>${Number(it.qty||0)}</td>
+      <td>${Number(it.price||0).toFixed(2)}</td>
+      <td>${Number(it.disc||0).toFixed(2)}</td>
+      <td>${Number(it.sub||0).toFixed(2)}</td>
+    </tr>
+  `).join("") : `<tr><td colspan="6" style="padding:18px;text-align:center;color:#64748b">لا توجد أصناف</td></tr>`;
+
+  return `<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${docTitle} ${escapeHtml(d.invNo)}</title><style>
+  :root{ --text:#0f172a; --muted:#64748b; --stroke: rgba(15,23,42,.10); }
+  @page { size: A4; margin: 10mm; }
+  body{font-family: Arial, Helvetica, sans-serif;color:var(--text);direction:rtl;margin:0;background:#fff;}
+  .sheet{max-width:900px;margin:0 auto;}.card{background:#fff;border-radius:12px;padding:18px;margin-bottom:14px;border:1px solid var(--stroke);}
+  .header{display:flex;justify-content:space-between;align-items:center;gap:12px;}.brand{display:flex;align-items:center;gap:12px}.brand img{width:64px;height:64px;object-fit:contain}
+  h1{margin:0;font-weight:900}.meta{font-size:14px;color:var(--muted); line-height:1.7}.meta strong{color:#0f172a}
+  table{width:100%;border-collapse:collapse;margin-top:12px;font-size:14px} th,td{border:1px solid var(--stroke);padding:8px;text-align:center} th{background:#f7f7fb;}
+  .totals{margin-top:12px;display:flex;flex-direction:column;gap:8px}.tline{display:flex;justify-content:space-between;gap:10px;border:1px solid var(--stroke);border-radius:10px;padding:10px 12px;background:#fff;font-weight:900}.tline span:first-child{color:#64748b;font-weight:900}.tline.primary{background:#f7f7fb;}
+  .amountWords{margin-top:10px;font-weight:900;color:#334155}.note{margin-top:10px;border-top:1px dashed var(--stroke);padding-top:10px;font-weight:900;color:#334155}
+  .custGrid{display:grid;grid-template-columns:1fr;gap:10px;margin-top:8px}.custLine{border:1px dashed var(--stroke);border-radius:10px;padding:10px 12px}
+  .qrWrap{margin-top:12px;display:flex;flex-direction:column;align-items:center;gap:8px}.qrWrap img{width:120px;height:120px;object-fit:contain;border:1px solid var(--stroke);border-radius:10px;padding:6px}.qrText{font-size:12px;color:#334155;font-weight:900}
+  .footer{margin-top:10px;text-align:center;color:#64748b;font-size:12px;line-height:1.6}
+  </style></head><body><div class="sheet">
+  <div class="card header"><div class="brand"><img src="images/bslogo.webp" onerror="this.style.display='none'"><div><h1>B.S Medical &amp; Aesthetic</h1><div class="meta">${docTitle}: <strong>${escapeHtml(d.invNo)}</strong></div><div class="meta">Order ID: <strong>${escapeHtml(d.orderId || "—")}</strong></div></div></div><div class="meta" style="text-align:left"><div>التاريخ: <strong>${escapeHtml(d.invDate)}</strong></div><div>الوقت: <strong>${escapeHtml(d.invTime)}</strong></div></div></div>
+  <div class="card"><h3 style="margin:0 0 8px;font-weight:900;">بيانات العميل</h3><div class="custGrid"><div class="custLine"><strong>الاسم:</strong> ${escapeHtml(d.custName)}</div><div class="custLine"><strong>الهاتف:</strong> ${escapeHtml(d.custPhone)}</div><div class="custLine"><strong>العنوان:</strong> ${escapeHtml(d.custAddress)}</div></div></div>
+  <div class="card"><h3 style="margin:0 0 8px;font-weight:900;">الأصناف</h3><table><thead><tr><th>#</th><th>SKU / المنتج</th><th>الكمية</th><th>السعر</th><th>خصم</th><th>الإجمالي</th></tr></thead><tbody>${itemsHtml}</tbody></table>
+    <div class="totals"><div class="tline"><span>الإجمالي قبل الخصم</span><span>${Number(d.totalBefore||0).toFixed(2)} جنيه</span></div><div class="tline"><span>الخصم</span><span>${Number(d.rowDiscountSum||0).toFixed(2)} جنيه</span></div><div class="tline"><span>خصم خاص</span><span>${Number(d.globalDiscount||0).toFixed(2)} جنيه</span></div><div class="tline"><span>الإجمالي قبل خدمة التوصيل</span><span>${Number(d.afterAllDiscount||0).toFixed(2)} جنيه</span></div><div class="tline"><span>خدمة التوصيل</span><span>${deliveryText}</span></div><div class="tline primary"><span>الإجمالي</span><span>${Number(d.finalTotal||0).toFixed(2)} جنيه</span></div></div>
+    <div class="amountWords">${escapeHtml(d.words)}</div>${noteHtml}<div class="qrWrap"><img src="${QR_SRC_MAIN}" onerror="this.onerror=null;this.src='${QR_SRC_FALLBACK}'" alt="QR"><div class="qrText">امسح الـ QR للتواصل / روابط Axentro</div></div><div class="footer">Axentro – All Rights Reserved 2024 ©<br>By Ahmed Hamouda</div></div>
+  </div></body></html>`;
+}
+function exportA4(){
+  const d = getInvoiceData();
+  openPrintWindow(buildA4Html(d, isQuoteMode() ? "quote" : "invoice"), `${isQuoteMode() ? "عرض سعر" : "فاتورة"} ${d.invNo}`);
+}
+function buildThermalHtml(mm, d, mode){
+  const widthMm = (mm === 58) ? 58 : 80;
+  const isQuote = (mode==="quote");
+  const titleText = isQuote ? "عرض سعر" : "فاتورة";
+  const items = d.items.length ? d.items.map(it=>{
+    const name = (it.name || it.skuName || it.sku || "").trim();
+    const qty  = Number(it.qty || 0);
+    const price = Number(it.price || 0);
+    const disc  = Number(it.disc || 0);
+    const sub   = Number(it.sub || 0);
+    const left  = `Qty: ${qty} × ${price.toFixed(2)}`;
+    const right = (disc > 0.00001) ? `Disc: ${disc.toFixed(2)}` : "";
+    return `<div class="item"><div class="itemName">${it.idx}) ${escapeHtml(name)}</div><div class="itemMeta"><span class="l">${left}</span>${right ? `<span class="r">${right}</span>` : `<span class="r"></span>`}</div><div class="itemTotal"><span>Total</span><span>${sub.toFixed(2)}</span></div></div><div class="sep"></div>`;
+  }).join("") : `<div class="m" style="text-align:center;margin:10px 0">لا توجد أصناف</div>`;
+  const noteBlock = d.note ? `<div class="sep"></div><div class="m">${escapeHtml(d.note)}</div>` : "";
+  return `<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${titleText} ${escapeHtml(d.invNo)}</title><style>
+  @page { size: ${widthMm}mm auto; margin: 3mm; } body{margin:0;font-family: Arial, Tahoma, sans-serif;color:#000;direction:rtl;background:#fff;}
+  .paper{ width:${widthMm}mm; margin:0 auto; padding:0; }.center{text-align:center}.b{font-weight:900;font-size:13px;line-height:1.45}.m{font-weight:700;font-size:11px;line-height:1.55}.sep{border-top:1px dashed #000;margin:8px 0}
+  .totRow{display:flex;justify-content:space-between;gap:8px;font-weight:900;font-size:12px}.totMain{font-size:14px}.qr{display:flex;flex-direction:column;align-items:center;gap:6px;margin-top:8px}.qr img{width:${widthMm===58? 90:110}px;height:${widthMm===58? 90:110}px;object-fit:contain}
+  .foot{margin-top:8px;font-size:10px;color:#000;text-align:center;line-height:1.5}.logo{width:${widthMm===58? 46:56}px;height:${widthMm===58? 46:56}px;object-fit:contain;display:block;margin:0 auto 6px}
+  .item{padding:6px 0}.itemName{font-weight:900;font-size:12px;line-height:1.5}.itemMeta{display:flex;justify-content:space-between;gap:8px;font-weight:700;font-size:11px;line-height:1.6;margin-top:2px}.itemMeta .l,.itemMeta .r{direction:ltr;text-align:left;unicode-bidi:embed}.itemTotal{display:flex;justify-content:space-between;gap:8px;margin-top:2px;font-weight:900;font-size:12px;direction:ltr;text-align:left;unicode-bidi:embed} *{break-inside: avoid; page-break-inside: avoid;} html,body{height:auto}
+  </style></head><body><div class="paper"><div class="center"><img class="logo" src="images/bslogo.webp" onerror="this.style.display='none'"><div class="b">B.S Medical &amp; Aesthetic</div><div class="m">${titleText}: <strong>${escapeHtml(d.invNo)}</strong></div><div class="m">Order ID: <strong>${escapeHtml(d.orderId || "—")}</strong></div></div><div class="sep"></div><div class="m">تاريخ: <strong>${escapeHtml(d.invDate)}</strong></div><div class="m">وقت: <strong>${escapeHtml(d.invTime)}</strong></div><div class="sep"></div><div class="b">بيانات العميل</div><div class="m">الاسم: ${escapeHtml(d.custName)}</div><div class="m">الهاتف: ${escapeHtml(d.custPhone)}</div><div class="m">العنوان: ${escapeHtml(d.custAddress)}</div><div class="sep"></div><div class="b">الأصناف</div><div class="sep"></div>${items}<div class="sep"></div><div class="totRow"><span>قبل الخصم</span><span>${Number(d.totalBefore||0).toFixed(2)}</span></div><div class="totRow"><span>الخصم</span><span>${Number(d.rowDiscountSum||0).toFixed(2)}</span></div><div class="totRow"><span>خصم خاص</span><span>${Number(d.globalDiscount||0).toFixed(2)}</span></div><div class="totRow"><span>قبل التوصيل</span><span>${Number(d.afterAllDiscount||0).toFixed(2)}</span></div><div class="totRow"><span>التوصيل</span><span>${Number(d.deliveryFee||0) > 0 ? Number(d.deliveryFee).toFixed(2) : "مجاني"}</span></div><div class="totRow totMain"><span>الإجمالي</span><span>${Number(d.finalTotal||0).toFixed(2)}</span></div><div class="sep"></div><div class="m">${escapeHtml(d.words)}</div>${noteBlock}<div class="qr"><img src="${QR_SRC_MAIN}" onerror="this.onerror=null;this.src='${QR_SRC_FALLBACK}'" alt="QR"><div class="m">امسح الـ QR للتواصل / روابط Axentro</div></div><div class="foot">Axentro – All Rights Reserved 2024 ©<br>By Ahmed Hamouda</div></div></body></html>`;
+}
+function printThermal(mm){
+  const d = getInvoiceData();
+  openPrintWindow(buildThermalHtml(mm, d, isQuoteMode() ? "quote" : "invoice"), `${isQuoteMode() ? "عرض سعر" : "فاتورة"} ${d.invNo}`);
+}
+async function toDataURL(url){
+  try{
+    const abs = new URL(url, location.href).toString();
+    const res = await fetch(abs, { cache: "no-store" });
+    if(!res.ok) throw new Error("HTTP " + res.status);
+    const blob = await res.blob();
+    return await new Promise((resolve, reject)=>{
+      const r = new FileReader();
+      r.onload = ()=> resolve(r.result);
+      r.onerror = reject;
+      r.readAsDataURL(blob);
+    });
+  }catch(e){ return null; }
+}
+async function inlineAllImages(root){
+  const imgs = Array.from(root.querySelectorAll("img"));
+  for(const img of imgs){
+    const src = img.getAttribute("src") || "";
+    if(!src || src.startsWith("data:")) continue;
+    let dataUrl = await toDataURL(src);
+    if(!dataUrl && (src.includes(QR_SRC_MAIN) || src === QR_SRC_MAIN)){
+      dataUrl = await toDataURL(QR_SRC_FALLBACK);
+    }
+    if(dataUrl) img.setAttribute("src", dataUrl);
+  }
+}
+function buildA4FragmentForPdf(d, mode){
+  const full = buildA4Html(d, mode);
+  const style = (full.match(/<style>([\s\S]*?)<\/style>/i) || [,""])[1];
+  const body  = (full.match(/<body[^>]*>([\s\S]*?)<\/body>/i) || [,""])[1];
+  return `<div><style>${style}</style>${body}</div>`;
+}
+async function savePdfA4(mode){
+  const d = getInvoiceData();
+  const safeKey = (d.orderId || d.invNo || "BS").replace(/[^\w-]+/g,"_");
+  const filename = `${mode==="quote" ? "quotation" : "invoice"}_${safeKey}.pdf`;
+  const holder = document.createElement("div");
+  holder.style.position = "fixed";
+  holder.style.left = "-99999px";
+  holder.style.top = "0";
+  holder.style.width = "210mm";
+  holder.style.background = "#fff";
+  holder.style.zIndex = "-1";
+  holder.innerHTML = buildA4FragmentForPdf(d, mode);
+  document.body.appendChild(holder);
+  await new Promise(r=> setTimeout(r, 150));
+  await inlineAllImages(holder);
+  const opt = { margin: 10, filename, image: { type: "jpeg", quality: 0.98 }, html2canvas: { scale: 2, useCORS: true, allowTaint: true, backgroundColor: "#ffffff" }, jsPDF: { unit: "mm", format: "a4", orientation: "portrait" } };
+  try{ await html2pdf().set(opt).from(holder).save(); }
+  catch(e){ console.error(e); alert("فشل حفظ PDF"); }
+  finally{ holder.remove(); }
+}
+
 document.getElementById('addRowBtn')?.addEventListener('click', ()=> addRow(false));
-document.getElementById('newInvoiceBtn')?.addEventListener('click', ()=> newInvoiceReset_());
-document.getElementById('reloadProductsBtn')?.addEventListener('click', async ()=>{
-  clearProductCache_();
-  await loadProductsSmart();
-  alert("تم تحديث قائمة الأصناف.");
-});
 document.getElementById("deliveryFee")?.addEventListener("input", calcGrand);
 document.getElementById("globalDiscount")?.addEventListener("input", calcGrand);
 document.getElementById("invoiceNote")?.addEventListener("input", calcGrand);
