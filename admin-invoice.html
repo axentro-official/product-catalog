@@ -21,10 +21,6 @@
       --gold3:#efe7d8;
 
       --danger:#991b1b;
-      --danger-bg:#fff5f5;
-      --success:#166534;
-      --success-bg:#f0fdf4;
-
       --container-max:1180px;
     }
 
@@ -162,7 +158,7 @@
       background:#fff;
       color:var(--text);
       outline:none;
-      transition:border-color .15s ease, box-shadow .15s ease, transform .15s ease;
+      transition:border-color .15s ease, box-shadow .15s ease;
     }
 
     input:focus, textarea:focus{
@@ -171,10 +167,7 @@
     }
 
     input::placeholder, textarea::placeholder{color:#94a3b8}
-
-    #invNo, #invDate, #invTime, #orderId{
-      font-weight:1000;
-    }
+    #invNo, #invDate, #invTime, #orderId{ font-weight:1000; }
 
     .row{
       display:grid;
@@ -260,6 +253,10 @@
       font-size:15px;
       line-height:1;
       opacity:.95;
+    }
+
+    #sessionTimer{
+      display:none !important;
     }
 
     .statusBar{
@@ -559,6 +556,9 @@
       margin-top:12px;
       display:flex;
       justify-content:center;
+      flex-direction:column;
+      align-items:center;
+      gap:8px;
     }
 
     .site-footer .line3 .qrLink{
@@ -569,15 +569,9 @@
     }
 
     @media (max-width:1024px){
-      .actionsGrid{
-        grid-template-columns:repeat(2,1fr);
-      }
-      .row{
-        grid-template-columns:repeat(2,1fr);
-      }
-      .extraBox{
-        grid-template-columns:1fr;
-      }
+      .actionsGrid{grid-template-columns:repeat(2,1fr);}
+      .row{grid-template-columns:repeat(2,1fr);}
+      .extraBox{grid-template-columns:1fr;}
     }
 
     @media (max-width:720px){
@@ -586,12 +580,8 @@
         padding:12px;
         border-radius:18px;
       }
-      .brandTitle{
-        font-size:16px;
-      }
-      .loginMainTitle{
-        font-size:20px;
-      }
+      .brandTitle{font-size:16px;}
+      .loginMainTitle{font-size:20px;}
     }
 
     @media (max-width:560px){
@@ -642,12 +632,8 @@
         font-weight:1000;
       }
       .delBtn{width:100%}
-      .loginTitle{
-        align-items:flex-start;
-      }
-      .loginHead{
-        align-items:flex-start;
-      }
+      .loginTitle{align-items:flex-start}
+      .loginHead{align-items:flex-start}
     }
   </style>
 </head>
@@ -686,11 +672,11 @@
           By Ahmed Hamouda
         </div>
 
-        <a class="qrLink" href="images/qr-links.png" target="_blank" rel="noopener noreferrer" aria-label="QR code">
+        <a class="qrLink" href="https://axentro-official.github.io/axentro-website/links.html" target="_blank" rel="noopener noreferrer" aria-label="Scan me">
           <img src="images/qr-links.png" alt="QR Links" onerror="this.style.display='none'">
         </a>
 
-        <div class="qrCaption">اضغط على QR لفتحه</div>
+        <div class="qrCaption">Scan me</div>
       </div>
     </div>
   </div>
@@ -709,10 +695,10 @@
     </div>
 
     <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-      <div id="sessionTimer" class="softBadge">⏳ متبقي: --</div>
+      <div id="sessionTimer">⏳ متبقي: --</div>
       <button class="btn logout" id="logoutTopBtn" type="button">
-        <span class="ico">⟵</span>
-        <span>إنهاء الجلسة</span>
+        <span class="ico">🔒</span>
+        <span>تسجيل خروج</span>
       </button>
     </div>
   </div>
@@ -870,9 +856,10 @@
   <div class="line1">Axentro – All Rights Reserved 2024 ©</div>
   <div class="line2">By Ahmed Hamouda</div>
   <div class="line3">
-    <a class="qrLink" href="images/qr-links.png" target="_blank" rel="noopener noreferrer" aria-label="QR code footer">
+    <a class="qrLink" href="https://axentro-official.github.io/axentro-website/links.html" target="_blank" rel="noopener noreferrer" aria-label="Scan me footer">
       <img src="images/qr-links.png" alt="QR Links Footer" onerror="this.style.display='none'">
     </a>
+    <div class="qrCaption">Scan me</div>
   </div>
 </footer>
 
@@ -888,6 +875,7 @@ const API_URL = API_URLS[0];
 const IMG_PLACEHOLDER = "https://via.placeholder.com/600x400?text=No+Image";
 const QR_SRC_MAIN = "images/qr-links.png";
 const QR_SRC_FALLBACK = "images/qr-links.png";
+const CONTACT_LINK_URL = "https://axentro-official.github.io/axentro-website/links.html";
 
 const PROD_CACHE_KEY = "AX_PRODUCTS_CACHE_V1";
 const PROD_CACHE_TS  = "AX_PRODUCTS_CACHE_TS_V1";
@@ -1297,8 +1285,7 @@ function resolveImageBySku(sku){
   if(!s) return IMG_PLACEHOLDER;
   return `images/${s}.webp`;
 }
-
-/* ================= TABLE ================= */
+  /* ================= TABLE ================= */
 function refreshRowNumbers(){
   const rows = Array.from(document.querySelectorAll("#itemsTable tbody tr"));
   rows.forEach((tr, i)=>{
@@ -1635,7 +1622,8 @@ function fillInvoiceFromOrder_(payload){
   refreshRowNumbers();
   calcGrand();
 }
-  async function confirmInvoiceFromSystem(){
+
+async function confirmInvoiceFromSystem(){
   const orderId = String(document.getElementById("orderId")?.value || "").trim();
   if(!orderId){
     alert("اكتب رقم الطلب أولاً.");
@@ -1936,7 +1924,7 @@ function buildA4Html(d, mode){
   <div class="card"><h3 style="margin:0 0 8px;font-weight:900;">بيانات العميل</h3><div class="custGrid"><div class="custLine"><strong>الاسم:</strong> ${escapeHtml(d.custName)}</div><div class="custLine"><strong>الهاتف:</strong> ${escapeHtml(d.custPhone)}</div><div class="custLine"><strong>العنوان:</strong> ${escapeHtml(d.custAddress)}</div></div></div>
   <div class="card"><h3 style="margin:0 0 8px;font-weight:900;">الأصناف</h3><table><thead><tr><th>#</th><th>SKU / المنتج</th><th>الكمية</th><th>السعر</th><th>خصم</th><th>الإجمالي</th></tr></thead><tbody>${itemsHtml}</tbody></table>
     <div class="totals"><div class="tline"><span>الإجمالي قبل الخصم</span><span>${Number(d.totalBefore||0).toFixed(2)} جنيه</span></div><div class="tline"><span>الخصم</span><span>${Number(d.rowDiscountSum||0).toFixed(2)} جنيه</span></div><div class="tline"><span>خصم خاص</span><span>${Number(d.globalDiscount||0).toFixed(2)} جنيه</span></div><div class="tline"><span>الإجمالي قبل خدمة التوصيل</span><span>${Number(d.afterAllDiscount||0).toFixed(2)} جنيه</span></div><div class="tline"><span>خدمة التوصيل</span><span>${deliveryText}</span></div><div class="tline primary"><span>الإجمالي</span><span>${Number(d.finalTotal||0).toFixed(2)} جنيه</span></div></div>
-    <div class="amountWords">${escapeHtml(d.words)}</div>${noteHtml}<div class="qrWrap"><img src="${QR_SRC_MAIN}" onerror="this.onerror=null;this.src='${QR_SRC_FALLBACK}'" alt="QR"><div class="qrText">امسح الـ QR للتواصل / روابط Axentro</div></div><div class="footer">Axentro – All Rights Reserved 2024 ©<br>By Ahmed Hamouda</div></div>
+    <div class="amountWords">${escapeHtml(d.words)}</div>${noteHtml}<div class="qrWrap"><img src="${QR_SRC_MAIN}" onerror="this.onerror=null;this.src='${QR_SRC_FALLBACK}'" alt="QR"><div class="qrText">Scan me</div></div><div class="footer">Axentro – All Rights Reserved 2024 ©<br>By Ahmed Hamouda</div></div>
 </div></body></html>`;
 }
 
@@ -1969,7 +1957,7 @@ function buildThermalHtml(mm, d, mode){
   .logo{width:${widthMm===58? 46:56}px;height:${widthMm===58? 46:56}px;object-fit:contain;display:block;margin:0 auto 6px}
   .item{padding:6px 0}.itemName{font-weight:900;font-size:12px;line-height:1.5}.itemMeta{display:flex;justify-content:space-between;gap:8px;font-weight:700;font-size:11px;line-height:1.6;margin-top:2px}.itemMeta .l,.itemMeta .r{direction:ltr;text-align:left;unicode-bidi:embed}
   .itemTotal{display:flex;justify-content:space-between;gap:8px;margin-top:2px;font-weight:900;font-size:12px;direction:ltr;text-align:left;unicode-bidi:embed}*{break-inside: avoid; page-break-inside: avoid;}html,body{height:auto}
-</style></head><body><div class="paper"><div class="center"><img class="logo" src="images/bslogo.webp" onerror="this.style.display='none'"><div class="b">B.S Medical &amp; Aesthetic</div><div class="m">${titleText}: <strong>${escapeHtml(d.invNo)}</strong></div><div class="m">Order ID: <strong>${escapeHtml(d.orderId || "—")}</strong></div></div><div class="sep"></div><div class="m">تاريخ: <strong>${escapeHtml(d.invDate)}</strong></div><div class="m">وقت: <strong>${escapeHtml(d.invTime)}</strong></div><div class="sep"></div><div class="b">بيانات العميل</div><div class="m">الاسم: ${escapeHtml(d.custName)}</div><div class="m">الهاتف: ${escapeHtml(d.custPhone)}</div><div class="m">العنوان: ${escapeHtml(d.custAddress)}</div><div class="sep"></div><div class="b">الأصناف</div><div class="sep"></div>${items}<div class="sep"></div><div class="totRow"><span>قبل الخصم</span><span>${Number(d.totalBefore||0).toFixed(2)}</span></div><div class="totRow"><span>الخصم</span><span>${Number(d.rowDiscountSum||0).toFixed(2)}</span></div><div class="totRow"><span>خصم خاص</span><span>${Number(d.globalDiscount||0).toFixed(2)}</span></div><div class="totRow"><span>قبل التوصيل</span><span>${Number(d.afterAllDiscount||0).toFixed(2)}</span></div><div class="totRow"><span>التوصيل</span><span>${Number(d.deliveryFee||0) > 0 ? Number(d.deliveryFee).toFixed(2) : "مجاني"}</span></div><div class="totRow totMain"><span>الإجمالي</span><span>${Number(d.finalTotal||0).toFixed(2)}</span></div><div class="sep"></div><div class="m">${escapeHtml(d.words)}</div>${noteBlock}<div class="qr"><img src="${QR_SRC_MAIN}" onerror="this.onerror=null;this.src='${QR_SRC_FALLBACK}'" alt="QR"><div class="m">امسح الـ QR للتواصل / روابط Axentro</div></div><div class="foot">Axentro – All Rights Reserved 2024 ©<br>By Ahmed Hamouda</div></div></body></html>`;
+</style></head><body><div class="paper"><div class="center"><img class="logo" src="images/bslogo.webp" onerror="this.style.display='none'"><div class="b">B.S Medical &amp; Aesthetic</div><div class="m">${titleText}: <strong>${escapeHtml(d.invNo)}</strong></div><div class="m">Order ID: <strong>${escapeHtml(d.orderId || "—")}</strong></div></div><div class="sep"></div><div class="m">تاريخ: <strong>${escapeHtml(d.invDate)}</strong></div><div class="m">وقت: <strong>${escapeHtml(d.invTime)}</strong></div><div class="sep"></div><div class="b">بيانات العميل</div><div class="m">الاسم: ${escapeHtml(d.custName)}</div><div class="m">الهاتف: ${escapeHtml(d.custPhone)}</div><div class="m">العنوان: ${escapeHtml(d.custAddress)}</div><div class="sep"></div><div class="b">الأصناف</div><div class="sep"></div>${items}<div class="sep"></div><div class="totRow"><span>قبل الخصم</span><span>${Number(d.totalBefore||0).toFixed(2)}</span></div><div class="totRow"><span>الخصم</span><span>${Number(d.rowDiscountSum||0).toFixed(2)}</span></div><div class="totRow"><span>خصم خاص</span><span>${Number(d.globalDiscount||0).toFixed(2)}</span></div><div class="totRow"><span>قبل التوصيل</span><span>${Number(d.afterAllDiscount||0).toFixed(2)}</span></div><div class="totRow"><span>التوصيل</span><span>${Number(d.deliveryFee||0) > 0 ? Number(d.deliveryFee).toFixed(2) : "مجاني"}</span></div><div class="totRow totMain"><span>الإجمالي</span><span>${Number(d.finalTotal||0).toFixed(2)}</span></div><div class="sep"></div><div class="m">${escapeHtml(d.words)}</div>${noteBlock}<div class="qr"><img src="${QR_SRC_MAIN}" onerror="this.onerror=null;this.src='${QR_SRC_FALLBACK}'" alt="QR"><div class="m">Scan me</div></div><div class="foot">Axentro – All Rights Reserved 2024 ©<br>By Ahmed Hamouda</div></div></body></html>`;
 }
 
 async function toDataURL(url){
