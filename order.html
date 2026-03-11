@@ -666,10 +666,14 @@
     }
 
     @media (max-width:720px){
-      body{ padding-bottom: calc(12px + var(--bar-h) + var(--safe-b)); }
-      .actionBar{ display:block; }
-      .btns{ display:none; }
-    }
+  body{ padding-bottom: calc(12px + var(--bar-h) + var(--safe-b)); }
+  .actionBar{ display:block; }
+  .btns{ display:none; }
+}
+
+@media (min-width:721px){
+  body{ padding-bottom:0; }
+        }
 
     :focus{
       outline:3px solid rgba(212,175,55,.25);
