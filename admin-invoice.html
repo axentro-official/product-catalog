@@ -1033,17 +1033,29 @@ function buildInvoicePayloadFromUI_(){
 async function fetchOrderFromSystem(){
   const orderId = String(document.getElementById("orderId")?.value || "").trim();
   if(!orderId){ alert("اكتب رقم الطلب أولاً."); return; }
+
   const btn = document.getElementById("fetchOrderBtn");
   const oldText = btn ? btn.textContent : "";
+
   try{
     if(btn){ btn.disabled = true; btn.textContent = "جاري الجلب..."; }
+
     const data = await apiGetJson_({ action: "getOrder", orderId });
-    if(!data || !data.ok || !data.order){ throw new Error(data?.error || "تعذر جلب الطلب."); }
+    if(!data || !data.ok || !data.order){
+      throw new Error(data?.error || "تعذر جلب الطلب.");
+    }
+
+    CURRENT_ORDER = data.order || null;
     CURRENT_ORDER_STATE = data.order || null;
     CURRENT_INVOICE_STATE = data.invoice || null;
     CURRENT_INVOICE_ID = data?.invoice?.invoice_id ? String(data.invoice.invoice_id) : "";
+
     fillInvoiceFromOrder_(data.invoice || data.order, !!data.invoice);
-    if(CURRENT_INVOICE_ID) document.getElementById("invNo").value = CURRENT_INVOICE_ID;
+
+    if(CURRENT_INVOICE_ID){
+      document.getElementById("invNo").value = CURRENT_INVOICE_ID;
+    }
+
     renderOrderStatusInfo_(CURRENT_ORDER_STATE, CURRENT_INVOICE_STATE);
     document.getElementById("returnHint").style.display = "none";
     alert("تم جلب الطلب بنجاح.");
@@ -1155,27 +1167,22 @@ async function partialReturnInvoiceFromSystem(){
     return;
   }
 
-  const items = collectReturnItemsFromTable_().filter(x => x.qty > 0);
+  function collectReturnItemsFromTable_(){
+  const rows = Array.from(document.querySelectorAll("#itemsTable tbody tr"));
+  return rows.map(tr=>{
+    const sku = String(tr.querySelector('[data-field="sku"]')?.value || "").trim();
+    const name = String(tr.querySelector('[data-field="name"]')?.value || "").trim();
+    const qty = Math.max(0, Math.floor(money(tr.querySelector('[data-field="qty"]')?.value || 0)));
+    const soldQty = Math.max(0, Math.floor(qty));
+    return { sku, name, qty, soldQty };
+  }).filter(x => x.sku);
+}
 
-  if(!items.length){
-    document.getElementById("returnHint").style.display = "block";
-    alert("في المرتجع الجزئي عدّل كميات الأصناف في الجدول إلى الكميات المطلوب إرجاعها ثم اضغط الزر مرة أخرى.");
-    return;
-  }
+ const lines = items
+  .map(x => `${x.sku} | ${x.name} | qty: ${x.qty}`)
+  .join("\n");
 
-  for(const item of items){
-    if(item.qty > item.soldQty){
-      alert(`كمية المرتجع للصنف ${item.sku} أكبر من الكمية المباعة في الفاتورة.`);
-      return;
-    }
-  }
-
-  const lines = items
-    .map(x => `${x.sku} | ${x.name} | qty: ${x.qty}`)
-    .join("\\n");
-
-  const ok = confirm("سيتم تنفيذ مرتجع جزئي لهذه الأصناف:\\n\\n" + lines);
-  if(!ok) return;
+const ok = confirm("سيتم تنفيذ مرتجع جزئي لهذه الأصناف:\n\n" + lines);
 
   const btn = document.getElementById("partialReturnBtn");
   const oldText = btn ? btn.textContent : "";
@@ -1215,7 +1222,7 @@ async function partialReturnInvoiceFromSystem(){
     }
   }
 }
-function importFromWhatsApp()
+function importFromWhatsApp(){
   CURRENT_ORDER = null;
   CURRENT_ORDER_STATE = null;
   CURRENT_INVOICE_STATE = null;
