@@ -47,31 +47,45 @@
         radial-gradient(760px 520px at 90% 20%, rgba(15,23,42,.05), transparent 60%),
         linear-gradient(180deg, var(--bg), #f7f8fb);
       min-height:100vh;
-      -webkit-font-smoothing:antialiased;
       display:flex;
       flex-direction:column;
+      -webkit-font-smoothing:antialiased;
     }
 
     a{color:inherit;text-decoration:none}
     .wrap{max-width:var(--container-max);margin:0 auto; width:100%}
 
     .topbar{
-      position:sticky; top:0; z-index:30;
-      display:flex; gap:12px; align-items:center; justify-content:space-between;
+      position:sticky;
+      top:0;
+      z-index:30;
+      display:flex;
+      gap:12px;
+      align-items:center;
+      justify-content:space-between;
       padding:14px 16px;
       background: linear-gradient(180deg, rgba(255,255,255,.92), rgba(255,255,255,.70));
       border-bottom:1px solid var(--stroke);
       backdrop-filter: blur(10px);
     }
 
-    .brand{display:flex; align-items:center; gap:12px}
+    .brand{
+      display:flex;
+      align-items:center;
+      gap:12px;
+    }
 
     .logo{
-      width:44px; height:44px; border-radius:999px; display:grid; place-items:center;
+      width:44px;
+      height:44px;
+      border-radius:999px;
+      display:grid;
+      place-items:center;
       background: linear-gradient(135deg, rgba(212,175,55,.18), rgba(184,134,11,.12));
       border:1px solid rgba(212,175,55,.35);
       box-shadow: 0 10px 26px rgba(15,23,42,.10);
-      overflow:hidden; padding:6px;
+      overflow:hidden;
+      padding:6px;
       flex:0 0 auto;
     }
 
@@ -140,15 +154,20 @@
       flex:0 0 auto;
     }
 
-    main{ padding:18px; }
+    main{
+      padding:18px;
+      flex:1;
+    }
 
     @media (max-width:720px){
       main{ padding:12px; }
+
       .topbar{
         flex-direction:column;
         align-items:stretch;
         gap:10px;
       }
+
       .actions{ justify-content:stretch; }
       .back{ width:100%; }
     }
@@ -160,6 +179,12 @@
       border-radius:var(--radius);
       background: linear-gradient(180deg, rgba(255,255,255,.96), rgba(255,255,255,.90));
       box-shadow: var(--shadow);
+    }
+
+    .sectionTitle{
+      font-weight:1000;
+      font-size:18px;
+      margin-bottom:8px;
     }
 
     .invBar{
@@ -213,6 +238,18 @@
       color:#0f172a;
       font-weight:900;
       line-height:1.7;
+    }
+
+    .shippingNote{
+      margin-top:10px;
+      padding:12px;
+      border-radius:16px;
+      border:1px dashed rgba(212,175,55,.50);
+      background: rgba(255,255,255,.90);
+      color:#334155;
+      line-height:1.8;
+      font-weight:900;
+      font-size:13px;
     }
 
     .seg{
@@ -317,18 +354,26 @@
       border:1px solid var(--stroke);
       background: rgba(255,255,255,.92);
       border-radius:16px;
-      padding:10px;
+      padding:12px;
       display:flex;
-      gap:10px;
-      align-items:center;
+      gap:12px;
+      align-items:flex-start;
       justify-content:space-between;
       flex-wrap:wrap;
       box-shadow: 0 10px 22px rgba(15,23,42,.08);
     }
 
+    .itemMain{
+      display:flex;
+      align-items:flex-start;
+      gap:12px;
+      flex:1;
+      min-width:0;
+    }
+
     .thumb{
-      width:56px;
-      height:56px;
+      width:64px;
+      height:64px;
       border-radius:14px;
       border:1px solid var(--stroke);
       object-fit:cover;
@@ -336,11 +381,15 @@
       flex:0 0 auto;
     }
 
-    .iInfo{flex:1; min-width:0}
+    .iInfo{
+      flex:1;
+      min-width:0;
+    }
 
     .iName{
       font-weight:1000;
-      font-size:13px;
+      font-size:14px;
+      line-height:1.6;
       white-space:nowrap;
       overflow:hidden;
       text-overflow:ellipsis;
@@ -349,8 +398,36 @@
     .iMeta{
       font-size:11px;
       color:var(--muted);
-      margin-top:3px;
+      margin-top:4px;
       font-weight:900;
+      line-height:1.8;
+    }
+
+    .itemPricing{
+      margin-top:8px;
+      display:grid;
+      grid-template-columns:repeat(2, minmax(120px, 1fr));
+      gap:8px;
+    }
+
+    .priceBox{
+      border:1px solid var(--stroke);
+      border-radius:12px;
+      background: rgba(248,250,252,.85);
+      padding:8px 10px;
+    }
+
+    .priceLabel{
+      color:var(--muted);
+      font-size:11px;
+      font-weight:900;
+      margin-bottom:4px;
+    }
+
+    .priceValue{
+      font-size:13px;
+      font-weight:1000;
+      color:#0f172a;
     }
 
     .status{font-weight:1000}
@@ -358,6 +435,14 @@
     .st-low{color:var(--warn)}
     .st-out{color:var(--bad)}
     .st-unknown{color:#334155}
+
+    .itemActions{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+    }
 
     .qtyBox{
       display:flex;
@@ -404,6 +489,81 @@
       box-shadow:none;
       padding:0;
       flex:0 0 auto;
+    }
+
+    @media (max-width:720px){
+      .item{
+        align-items:stretch;
+      }
+
+      .itemActions{
+        width:100%;
+        justify-content:space-between;
+      }
+
+      .itemPricing{
+        grid-template-columns:1fr;
+      }
+    }
+
+    .totalsCard{
+      margin-top:12px;
+      border:1px solid var(--stroke);
+      border-radius:16px;
+      background: rgba(248,250,252,.82);
+      padding:12px;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.50);
+    }
+
+    .totalLine{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      padding:10px 0;
+      border-bottom:1px dashed rgba(15,23,42,.10);
+      font-weight:1000;
+    }
+
+    .totalLine:last-child{
+      border-bottom:none;
+      padding-bottom:0;
+    }
+
+    .totalLine .k{
+      color:var(--muted);
+      font-size:13px;
+    }
+
+    .totalLine .v{
+      color:#0f172a;
+      font-size:14px;
+      text-align:left;
+      direction:ltr;
+    }
+
+    .grandLine{
+      margin-top:6px;
+      padding-top:14px;
+      border-top:1px solid rgba(212,175,55,.30);
+    }
+
+    .grandLine .k,
+    .grandLine .v{
+      font-size:16px;
+      font-weight:1000;
+    }
+
+    .amountWords{
+      margin-top:12px;
+      padding:12px;
+      border-radius:14px;
+      border:1px solid rgba(212,175,55,.25);
+      background: linear-gradient(135deg, rgba(212,175,55,.12), rgba(255,255,255,.92));
+      color:#334155;
+      font-weight:1000;
+      line-height:1.9;
+      text-align:center;
     }
 
     .btns{
@@ -517,15 +677,15 @@
     }
 
     .site-footer{
-  margin-top:30px;
-  padding:18px 16px 120px;
-  text-align:center;
-  color:var(--muted);
-  border-top:1px solid var(--stroke);
-  background: rgba(255,255,255,.78);
-  backdrop-filter: blur(10px);
-  padding-bottom: calc(120px + env(safe-area-inset-bottom));
-}
+      margin-top:30px;
+      padding:18px 16px 120px;
+      text-align:center;
+      color:var(--muted);
+      border-top:1px solid var(--stroke);
+      background: rgba(255,255,255,.78);
+      backdrop-filter: blur(10px);
+      padding-bottom: calc(120px + env(safe-area-inset-bottom));
+    }
 
     .site-footer .line1{
       font-weight:1000;
@@ -604,7 +764,7 @@
   <main>
     <div class="wrap">
       <div class="card" aria-live="polite">
-        <div style="font-weight:1000">محتويات السلة</div>
+        <div class="sectionTitle">محتويات السلة</div>
 
         <div class="invBar" aria-label="معلومات الطلب">
           <div>
@@ -616,6 +776,25 @@
 
         <div id="cartBox" class="items"></div>
 
+        <div id="totalsWrap" class="totalsCard" style="display:none">
+          <div class="totalLine">
+            <span class="k">عدد الأصناف</span>
+            <span class="v" id="itemsCountView">0</span>
+          </div>
+          <div class="totalLine">
+            <span class="k">إجمالي الكميات</span>
+            <span class="v" id="qtyCountView">0</span>
+          </div>
+          <div class="totalLine grandLine">
+            <span class="k">الإجمالي الحالي</span>
+            <span class="v" id="grandTotalView">0.00 EGP</span>
+          </div>
+          <div class="amountWords" id="amountWordsView">صفر جنيه مصري فقط لا غير</div>
+          <div class="shippingNote">
+            رسوم الشحن لا تُضاف حاليًا إلى إجمالي الطلب المعروض، ويتم تحديدها بعد مراجعة الطلب وفقًا للمنطقة وعنوان التسليم.
+          </div>
+        </div>
+
         <div class="note" id="note" role="status"></div>
 
         <div style="margin-top:10px;font-weight:1000">نوع الطلب</div>
@@ -626,7 +805,7 @@
       </div>
 
       <div class="card">
-        <div style="font-weight:1000;margin-bottom:8px">بيانات العميل</div>
+        <div class="sectionTitle">بيانات العميل</div>
 
         <div class="row2">
           <div>
@@ -691,12 +870,17 @@
 <script>
   const API_URL  = "https://script.google.com/macros/s/AKfycbwA-TDjlHKaqeTneXqCYxDQqJFht8uuk2J1wVEx8K6UVdgHGGmTQxXhlekxrmF3erO-/exec";
   const LS_KEY   = "AX_CART_V1";
-
   const THANKS_URL = "./thanks.html";
 
   const cartBox  = document.getElementById("cartBox");
   const note     = document.getElementById("note");
   const ok       = document.getElementById("ok");
+
+  const totalsWrap      = document.getElementById("totalsWrap");
+  const itemsCountView  = document.getElementById("itemsCountView");
+  const qtyCountView    = document.getElementById("qtyCountView");
+  const grandTotalView  = document.getElementById("grandTotalView");
+  const amountWordsView = document.getElementById("amountWordsView");
 
   const sendBtnDesktop = document.getElementById("sendOrder");
   const sendBtnMobile  = document.getElementById("sendOrderMobile");
@@ -745,6 +929,73 @@
     if(av === "Out of stock") return "st-out";
     if(av === "Available") return "st-available";
     return "st-unknown";
+  }
+
+  function money(n){
+    const v = Number(n || 0);
+    return isFinite(v) ? v : 0;
+  }
+
+  function formatEGP(n){
+    return `${money(n).toFixed(2)} EGP`;
+  }
+
+  function numberToArabicWords(number){
+    number = Math.round(Number(number) || 0);
+
+    if(number === 0){
+      return "صفر جنيه مصري فقط لا غير";
+    }
+
+    const ones = ["","واحد","اثنان","ثلاثة","أربعة","خمسة","ستة","سبعة","ثمانية","تسعة","عشرة","أحد عشر","اثنا عشر","ثلاثة عشر","أربعة عشر","خمسة عشر","ستة عشر","سبعة عشر","ثمانية عشر","تسعة عشر"];
+    const tens = ["","عشرة","عشرون","ثلاثون","أربعون","خمسون","ستون","سبعون","ثمانون","تسعون"];
+    const hundreds = ["","مائة","مائتان","ثلاثمائة","أربعمائة","خمسمائة","ستمائة","سبعمائة","ثمانمائة","تسعمائة"];
+
+    function subThousand(n){
+      n = Number(n);
+      if(n === 0) return "";
+      let out = [];
+      const h = Math.floor(n / 100);
+      const r = n % 100;
+
+      if(h) out.push(hundreds[h]);
+
+      if(r){
+        if(r < 20){
+          out.push(ones[r]);
+        }else{
+          const t = Math.floor(r / 10);
+          const o = r % 10;
+          if(o) out.push(ones[o] + " و " + tens[t]);
+          else out.push(tens[t]);
+        }
+      }
+
+      return out.join(" و ");
+    }
+
+    let parts = [];
+    const million  = Math.floor(number / 1000000);
+    const thousand = Math.floor((number % 1000000) / 1000);
+    const rest     = number % 1000;
+
+    if(million){
+      if(million === 1) parts.push("مليون");
+      else if(million === 2) parts.push("مليونان");
+      else parts.push(subThousand(million) + " مليون");
+    }
+
+    if(thousand){
+      if(thousand === 1) parts.push("ألف");
+      else if(thousand === 2) parts.push("ألفان");
+      else parts.push(subThousand(thousand) + " ألف");
+    }
+
+    if(rest){
+      parts.push(subThousand(rest));
+    }
+
+    return `${parts.join(" و ")} جنيه مصري فقط لا غير`;
   }
 
   function getType(){
@@ -814,6 +1065,46 @@
     return products.find(x=>String(x.id)===String(pid)) || null;
   }
 
+  function getCartSummary(){
+    const cart = getCart();
+
+    let itemsCount = cart.length;
+    let qtyCount = 0;
+    let grandTotal = 0;
+
+    cart.forEach(it=>{
+      const p = findProduct(it.id);
+      const qty = Math.max(0, Number(it.qty) || 0);
+      const unitPrice = money(p?.price || 0);
+
+      qtyCount += qty;
+      grandTotal += qty * unitPrice;
+    });
+
+    return { itemsCount, qtyCount, grandTotal };
+  }
+
+  function renderTotals(){
+    const cart = getCart();
+
+    if(!cart.length){
+      totalsWrap.style.display = "none";
+      itemsCountView.textContent = "0";
+      qtyCountView.textContent = "0";
+      grandTotalView.textContent = "0.00 EGP";
+      amountWordsView.textContent = "صفر جنيه مصري فقط لا غير";
+      return;
+    }
+
+    const summary = getCartSummary();
+
+    totalsWrap.style.display = "block";
+    itemsCountView.textContent = String(summary.itemsCount);
+    qtyCountView.textContent = String(summary.qtyCount);
+    grandTotalView.textContent = formatEGP(summary.grandTotal);
+    amountWordsView.textContent = numberToArabicWords(summary.grandTotal);
+  }
+
   function updateSendButtonsState(){
     const hasItems = getCart().length > 0;
     const disabled = !hasItems;
@@ -828,6 +1119,7 @@
 
     if(cart.length === 0){
       cartBox.innerHTML = `<div class="empty">السلة فارغة. ارجع للكتالوج وأضف منتجات.</div>`;
+      renderTotals();
       updateSendButtonsState();
       return;
     }
@@ -839,32 +1131,50 @@
         id: it.id,
         name: "منتج غير متاح (تم تحديث الكتالوج)",
         category: "—",
-        availability: "Unknown"
+        availability: "Unknown",
+        price: 0
       };
+
+      const qty = Math.max(0, Number(it.qty) || 0);
+      const unitPrice = money(safe.price || 0);
+      const lineTotal = qty * unitPrice;
 
       const row = document.createElement("div");
       row.className = "item";
 
       row.innerHTML = `
-        <div style="display:flex;align-items:center;gap:12px;flex:1;min-width:0">
+        <div class="itemMain">
           <img class="thumb" loading="lazy" decoding="async"
             src="${resolveImageById(escapeAttr(safe.id))}"
             onerror="this.onerror=null;this.src='${IMG_PLACEHOLDER}'"
             alt="${escapeHtml(safe.name)}">
+
           <div class="iInfo">
             <div class="iName">${escapeHtml(safe.name)}</div>
+
             <div class="iMeta">
               ${escapeHtml(safe.category)} •
               <span class="status ${statusClass(safe.availability)}">${escapeHtml(safe.availability)}</span> •
               ${escapeHtml(safe.id)}
             </div>
+
+            <div class="itemPricing">
+              <div class="priceBox">
+                <div class="priceLabel">سعر الوحدة</div>
+                <div class="priceValue">${formatEGP(unitPrice)}</div>
+              </div>
+              <div class="priceBox">
+                <div class="priceLabel">إجمالي الصنف</div>
+                <div class="priceValue">${formatEGP(lineTotal)}</div>
+              </div>
+            </div>
           </div>
         </div>
 
-        <div style="display:flex;align-items:center;gap:12px;">
+        <div class="itemActions">
           <div class="qtyBox" aria-label="كمية المنتج">
             <button class="qBtn" data-act="minus" data-id="${escapeAttr(safe.id)}" aria-label="إنقاص">−</button>
-            <div class="qVal" aria-live="polite">${Number(it.qty)||1}</div>
+            <div class="qVal" aria-live="polite">${qty}</div>
             <button class="qBtn" data-act="plus" data-id="${escapeAttr(safe.id)}" aria-label="زيادة">+</button>
           </div>
           <button class="rmBtn" data-act="rm" data-id="${escapeAttr(safe.id)}" aria-label="حذف من السلة">حذف</button>
@@ -874,9 +1184,9 @@
       cartBox.appendChild(row);
     });
 
+    renderTotals();
     updateSendButtonsState();
   }
-
   cartBox.addEventListener("click", (ev)=>{
     const btn = ev.target.closest("[data-act]");
     if(!btn) return;
@@ -1061,14 +1371,22 @@
 
     const items = cart.map(it=>{
       const pr = findProduct(it.id);
+      const qty = Number(it.qty) || 1;
+      const unitPrice = money(pr?.price || 0);
+      const lineTotal = qty * unitPrice;
+
       return {
         id: String(it.id),
         sku: String(it.id),
         name: pr?.name ? String(pr.name).trim() : "اسم المنتج",
-        qty: Number(it.qty)||1,
-        price: Number(pr?.price || 0)
+        qty,
+        price: unitPrice,
+        unit_price: unitPrice,
+        line_total: lineTotal
       };
     });
+
+    const summary = getCartSummary();
 
     return {
       action: "createOrder",
@@ -1079,9 +1397,15 @@
       orderType: type,
       createdDate: dateOnly,
       createdTime: timeOnly,
+      subtotal: summary.grandTotal,
+      final_total: summary.grandTotal,
+      total_items: summary.itemsCount,
+      total_qty: summary.qtyCount,
+      shipping_note: "رسوم الشحن تُحدد بعد مراجعة الطلب وفقًا للمنطقة وعنوان التسليم.",
       items
     };
   }
+
   function saveProductsCache(list){
     localStorage.setItem(PROD_CACHE_KEY, JSON.stringify(list));
     localStorage.setItem(PROD_CACHE_TS, String(Date.now()));
@@ -1213,6 +1537,7 @@
       try{
         sessionStorage.setItem("BS_LAST_ORDER_ID", String(data.order_id || payload.orderId || ""));
         sessionStorage.setItem("BS_LAST_CUSTOMER_NAME", String(payload.name || ""));
+        sessionStorage.setItem("BS_LAST_ORDER_TOTAL", String(payload.final_total || 0));
       }catch(e){}
 
       setCart([]);
