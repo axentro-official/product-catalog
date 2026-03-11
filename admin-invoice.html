@@ -278,8 +278,12 @@
     </div>
 
     <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-      <div id="sessionTimer" style="font-weight:900;color:var(--muted);white-space:nowrap">⏳ متبقي: --</div>
-      <button class="btn secondary" id="logoutTopBtn" style="white-space:nowrap">🚪 تسجيل خروج</button>
+      <div id="sessionTimer" style="font-weight:900;color:var(--muted);white-space:nowrap">
+        ⏳ متبقي: --
+      </div>
+      <button class="btn secondary" id="logoutTopBtn" style="white-space:nowrap">
+        🚪 تسجيل خروج
+      </button>
     </div>
   </div>
 
@@ -294,6 +298,7 @@
 
   <div class="card">
     <h2 id="pageTitle">فاتورة  B.S</h2>
+
     <div class="row" role="region" aria-label="معلومات الفاتورة">
       <div>
         <label for="invNo">رقم الفاتورة</label>
@@ -312,12 +317,12 @@
         <input id="orderId" placeholder="مثال: BS-20260309-36124" />
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
           <button class="btn secondary" id="fetchOrderBtn" type="button" style="flex:1">🔎 جلب الطلب من النظام</button>
-          <button class="btn" id="confirmInvoiceBtn" type="button" style="flex:1">✅ تأكيد الفاتورة وخصم المخزون</button>
+          <button class="btn" id="confirmInvoiceBtn" type="button" style="flex:1">💾 حفظ / تأكيد الفاتورة</button>
           <button class="btn secondary" id="partialReturnBtn" type="button" style="flex:1">↩️ مرتجع جزئي</button>
           <button class="btn secondary" id="fullReturnBtn" type="button" style="flex:1">⛔ مرتجع كامل</button>
         </div>
         <div id="orderStatusInfo" style="margin-top:8px;font-size:12px;color:#64748b;font-weight:900"></div>
-        <div id="returnHint" style="margin-top:6px;font-size:12px;color:#92400e;font-weight:900;display:none">في المرتجع الجزئي: عدّل الكميات في الجدول إلى الكمية المطلوب إرجاعها فقط، واترك غير المرتجع = 0.</div>
+        <div id="returnHint" style="margin-top:6px;font-size:12px;color:#92400e;font-weight:900;display:none">في المرتجع الجزئي: عدّل كميات الأصناف في الجدول إلى الكميات المطلوب إرجاعها فقط، واترك غير المرتجع = 0.</div>
       </div>
     </div>
 
@@ -341,6 +346,7 @@
 
   <div class="card">
     <h2>الأصناف</h2>
+
     <div class="table-wrap" aria-live="polite">
       <table id="itemsTable" role="table" aria-label="جدول الأصناف">
         <thead>
@@ -408,20 +414,92 @@
 
 <script>
 const ADMIN_PASSWORD = "1407";
-const API_URL = "https://script.google.com/macros/s/AKfycbwsPPw3UiW6TBngBcbFxY4E8rB7JYgK1W2LRn0WaS9C7OitA1FgZ1vAz9Qr1u_ojlZ8/exec";
+const API_URLS = [
+  "https://script.google.com/macros/s/AKfycbwA-TDjlHKaqeTneXqCYxDQqJFht8uuk2J1wVEx8K6UVdgHGGmTQxXhlekxrmF3erO-/exec",
+  "https://script.google.com/macros/s/AKfycbwsPPw3UiW6TBngBcbFxY4E8rB7JYgK1W2LRn0WaS9C7OitA1FgZ1vAz9Qr1u_ojlZ8/exec"
+];
+const API_URL = API_URLS[0];
 const IMG_PLACEHOLDER = "https://via.placeholder.com/600x400?text=No+Image";
 const QR_SRC_MAIN = "qr-links.png";
 const QR_SRC_FALLBACK = "images/qr-links.png";
 
 const PROD_CACHE_KEY = "AX_PRODUCTS_CACHE_V1";
 const PROD_CACHE_TS  = "AX_PRODUCTS_CACHE_TS_V1";
-const CACHE_TTL_MS   = 60 * 1000;
+const CACHE_TTL_MS   = 10 * 60 * 1000;
 
 let PRODUCTS = [];
 let ROW_ID = 0;
 let CURRENT_ORDER = null;
+let CURRENT_ORDER_STATE = null;
+let CURRENT_INVOICE_STATE = null;
+let LAST_WORKING_API_URL = API_URL;
 
-function isQuoteMode(){ try{ return new URLSearchParams(location.search).get("quote") === "1"; } catch(e){ return false; } }
+/* ================= API HELPERS ================= */
+function buildApiUrl_(baseUrl, paramsObj){
+  const usp = new URLSearchParams();
+  Object.keys(paramsObj || {}).forEach(k=>{
+    const v = paramsObj[k];
+    if(v !== undefined && v !== null) usp.append(k, String(v));
+  });
+  return baseUrl + (usp.toString() ? "?" + usp.toString() : "");
+}
+function sleep_(ms){ return new Promise(resolve => setTimeout(resolve, ms)); }
+async function fetchWithTimeout_(url, options = {}, timeoutMs = 20000){
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try{
+    return await fetch(url, {
+      ...options, signal: controller.signal, redirect: "follow", cache: "no-store",
+      headers: { "Accept": "application/json", ...(options.headers || {}) }
+    });
+  } finally { clearTimeout(timer); }
+}
+async function apiGetJson_(paramsObj, retryCount = 1){
+  let lastErr = null;
+  const urls = [LAST_WORKING_API_URL, ...API_URLS.filter(u => u !== LAST_WORKING_API_URL)];
+  for (const baseUrl of urls){
+    for(let attempt = 0; attempt <= retryCount; attempt++){
+      try{
+        const res = await fetchWithTimeout_(buildApiUrl_(baseUrl, paramsObj), { method: "GET" }, 20000);
+        if(!res.ok) throw new Error("HTTP " + res.status);
+        const text = await res.text();
+        if(!text) throw new Error("Empty response");
+        const data = JSON.parse(text);
+        LAST_WORKING_API_URL = baseUrl;
+        return data;
+      }catch(err){ lastErr = err; if(attempt < retryCount) await sleep_(700 * (attempt + 1)); }
+    }
+  }
+  throw lastErr || new Error("Request failed");
+}
+async function apiPostJson_(payload, retryCount = 1){
+  let lastErr = null;
+  const urls = [LAST_WORKING_API_URL, ...API_URLS.filter(u => u !== LAST_WORKING_API_URL)];
+  for (const baseUrl of urls){
+    for(let attempt = 0; attempt <= retryCount; attempt++){
+      try{
+        const res = await fetchWithTimeout_(baseUrl, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8", "Accept": "application/json" },
+          body: JSON.stringify(payload || {})
+        }, 25000);
+        if(!res.ok) throw new Error("HTTP " + res.status);
+        const text = await res.text();
+        if(!text) throw new Error("Empty response");
+        const data = JSON.parse(text);
+        LAST_WORKING_API_URL = baseUrl;
+        return data;
+      }catch(err){ lastErr = err; if(attempt < retryCount) await sleep_(900 * (attempt + 1)); }
+    }
+  }
+  throw lastErr || new Error("Request failed");
+}
+let CURRENT_INVOICE_ID = "";
+
+function isQuoteMode(){
+  try{ return new URLSearchParams(location.search).get("quote") === "1"; }
+  catch(e){ return false; }
+}
 function applyModeUI(){
   const quote = isQuoteMode();
   const pageTitle = document.getElementById("pageTitle");
@@ -487,7 +565,10 @@ function resetFails(){
 function renderSessionTimer(){
   const el = document.getElementById("sessionTimer");
   if(!el) return;
-  if(sessionStorage.getItem("BS_ADMIN_OK") !== "1"){ el.textContent = "⏳ متبقي: --"; return; }
+  if(sessionStorage.getItem("BS_ADMIN_OK") !== "1"){
+    el.textContent = "⏳ متبقي: --";
+    return;
+  }
   const totalSec = Math.max(0, Math.ceil(idleLeftMs / 1000));
   const mm = String(Math.floor(totalSec / 60)).padStart(2,"0");
   const ss = String(totalSec % 60).padStart(2,"0");
@@ -500,7 +581,10 @@ function startIdleGuard(){
   idleTick = setInterval(()=>{
     idleLeftMs -= 1000;
     renderSessionTimer();
-    if(idleLeftMs <= 0){ clearInterval(idleTick); idleTick = null; }
+    if(idleLeftMs <= 0){
+      clearInterval(idleTick);
+      idleTick = null;
+    }
   }, 1000);
   const kick = ()=>{ try{ alert("تم تسجيل الخروج تلقائيًا بسبب عدم النشاط."); }catch(e){} setLoggedIn(false); };
   idleTimer = setTimeout(kick, IDLE_MINUTES * 60000);
@@ -511,11 +595,15 @@ function stopIdleGuard(){
   idleLeftMs = IDLE_MINUTES * 60000;
   renderSessionTimer();
 }
-function bumpIdle(){ if(sessionStorage.getItem("BS_ADMIN_OK") === "1") startIdleGuard(); }
+function bumpIdle(){
+  if(sessionStorage.getItem("BS_ADMIN_OK") === "1") startIdleGuard();
+}
 ["click","keydown","mousemove","touchstart","scroll"].forEach(ev=>{
   window.addEventListener(ev, ()=> bumpIdle(), {passive:true});
 });
-document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState === "visible") bumpIdle(); });
+document.addEventListener("visibilitychange", ()=>{
+  if(document.visibilityState === "visible") bumpIdle();
+});
 
 const loginBox  = document.getElementById('loginBox');
 const loginBtn  = document.getElementById('loginBtn');
@@ -537,9 +625,10 @@ function setLoggedIn(isOn){
     try{ passInput.focus(); }catch(e){}
   }
 }
+
 function checkPass(){
   if(isLocked()){ alert(lockRemainingText()); return; }
-  const v = String(passInput.value || "");
+  const v = String(passInput.value || "").trim();
   if(v === ADMIN_PASSWORD){
     resetFails();
     setLoggedIn(true);
@@ -555,6 +644,7 @@ function checkPass(){
     }
   }
 }
+
 loginBtn.addEventListener('click', checkPass);
 passInput.addEventListener('keydown', (e)=> { if(e.key === 'Enter') checkPass(); });
 document.getElementById('logoutTopBtn')?.addEventListener('click', ()=> setLoggedIn(false));
@@ -572,7 +662,7 @@ function initInvoice(){
   const now = new Date();
   document.getElementById("invDate").value = formatDateEnglish(now);
   document.getElementById("invTime").value = now.toLocaleTimeString("en-US",{hour:'2-digit',minute:'2-digit',hour12:true});
-  document.getElementById("invNo").value = generateInvoiceNo();
+  if(!CURRENT_INVOICE_ID) document.getElementById("invNo").value = generateInvoiceNo();
   calcGrand();
 }
 
@@ -591,9 +681,7 @@ function loadProductsFromCache(){
   }catch(e){ return null; }
 }
 async function fetchProductsFromApi(){
-  const res = await fetch(API_URL,{cache:"no-store"});
-  if(!res.ok) throw new Error("HTTP " + res.status);
-  const data = await res.json();
+  const data = await apiGetJson_({});
   return Array.isArray(data) ? data : [];
 }
 async function loadProductsSmart(){
@@ -601,8 +689,10 @@ async function loadProductsSmart(){
   const now = Date.now();
   const hasCache = cached && cached.list && cached.list.length;
   const cacheFresh = hasCache && (now - cached.ts) < CACHE_TTL_MS;
+
   PRODUCTS = hasCache ? cached.list : [];
   buildDataLists();
+
   const doFetch = async ()=>{
     try{
       const fresh = await fetchProductsFromApi();
@@ -610,17 +700,32 @@ async function loadProductsSmart(){
       saveProductsCache(fresh);
       buildDataLists();
       syncRowsWithProducts();
-    }catch(e){ console.warn("فشل تحميل الكتالوج", e); }
+    }catch(e){
+      console.warn("فشل تحميل الكتالوج", e);
+    }
   };
-  if(cacheFresh) setTimeout(doFetch, 400); else await doFetch();
+
+  if(cacheFresh) setTimeout(doFetch, 400);
+  else await doFetch();
 }
+
 function buildDataLists(){
   let dlSku = document.getElementById("skuList");
-  if(!dlSku){ dlSku = document.createElement("datalist"); dlSku.id = "skuList"; document.body.appendChild(dlSku); }
+  if(!dlSku){
+    dlSku = document.createElement("datalist");
+    dlSku.id = "skuList";
+    document.body.appendChild(dlSku);
+  }
   dlSku.innerHTML = "";
+
   let dlName = document.getElementById("nameList");
-  if(!dlName){ dlName = document.createElement("datalist"); dlName.id = "nameList"; document.body.appendChild(dlName); }
+  if(!dlName){
+    dlName = document.createElement("datalist");
+    dlName.id = "nameList";
+    document.body.appendChild(dlName);
+  }
   dlName.innerHTML = "";
+
   PRODUCTS.forEach(p=>{
     const id = String(p.id || "").trim();
     const name = String(p.name || "").trim();
@@ -628,6 +733,7 @@ function buildDataLists(){
     if(name){ const o2 = document.createElement("option"); o2.value = name; dlName.appendChild(o2); }
   });
 }
+
 function findBySku(sku){
   const s = String(sku || "").trim().toLowerCase();
   if(!s) return null;
@@ -654,11 +760,13 @@ function refreshRowNumbers(){
     if(cell) cell.textContent = String(i + 1);
   });
 }
+
 function addRow(silentFocus=false){
   ROW_ID++;
   const tbody = document.querySelector("#itemsTable tbody");
   const tr = document.createElement("tr");
   tr.dataset.id = ROW_ID;
+
   tr.innerHTML = `
     <td data-label="#" data-field="idx" style="font-weight:900">1</td>
     <td data-label="SKU / المنتج">
@@ -674,43 +782,60 @@ function addRow(silentFocus=false){
     <td data-label="الإجمالي" class="rowTotal" data-field="rowTotal">0.00</td>
     <td data-label="حذف"><button type="button" class="delBtn" data-act="remove">✖ حذف</button></td>
   `;
+
   tbody.appendChild(tr);
   refreshRowNumbers();
   if(!silentFocus) tr.querySelector('[data-field="sku"]')?.focus();
   calcRowByTr(tr);
   return tr;
 }
-function removeRowByTr(tr){ tr?.remove(); refreshRowNumbers(); calcGrand(); }
+
+function removeRowByTr(tr){
+  tr?.remove();
+  refreshRowNumbers();
+  calcGrand();
+}
+
 const itemsTbody = document.querySelector("#itemsTable tbody");
 itemsTbody.addEventListener("click", (ev)=>{
   const btn = ev.target.closest("[data-act='remove']");
   if(!btn) return;
   removeRowByTr(btn.closest("tr"));
 });
+
 itemsTbody.addEventListener("input", (ev)=>{
   const el = ev.target;
   const tr = el.closest("tr");
   if(!tr) return;
+
   const field = el.getAttribute("data-field");
-  if(field === "qty" || field === "price" || field === "discount"){ calcRowByTr(tr); return; }
+  if(field === "qty" || field === "price" || field === "discount"){
+    calcRowByTr(tr); return;
+  }
   if(field === "sku"){
     const sku = String(el.value||"").trim();
     const p = findBySku(sku);
     if(p){
       tr.querySelector('[data-field="name"]').value = String(p.name||"").trim();
-      tr.querySelector('[data-field="price"]').value = Number(p.price||0);
+      const priceEl = tr.querySelector('[data-field="price"]');
+      if(priceEl && !Number(priceEl.value||0)) priceEl.value = Number(p.price||0);
     }
-    syncRowThumb(tr); calcRowByTr(tr); return;
+    syncRowThumb(tr);
+    calcRowByTr(tr);
+    return;
   }
   if(field === "name"){
     const p2 = findByName(el.value);
     if(p2){
       tr.querySelector('[data-field="sku"]').value = String(p2.id||"").trim();
-      tr.querySelector('[data-field="price"]').value = Number(p2.price||0);
+      const priceEl = tr.querySelector('[data-field="price"]');
+      if(priceEl && !Number(priceEl.value||0)) priceEl.value = Number(p2.price||0);
     }
-    syncRowThumb(tr); calcRowByTr(tr); return;
+    syncRowThumb(tr);
+    calcRowByTr(tr);
   }
 });
+
 function syncRowThumb(tr){
   const sku = String(tr.querySelector('[data-field="sku"]')?.value || "").trim();
   const img = tr.querySelector("img.thumbMini");
@@ -718,6 +843,7 @@ function syncRowThumb(tr){
   img.src = sku ? resolveImageBySku(sku) : IMG_PLACEHOLDER;
   img.onerror = function(){ this.onerror=null; this.src=IMG_PLACEHOLDER; };
 }
+
 function syncRowsWithProducts(){
   const rows = Array.from(document.querySelectorAll("#itemsTable tbody tr"));
   rows.forEach(tr=>{
@@ -725,6 +851,7 @@ function syncRowsWithProducts(){
     const nameEl = tr.querySelector('[data-field="name"]');
     const sku = String(skuEl?.value||"").trim();
     const name = String(nameEl?.value||"").trim();
+
     if(sku && (!name || name === "—")){
       const p = findBySku(sku);
       if(p){
@@ -748,35 +875,42 @@ function syncRowsWithProducts(){
 
 function money(n){ n = Number(n||0); return (isFinite(n)?n:0); }
 function calcRowByTr(tr){
-  const qty = money(tr.querySelector('[data-field="qty"]')?.value);
-  const price = money(tr.querySelector('[data-field="price"]')?.value);
-  const discIn = money(tr.querySelector('[data-field="discount"]')?.value);
+  const qty = Math.max(0, money(tr.querySelector('[data-field="qty"]')?.value));
+  const price = Math.max(0, money(tr.querySelector('[data-field="price"]')?.value));
+  const discIn = Math.max(0, money(tr.querySelector('[data-field="discount"]')?.value));
+
   const subRaw = Math.max(0, qty * price);
   const disc = Math.max(0, Math.min(discIn, subRaw));
   const sub = Math.max(0, subRaw - disc);
+
   tr.querySelector('[data-field="rowTotal"]').textContent = sub.toFixed(2);
   calcGrand();
 }
+
 function calcGrand(){
   const rows = Array.from(document.querySelectorAll("#itemsTable tbody tr"));
   let totalBefore = 0;
   let rowDiscountSum = 0;
+
   rows.forEach(tr=>{
-    const qty = money(tr.querySelector('[data-field="qty"]')?.value);
-    const price = money(tr.querySelector('[data-field="price"]')?.value);
-    const discIn = money(tr.querySelector('[data-field="discount"]')?.value);
+    const qty = Math.max(0, money(tr.querySelector('[data-field="qty"]')?.value));
+    const price = Math.max(0, money(tr.querySelector('[data-field="price"]')?.value));
+    const discIn = Math.max(0, money(tr.querySelector('[data-field="discount"]')?.value));
+
     const subRaw = Math.max(0, qty * price);
     const disc = Math.max(0, Math.min(discIn, subRaw));
+
     totalBefore += subRaw;
     rowDiscountSum += disc;
   });
+
   const afterRowDiscount = Math.max(0, totalBefore - rowDiscountSum);
-  const globalDiscountIn = money(document.getElementById("globalDiscount")?.value);
+  const globalDiscountIn = Math.max(0, money(document.getElementById("globalDiscount")?.value));
   const globalDiscount = Math.max(0, Math.min(globalDiscountIn, afterRowDiscount));
   const afterAllDiscount = Math.max(0, afterRowDiscount - globalDiscount);
-  const deliveryFeeIn = money(document.getElementById("deliveryFee")?.value);
-  const deliveryFee = Math.max(0, deliveryFeeIn);
+  const deliveryFee = Math.max(0, money(document.getElementById("deliveryFee")?.value));
   const finalTotal = afterAllDiscount + deliveryFee;
+
   const deliveryText = deliveryFee > 0 ? `${deliveryFee.toFixed(2)} جنيه` : "توصيل مجاني";
   document.getElementById("totalsBox").innerHTML = `
     <div class="totalLine"><span class="k">الإجمالي قبل الخصم</span><span class="v">${totalBefore.toFixed(2)} جنيه</span></div>
@@ -786,11 +920,17 @@ function calcGrand(){
     <div class="totalLine"><span class="k">خدمة التوصيل</span><span class="v">${deliveryText}</span></div>
     <div class="totalLine primary"><span class="k">الإجمالي</span><span class="v">${finalTotal.toFixed(2)} جنيه</span></div>
   `;
+
   document.getElementById("amountWords").textContent = numberToArabicWords(Math.round(finalTotal));
   const note = String(document.getElementById("invoiceNote")?.value || "").trim();
   const noteBox = document.getElementById("noteBox");
-  if(note){ noteBox.style.display = "block"; noteBox.textContent = note; }
-  else{ noteBox.style.display = "none"; noteBox.textContent = ""; }
+  if(note){
+    noteBox.style.display = "block";
+    noteBox.textContent = note;
+  }else{
+    noteBox.style.display = "none";
+    noteBox.textContent = "";
+  }
 }
 
 function extractOrderIdSmart(text){
@@ -805,9 +945,9 @@ function extractOrderIdSmart(text){
     }
   }
   const fallback = t.match(/\b([0-9]{5,})\b/);
-  if(fallback) return fallback[1];
-  return "";
+  return fallback ? fallback[1] : "";
 }
+
 function extractCustomerData(fullText){
   const t = String(fullText || "");
   const nameMatch = t.match(/(?:^|\n)\s*الاسم\s*[:：]\s*(.+)\s*(?:\n|$)/i);
@@ -821,132 +961,180 @@ function extractCustomerData(fullText){
   const orderId = extractOrderIdSmart(t);
   return { name, phone, address, orderId };
 }
+
 function parseWhatsAppLines(fullText){
   const text = String(fullText || "").trim();
   if(!text) return [];
   const lines = text.split(/\r?\n/).map(l=>l.trim()).filter(Boolean);
   const out = [];
+
   for(const line of lines){
     if(/^\s*الاسم\s*[:：]/i.test(line)) continue;
     if(line.includes("📞") || line.includes("📍")) continue;
     if(/(رقم\s*(الطلب|الأوردر|الاوردر)|order\s*id)/i.test(line)) continue;
     if(line.includes("التاريخ") || line.includes("الوقت")) continue;
+
     const qtyMatch = line.match(/الكمية\s*[:：]\s*(\d+)/i);
     const qty = qtyMatch ? Number(qtyMatch[1]) : 0;
     const skuMatch = line.match(/\b([A-Z]{2,}\d{1,})\b/i);
     const sku = skuMatch ? skuMatch[1].toUpperCase() : "";
+
     let name = "";
     const pipeParts = line.split("|").map(s=>s.trim()).filter(Boolean);
-    if(pipeParts.length >= 2){ name = (pipeParts[1] || "").replace(/^•\s*/,"").trim(); }
-    else if(sku){ name = line.replace(sku, "").replace(/^•\s*/,"").trim(); }
-    if(sku || name){ out.push({ sku, name, qty: qty || 0 }); }
+    if(pipeParts.length >= 2) name = (pipeParts[1] || "").replace(/^•\s*/,"").trim();
+    else if(sku) name = line.replace(sku, "").replace(/^•\s*/,"").trim();
+
+    if(sku || name) out.push({ sku, name, qty: qty || 0 });
   }
   return out;
 }
 
-function clearInvoiceRows_(){
-  const tbody = document.querySelector("#itemsTable tbody");
-  if(!tbody) return;
-  tbody.innerHTML = "";
-  ROW_ID = 0;
-  refreshRowNumbers();
-  calcGrand();
-}
-function setRowFromProductData_(tr, item){
-  const sku = String(item?.sku || item?.id || "").trim();
-  const name = String(item?.name || "").trim();
-  const qty = Math.max(1, Number(item?.qty || 1));
-  const price = Number(item?.price || 0);
-  tr.querySelector('[data-field="sku"]').value = sku;
-  tr.querySelector('[data-field="name"]').value = name;
-  tr.querySelector('[data-field="qty"]').value = qty;
-  tr.querySelector('[data-field="qty"]').dataset.originalQty = String(qty);
-  tr.querySelector('[data-field="price"]').value = price;
-  tr.querySelector('[data-field="discount"]').value = 0;
-  syncRowThumb(tr);
-  calcRowByTr(tr);
-}
-function renderOrderStatusInfo_(order){
+function renderOrderStatusInfo_(order, invoice){
   const box = document.getElementById("orderStatusInfo");
   if(!box) return;
-  if(!order){ box.textContent = ""; return; }
-  const inv = String(order.inventory_status || "—").trim();
-  const invc = String(order.invoice_status || "—").trim();
-  box.textContent = `حالة المخزون: ${inv} | حالة الفاتورة: ${invc}`;
+  const parts = [];
+  if(invoice?.invoice_id) parts.push(`رقم الفاتورة المحفوظة: ${invoice.invoice_id}`);
+  if(order?.inventory_status) parts.push(`حالة المخزون: ${order.inventory_status}`);
+  if(order?.invoice_status) parts.push(`حالة الفاتورة: ${order.invoice_status}`);
+  box.textContent = parts.join(" | ");
 }
+
+function collectInvoiceItemsFromUI_(){
+  return Array.from(document.querySelectorAll("#itemsTable tbody tr")).map(tr=>{
+    const sku = String(tr.querySelector('[data-field="sku"]')?.value || "").trim();
+    const name = String(tr.querySelector('[data-field="name"]')?.value || "").trim();
+    const qty = Math.max(0, Number(tr.querySelector('[data-field="qty"]')?.value || 0));
+    const unit_price = Math.max(0, Number(tr.querySelector('[data-field="price"]')?.value || 0));
+    const line_discount = Math.max(0, Number(tr.querySelector('[data-field="discount"]')?.value || 0));
+    const line_total = Math.max(0, Number(tr.querySelector('[data-field="rowTotal"]')?.textContent || 0));
+    return { sku, name, qty, unit_price, line_discount, line_total };
+  }).filter(x=>x.sku && x.qty > 0);
+}
+
+function buildInvoicePayloadFromUI_(){
+  const d = getInvoiceData();
+  return {
+    order_id: String(d.orderId || "").trim(),
+    invoice_id: CURRENT_INVOICE_ID || String(d.invNo || "").trim(),
+    customer_name: String(d.custName || "").trim(),
+    phone: String(d.custPhone || "").trim(),
+    address: String(d.custAddress || "").trim(),
+    order_type: CURRENT_ORDER_STATE?.order_type || "",
+    subtotal_before_discount: Number(d.totalBefore || 0),
+    row_discount_total: Number(d.rowDiscountSum || 0),
+    global_discount: Number(d.globalDiscount || 0),
+    delivery_fee: Number(d.deliveryFee || 0),
+    final_total: Number(d.finalTotal || 0),
+    note: String(d.note || "").trim(),
+    items: collectInvoiceItemsFromUI_()
+  };
+}
+
 async function fetchOrderFromSystem(){
   const orderId = String(document.getElementById("orderId")?.value || "").trim();
   if(!orderId){ alert("اكتب رقم الطلب أولاً."); return; }
+  const btn = document.getElementById("fetchOrderBtn");
+  const oldText = btn ? btn.textContent : "";
   try{
-    const url = `${API_URL}?action=getOrder&orderId=${encodeURIComponent(orderId)}`;
-    const res = await fetch(url, { cache: "no-store" });
-    if(!res.ok) throw new Error("HTTP " + res.status);
-    const data = await res.json();
+    if(btn){ btn.disabled = true; btn.textContent = "جاري الجلب..."; }
+    const data = await apiGetJson_({ action: "getOrder", orderId });
     if(!data || !data.ok || !data.order){ throw new Error(data?.error || "تعذر جلب الطلب."); }
-    fillInvoiceFromOrder_(data.order);
+    CURRENT_ORDER_STATE = data.order || null;
+    CURRENT_INVOICE_STATE = data.invoice || null;
+    CURRENT_INVOICE_ID = data?.invoice?.invoice_id ? String(data.invoice.invoice_id) : "";
+    fillInvoiceFromOrder_(data.invoice || data.order, !!data.invoice);
+    if(CURRENT_INVOICE_ID) document.getElementById("invNo").value = CURRENT_INVOICE_ID;
+    renderOrderStatusInfo_(CURRENT_ORDER_STATE, CURRENT_INVOICE_STATE);
+    document.getElementById("returnHint").style.display = "none";
     alert("تم جلب الطلب بنجاح.");
   }catch(e){
     console.error(e);
     alert("فشل جلب الطلب: " + (e?.message || e));
+  }finally{
+    if(btn){ btn.disabled = false; btn.textContent = oldText || "🔎 جلب الطلب من النظام"; }
   }
 }
-function fillInvoiceFromOrder_(order){
-  CURRENT_ORDER = order || null;
-  document.getElementById("orderId").value = String(order.order_id || "").trim();
-  renderOrderStatusInfo_(order);
-  document.getElementById("returnHint").style.display = "none";
-  document.getElementById("custName").value = String(order.customer_name || "").trim();
-  document.getElementById("custPhone").value = String(order.phone || "").trim();
-  document.getElementById("custAddress").value = String(order.address || "").trim();
-  if(order.created_at){
-    const dt = new Date(String(order.created_at).replace(" ", "T"));
+
+function fillInvoiceFromOrder_(payload){
+  const data = payload || {};
+  document.getElementById("orderId").value = String(data.order_id || "").trim();
+  document.getElementById("custName").value = String(data.customer_name || "").trim();
+  document.getElementById("custPhone").value = String(data.phone || "").trim();
+  document.getElementById("custAddress").value = String(data.address || "").trim();
+
+  if(data.created_at){
+    const dt = new Date(String(data.created_at).replace(" ", "T"));
     if(!isNaN(dt.getTime())){
       document.getElementById("invDate").value = formatDateEnglish(dt);
       document.getElementById("invTime").value = dt.toLocaleTimeString("en-US",{hour:'2-digit',minute:'2-digit',hour12:true});
     }
   }
+
   const tbody = document.querySelector("#itemsTable tbody");
   tbody.innerHTML = "";
   ROW_ID = 0;
-  const items = Array.isArray(order.items) ? order.items : [];
+
+  const items = Array.isArray(data.items) ? data.items : [];
   items.forEach(item=>{
     const tr = addRow(true);
-    setRowFromProductData_(tr, item);
+    tr.querySelector('[data-field="sku"]').value = String(item.sku || item.id || "").trim();
+    tr.querySelector('[data-field="name"]').value = String(item.name || "").trim();
+    tr.querySelector('[data-field="qty"]').value = Math.max(0, Number(item.qty || 0));
+    tr.querySelector('[data-field="price"]').value = Number(item.unit_price !== undefined ? item.unit_price : (item.price || 0));
+    tr.querySelector('[data-field="discount"]').value = Number(item.line_discount !== undefined ? item.line_discount : (item.discount || 0));
+    syncRowThumb(tr);
+    calcRowByTr(tr);
   });
+
   if(!items.length) addRow(true);
-  document.getElementById("globalDiscount").value = 0;
-  document.getElementById("deliveryFee").value = 0;
-  document.getElementById("invoiceNote").value = "";
+
+  document.getElementById("globalDiscount").value = Number(data.global_discount || 0);
+  document.getElementById("deliveryFee").value = Number(data.delivery_fee || 0);
+  document.getElementById("invoiceNote").value = String(data.note || "");
+
   refreshRowNumbers();
   calcGrand();
 }
-function collectReturnItemsFromTable_(){
-  const rows = Array.from(document.querySelectorAll("#itemsTable tbody tr"));
-  return rows.map(tr=>{
-    const sku = String(tr.querySelector('[data-field="sku"]')?.value || "").trim();
-    const name = String(tr.querySelector('[data-field="name"]')?.value || "").trim();
-    const qty = Math.max(0, Math.floor(money(tr.querySelector('[data-field="qty"]')?.value)));
-    const price = money(tr.querySelector('[data-field="price"]')?.value);
-    const soldQty = Math.max(0, Math.floor(money(tr.querySelector('[data-field="qty"]')?.dataset?.originalQty || qty)));
-    return { sku, name, qty, price, soldQty };
-  }).filter(x=>x.sku);
+
+async function confirmInvoiceFromSystem(){
+  const orderId = String(document.getElementById("orderId")?.value || "").trim();
+  if(!orderId){ alert("اكتب رقم الطلب أولاً."); return; }
+  if(isQuoteMode()){ alert("وضع الكوتيشن لا يدعم تأكيد الفاتورة."); return; }
+  const invoice = buildInvoicePayloadFromUI_();
+  if(!invoice.items.length){ alert("أضف صنفًا واحدًا على الأقل."); return; }
+  const ok = confirm(CURRENT_INVOICE_ID ? "سيتم حفظ التعديلات الحالية على نفس الفاتورة وتحديث المخزون بالفروق. هل تريد المتابعة؟" : "سيتم إنشاء/تأكيد الفاتورة وحفظ الشحن والخصومات وتحديث المخزون. هل تريد المتابعة؟");
+  if(!ok) return;
+  const btn = document.getElementById("confirmInvoiceBtn");
+  const oldText = btn ? btn.textContent : "";
+  try{
+    if(btn){ btn.disabled = true; btn.textContent = "جاري الحفظ..."; }
+    const data = await apiPostJson_({ action: "confirmInvoice", orderId, invoice });
+    if(!data || !data.ok) throw new Error(data?.error || "تعذر حفظ الفاتورة.");
+    CURRENT_INVOICE_ID = String(data.invoice_id || CURRENT_INVOICE_ID || "");
+    if(CURRENT_INVOICE_ID) document.getElementById("invNo").value = CURRENT_INVOICE_ID;
+    await fetchOrderFromSystem();
+    alert("تم حفظ/تأكيد الفاتورة بنجاح.");
+  }catch(e){
+    console.error(e);
+    alert("فشل حفظ/تأكيد الفاتورة: " + (e?.message || e));
+  }finally{
+    if(btn){ btn.disabled = false; btn.textContent = oldText || "💾 حفظ / تأكيد الفاتورة"; }
+  }
 }
+
 async function fullReturnInvoiceFromSystem(){
   const orderId = String(document.getElementById("orderId")?.value || "").trim();
   if(!orderId){ alert("اكتب رقم الطلب أولاً."); return; }
-  if(!CURRENT_ORDER){ alert("اجلب الطلب من النظام أولاً."); return; }
-  const ok = confirm("سيتم إرجاع الفاتورة بالكامل وإضافة كل الكميات مرة أخرى إلى المخزون. هل تريد المتابعة؟");
+  const ok = confirm("سيتم تنفيذ مرتجع كامل لهذه الفاتورة. هل تريد المتابعة؟");
   if(!ok) return;
   const btn = document.getElementById("fullReturnBtn");
   const oldText = btn ? btn.textContent : "";
   try{
     if(btn){ btn.disabled = true; btn.textContent = "جاري الإرجاع..."; }
-    const res = await fetch(API_URL, { method: "POST", body: JSON.stringify({ action: "returnInvoice", orderId }) });
-    if(!res.ok) throw new Error("HTTP " + res.status);
-    const data = await res.json();
+    const data = await apiPostJson_({ action: "returnInvoice", orderId });
     if(!data || !data.ok) throw new Error(data?.error || "تعذر تنفيذ المرتجع الكامل.");
-    alert(data.already_returned ? "الفاتورة مرتجعة بالكامل بالفعل." : "تم تنفيذ المرتجع الكامل بنجاح.");
     await fetchOrderFromSystem();
+    alert(data.already_returned ? "الفاتورة مرتجعة بالكامل بالفعل." : "تم تنفيذ المرتجع الكامل بنجاح.");
   }catch(e){
     console.error(e);
     alert("فشل المرتجع الكامل: " + (e?.message || e));
@@ -954,35 +1142,30 @@ async function fullReturnInvoiceFromSystem(){
     if(btn){ btn.disabled = false; btn.textContent = oldText || "⛔ مرتجع كامل"; }
   }
 }
+
 async function partialReturnInvoiceFromSystem(){
   const orderId = String(document.getElementById("orderId")?.value || "").trim();
   if(!orderId){ alert("اكتب رقم الطلب أولاً."); return; }
-  if(!CURRENT_ORDER){ alert("اجلب الطلب من النظام أولاً."); return; }
-  const items = collectReturnItemsFromTable_().filter(x=>x.qty > 0);
+  const items = collectInvoiceItemsFromUI_().map(x=>({ sku:x.sku, qty:Number(x.qty||0), name:x.name })).filter(x=>x.qty > 0);
   if(!items.length){
     document.getElementById("returnHint").style.display = "block";
-    alert("في المرتجع الجزئي عدّل كميات الأصناف في الجدول إلى الكميات المطلوب إرجاعها ثم اضغط الزر مرة أخرى.");
+    alert("في المرتجع الجزئي: اجعل الكمية في كل صف = الكمية المطلوب إرجاعها فقط، واترك غير المرتجع = 0.");
     return;
   }
-  for(const item of items){
-    if(item.qty > item.soldQty){
-      alert(`كمية المرتجع للصنف ${item.sku} أكبر من الكمية المباعة في الفاتورة.`);
-      return;
-    }
-  }
-  const lines = items.map(x=>`${x.sku} | ${x.name} | qty: ${x.qty}`).join("\n");
-  const ok = confirm("سيتم تنفيذ مرتجع جزئي لهذه الأصناف:\n\n" + lines);
+  const lines = items.map(x=>`${x.sku} | ${x.name || ''} | qty: ${x.qty}`).join("
+");
+  const ok = confirm("سيتم تنفيذ مرتجع جزئي بالكميات الحالية الظاهرة في الجدول:
+
+" + lines);
   if(!ok) return;
   const btn = document.getElementById("partialReturnBtn");
   const oldText = btn ? btn.textContent : "";
   try{
     if(btn){ btn.disabled = true; btn.textContent = "جاري المرتجع..."; }
-    const res = await fetch(API_URL, { method: "POST", body: JSON.stringify({ action: "returnInvoicePartial", orderId, items }) });
-    if(!res.ok) throw new Error("HTTP " + res.status);
-    const data = await res.json();
+    const data = await apiPostJson_({ action: "returnInvoicePartial", orderId, items });
     if(!data || !data.ok) throw new Error(data?.error || "تعذر تنفيذ المرتجع الجزئي.");
-    alert("تم تنفيذ المرتجع الجزئي بنجاح.");
     await fetchOrderFromSystem();
+    alert("تم تنفيذ المرتجع الجزئي بنجاح.");
   }catch(e){
     console.error(e);
     alert("فشل المرتجع الجزئي: " + (e?.message || e));
@@ -990,67 +1173,59 @@ async function partialReturnInvoiceFromSystem(){
     if(btn){ btn.disabled = false; btn.textContent = oldText || "↩️ مرتجع جزئي"; }
   }
 }
-async function confirmInvoiceFromSystem(){
-  const orderId = String(document.getElementById("orderId")?.value || "").trim();
-  if(!orderId){ alert("اكتب رقم الطلب أولاً."); return; }
-  if(isQuoteMode()){ alert("وضع الكوتيشن لا يدعم تأكيد الفاتورة."); return; }
-  const ok = confirm("سيتم خصم الكميات من المخزون وتأكيد الفاتورة لهذا الطلب. هل تريد المتابعة؟");
-  if(!ok) return;
-  const btn = document.getElementById("confirmInvoiceBtn");
-  const oldText = btn ? btn.textContent : "";
-  try{
-    if(btn){ btn.disabled = true; btn.textContent = "جاري التأكيد..."; }
-    const res = await fetch(API_URL, { method: "POST", body: JSON.stringify({ action: "confirmInvoice", orderId: orderId }) });
-    if(!res.ok) throw new Error("HTTP " + res.status);
-    const data = await res.json();
-    if(!data || !data.ok){ throw new Error(data?.error || "تعذر تأكيد الفاتورة."); }
-    const msg = data.already_confirmed ? "الفاتورة مؤكدة بالفعل من قبل." : "تم تأكيد الفاتورة وخصم المخزون بنجاح.";
-    alert(msg);
-    await fetchOrderFromSystem();
-  }catch(e){
-    console.error(e);
-    alert("فشل تأكيد الفاتورة: " + (e?.message || e));
-  }finally{
-    if(btn){ btn.disabled = false; btn.textContent = oldText || "✅ تأكيد الفاتورة وخصم المخزون"; }
-  }
-}
 
 function importFromWhatsApp(){
-  if(isQuoteMode()){ alert("وضع الكوتيشن لا يدعم الاستيراد من واتساب."); return; }
+  CURRENT_ORDER = null;
+  CURRENT_ORDER_STATE = null;
+  CURRENT_INVOICE_STATE = null;
+  CURRENT_INVOICE_ID = "";
+  renderOrderStatusInfo_(null, null);
+  document.getElementById("returnHint").style.display = "none";
+  if(isQuoteMode()){
+    alert("وضع الكوتيشن لا يدعم الاستيراد من واتساب.");
+    return;
+  }
   const ta = document.getElementById("waImport");
   const raw = String(ta.value || "").trim();
   if(!raw){ alert("الصق رسالة واتساب أولاً."); return; }
+
   const cust = extractCustomerData(raw);
   if(cust.name) document.getElementById("custName").value = cust.name;
   if(cust.phone) document.getElementById("custPhone").value = cust.phone;
   if(cust.address) document.getElementById("custAddress").value = cust.address;
   if(cust.orderId) document.getElementById("orderId").value = cust.orderId;
+
   const items = parseWhatsAppLines(raw);
   if(items.length){
     const tbody = document.querySelector("#itemsTable tbody");
     tbody.innerHTML = "";
     ROW_ID = 0;
+
     items.forEach(it=>{
       const tr = addRow(true);
       const skuEl = tr.querySelector('[data-field="sku"]');
       const nameEl = tr.querySelector('[data-field="name"]');
       const qtyEl = tr.querySelector('[data-field="qty"]');
+
       if(it.sku){
         skuEl.value = it.sku;
         const p = findBySku(it.sku);
-        if(p){ nameEl.value = String(p.name||"").trim(); tr.querySelector('[data-field="price"]').value = Number(p.price||0); }
+        if(p) nameEl.value = String(p.name||"").trim();
         else if(it.name) nameEl.value = it.name;
       }else if(it.name){
         nameEl.value = it.name;
         const p2 = findByName(it.name);
         if(p2) skuEl.value = String(p2.id||"").trim();
       }
+
       qtyEl.value = it.qty ? String(it.qty) : "1";
       syncRowThumb(tr);
       calcRowByTr(tr);
     });
+
     refreshRowNumbers();
   }
+
   calcGrand();
   alert("✅ تم الاستيراد");
 }
@@ -1063,22 +1238,27 @@ function getInvoiceData(){
   const custName = document.getElementById("custName").value || "";
   const custPhone = document.getElementById("custPhone").value || "";
   const custAddress = document.getElementById("custAddress").value || "";
+
   const deliveryFee = Math.max(0, money(document.getElementById("deliveryFee")?.value));
   const globalDiscountIn = Math.max(0, money(document.getElementById("globalDiscount")?.value));
   const note = String(document.getElementById("invoiceNote")?.value || "").trim();
+
   const rows = Array.from(document.querySelectorAll("#itemsTable tbody tr"));
   const items = rows.map((tr, idx)=>{
     const sku = (tr.querySelector('[data-field="sku"]')?.value || "").trim();
     const name = (tr.querySelector('[data-field="name"]')?.value || "").trim();
-    const qty = money(tr.querySelector('[data-field="qty"]')?.value);
-    const price = money(tr.querySelector('[data-field="price"]')?.value);
-    const discIn = money(tr.querySelector('[data-field="discount"]')?.value);
+    const qty = Math.max(0, money(tr.querySelector('[data-field="qty"]')?.value));
+    const price = Math.max(0, money(tr.querySelector('[data-field="price"]')?.value));
+    const discIn = Math.max(0, money(tr.querySelector('[data-field="discount"]')?.value));
+
     const subRaw = Math.max(0, qty * price);
     const disc = Math.max(0, Math.min(discIn, subRaw));
     const sub = Math.max(0, subRaw - disc);
     const skuName = (sku && name) ? `${sku} | ${name}` : (sku || name);
+
     return { idx: idx + 1, sku, name, skuName, qty, price, disc, sub, subRaw };
   }).filter(i => i.skuName || i.qty || i.price || i.disc);
+
   const totalBefore = items.reduce((s,i)=> s + money(i.subRaw), 0);
   const rowDiscountSum = items.reduce((s,i)=> s + money(i.disc), 0);
   const afterRowDiscount = Math.max(0, totalBefore - rowDiscountSum);
@@ -1086,13 +1266,21 @@ function getInvoiceData(){
   const afterAllDiscount = Math.max(0, afterRowDiscount - globalDiscount);
   const finalTotal = afterAllDiscount + deliveryFee;
   const words = numberToArabicWords(Math.round(finalTotal));
+
   return {
     invNo, invDate, invTime, orderId,
     custName, custPhone, custAddress,
     deliveryFee, globalDiscount, note,
-    items, totalBefore, rowDiscountSum, afterRowDiscount, afterAllDiscount, finalTotal, words
+    items,
+    totalBefore,
+    rowDiscountSum,
+    afterRowDiscount,
+    afterAllDiscount,
+    finalTotal,
+    words
   };
 }
+
 function openPrintWindow(html, title){
   const w = window.open("", "_blank");
   if(!w){ alert("Pop-up blocked. اسمح بفتح النوافذ المنبثقة."); return; }
@@ -1153,27 +1341,38 @@ function buildA4Html(d, mode){
   :root{ --text:#0f172a; --muted:#64748b; --stroke: rgba(15,23,42,.10); }
   @page { size: A4; margin: 10mm; }
   body{font-family: Arial, Helvetica, sans-serif;color:var(--text);direction:rtl;margin:0;background:#fff;}
-  .sheet{max-width:900px;margin:0 auto;}.card{background:#fff;border-radius:12px;padding:18px;margin-bottom:14px;border:1px solid var(--stroke);}
-  .header{display:flex;justify-content:space-between;align-items:center;gap:12px;}.brand{display:flex;align-items:center;gap:12px}.brand img{width:64px;height:64px;object-fit:contain}
-  h1{margin:0;font-weight:900}.meta{font-size:14px;color:var(--muted); line-height:1.7}.meta strong{color:#0f172a}
-  table{width:100%;border-collapse:collapse;margin-top:12px;font-size:14px} th,td{border:1px solid var(--stroke);padding:8px;text-align:center} th{background:#f7f7fb;}
-  .totals{margin-top:12px;display:flex;flex-direction:column;gap:8px}.tline{display:flex;justify-content:space-between;gap:10px;border:1px solid var(--stroke);border-radius:10px;padding:10px 12px;background:#fff;font-weight:900}.tline span:first-child{color:#64748b;font-weight:900}.tline.primary{background:#f7f7fb;}
-  .amountWords{margin-top:10px;font-weight:900;color:#334155}.note{margin-top:10px;border-top:1px dashed var(--stroke);padding-top:10px;font-weight:900;color:#334155}
-  .custGrid{display:grid;grid-template-columns:1fr;gap:10px;margin-top:8px}.custLine{border:1px dashed var(--stroke);border-radius:10px;padding:10px 12px}
-  .qrWrap{margin-top:12px;display:flex;flex-direction:column;align-items:center;gap:8px}.qrWrap img{width:120px;height:120px;object-fit:contain;border:1px solid var(--stroke);border-radius:10px;padding:6px}.qrText{font-size:12px;color:#334155;font-weight:900}
+  .sheet{max-width:900px;margin:0 auto;}
+  .card{background:#fff;border-radius:12px;padding:18px;margin-bottom:14px;border:1px solid var(--stroke);}
+  .header{display:flex;justify-content:space-between;align-items:center;gap:12px;}
+  .brand{display:flex;align-items:center;gap:12px}
+  .brand img{width:64px;height:64px;object-fit:contain}
+  h1{margin:0;font-weight:900}
+  .meta{font-size:14px;color:var(--muted); line-height:1.7}
+  .meta strong{color:#0f172a}
+  table{width:100%;border-collapse:collapse;margin-top:12px;font-size:14px}
+  th,td{border:1px solid var(--stroke);padding:8px;text-align:center}
+  th{background:#f7f7fb;}
+  .totals{margin-top:12px;display:flex;flex-direction:column;gap:8px}
+  .tline{display:flex;justify-content:space-between;gap:10px;border:1px solid var(--stroke);border-radius:10px;padding:10px 12px;background:#fff;font-weight:900}
+  .tline span:first-child{color:#64748b;font-weight:900}
+  .tline.primary{background:#f7f7fb;}
+  .amountWords{margin-top:10px;font-weight:900;color:#334155}
+  .note{margin-top:10px;border-top:1px dashed var(--stroke);padding-top:10px;font-weight:900;color:#334155}
+  .custGrid{display:grid;grid-template-columns:1fr;gap:10px;margin-top:8px}
+  .custLine{border:1px dashed var(--stroke);border-radius:10px;padding:10px 12px}
+  .qrWrap{margin-top:12px;display:flex;flex-direction:column;align-items:center;gap:8px}
+  .qrWrap img{width:120px;height:120px;object-fit:contain;border:1px solid var(--stroke);border-radius:10px;padding:6px}
+  .qrText{font-size:12px;color:#334155;font-weight:900}
   .footer{margin-top:10px;text-align:center;color:#64748b;font-size:12px;line-height:1.6}
-  </style></head><body><div class="sheet">
+</style></head><body><div class="sheet">
   <div class="card header"><div class="brand"><img src="images/bslogo.webp" onerror="this.style.display='none'"><div><h1>B.S Medical &amp; Aesthetic</h1><div class="meta">${docTitle}: <strong>${escapeHtml(d.invNo)}</strong></div><div class="meta">Order ID: <strong>${escapeHtml(d.orderId || "—")}</strong></div></div></div><div class="meta" style="text-align:left"><div>التاريخ: <strong>${escapeHtml(d.invDate)}</strong></div><div>الوقت: <strong>${escapeHtml(d.invTime)}</strong></div></div></div>
   <div class="card"><h3 style="margin:0 0 8px;font-weight:900;">بيانات العميل</h3><div class="custGrid"><div class="custLine"><strong>الاسم:</strong> ${escapeHtml(d.custName)}</div><div class="custLine"><strong>الهاتف:</strong> ${escapeHtml(d.custPhone)}</div><div class="custLine"><strong>العنوان:</strong> ${escapeHtml(d.custAddress)}</div></div></div>
   <div class="card"><h3 style="margin:0 0 8px;font-weight:900;">الأصناف</h3><table><thead><tr><th>#</th><th>SKU / المنتج</th><th>الكمية</th><th>السعر</th><th>خصم</th><th>الإجمالي</th></tr></thead><tbody>${itemsHtml}</tbody></table>
     <div class="totals"><div class="tline"><span>الإجمالي قبل الخصم</span><span>${Number(d.totalBefore||0).toFixed(2)} جنيه</span></div><div class="tline"><span>الخصم</span><span>${Number(d.rowDiscountSum||0).toFixed(2)} جنيه</span></div><div class="tline"><span>خصم خاص</span><span>${Number(d.globalDiscount||0).toFixed(2)} جنيه</span></div><div class="tline"><span>الإجمالي قبل خدمة التوصيل</span><span>${Number(d.afterAllDiscount||0).toFixed(2)} جنيه</span></div><div class="tline"><span>خدمة التوصيل</span><span>${deliveryText}</span></div><div class="tline primary"><span>الإجمالي</span><span>${Number(d.finalTotal||0).toFixed(2)} جنيه</span></div></div>
     <div class="amountWords">${escapeHtml(d.words)}</div>${noteHtml}<div class="qrWrap"><img src="${QR_SRC_MAIN}" onerror="this.onerror=null;this.src='${QR_SRC_FALLBACK}'" alt="QR"><div class="qrText">امسح الـ QR للتواصل / روابط Axentro</div></div><div class="footer">Axentro – All Rights Reserved 2024 ©<br>By Ahmed Hamouda</div></div>
-  </div></body></html>`;
+</div></body></html>`;
 }
-function exportA4(){
-  const d = getInvoiceData();
-  openPrintWindow(buildA4Html(d, isQuoteMode() ? "quote" : "invoice"), `${isQuoteMode() ? "عرض سعر" : "فاتورة"} ${d.invNo}`);
-}
+
 function buildThermalHtml(mm, d, mode){
   const widthMm = (mm === 58) ? 58 : 80;
   const isQuote = (mode==="quote");
@@ -1189,18 +1388,21 @@ function buildThermalHtml(mm, d, mode){
     return `<div class="item"><div class="itemName">${it.idx}) ${escapeHtml(name)}</div><div class="itemMeta"><span class="l">${left}</span>${right ? `<span class="r">${right}</span>` : `<span class="r"></span>`}</div><div class="itemTotal"><span>Total</span><span>${sub.toFixed(2)}</span></div></div><div class="sep"></div>`;
   }).join("") : `<div class="m" style="text-align:center;margin:10px 0">لا توجد أصناف</div>`;
   const noteBlock = d.note ? `<div class="sep"></div><div class="m">${escapeHtml(d.note)}</div>` : "";
+
   return `<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${titleText} ${escapeHtml(d.invNo)}</title><style>
-  @page { size: ${widthMm}mm auto; margin: 3mm; } body{margin:0;font-family: Arial, Tahoma, sans-serif;color:#000;direction:rtl;background:#fff;}
-  .paper{ width:${widthMm}mm; margin:0 auto; padding:0; }.center{text-align:center}.b{font-weight:900;font-size:13px;line-height:1.45}.m{font-weight:700;font-size:11px;line-height:1.55}.sep{border-top:1px dashed #000;margin:8px 0}
-  .totRow{display:flex;justify-content:space-between;gap:8px;font-weight:900;font-size:12px}.totMain{font-size:14px}.qr{display:flex;flex-direction:column;align-items:center;gap:6px;margin-top:8px}.qr img{width:${widthMm===58? 90:110}px;height:${widthMm===58? 90:110}px;object-fit:contain}
-  .foot{margin-top:8px;font-size:10px;color:#000;text-align:center;line-height:1.5}.logo{width:${widthMm===58? 46:56}px;height:${widthMm===58? 46:56}px;object-fit:contain;display:block;margin:0 auto 6px}
-  .item{padding:6px 0}.itemName{font-weight:900;font-size:12px;line-height:1.5}.itemMeta{display:flex;justify-content:space-between;gap:8px;font-weight:700;font-size:11px;line-height:1.6;margin-top:2px}.itemMeta .l,.itemMeta .r{direction:ltr;text-align:left;unicode-bidi:embed}.itemTotal{display:flex;justify-content:space-between;gap:8px;margin-top:2px;font-weight:900;font-size:12px;direction:ltr;text-align:left;unicode-bidi:embed} *{break-inside: avoid; page-break-inside: avoid;} html,body{height:auto}
-  </style></head><body><div class="paper"><div class="center"><img class="logo" src="images/bslogo.webp" onerror="this.style.display='none'"><div class="b">B.S Medical &amp; Aesthetic</div><div class="m">${titleText}: <strong>${escapeHtml(d.invNo)}</strong></div><div class="m">Order ID: <strong>${escapeHtml(d.orderId || "—")}</strong></div></div><div class="sep"></div><div class="m">تاريخ: <strong>${escapeHtml(d.invDate)}</strong></div><div class="m">وقت: <strong>${escapeHtml(d.invTime)}</strong></div><div class="sep"></div><div class="b">بيانات العميل</div><div class="m">الاسم: ${escapeHtml(d.custName)}</div><div class="m">الهاتف: ${escapeHtml(d.custPhone)}</div><div class="m">العنوان: ${escapeHtml(d.custAddress)}</div><div class="sep"></div><div class="b">الأصناف</div><div class="sep"></div>${items}<div class="sep"></div><div class="totRow"><span>قبل الخصم</span><span>${Number(d.totalBefore||0).toFixed(2)}</span></div><div class="totRow"><span>الخصم</span><span>${Number(d.rowDiscountSum||0).toFixed(2)}</span></div><div class="totRow"><span>خصم خاص</span><span>${Number(d.globalDiscount||0).toFixed(2)}</span></div><div class="totRow"><span>قبل التوصيل</span><span>${Number(d.afterAllDiscount||0).toFixed(2)}</span></div><div class="totRow"><span>التوصيل</span><span>${Number(d.deliveryFee||0) > 0 ? Number(d.deliveryFee).toFixed(2) : "مجاني"}</span></div><div class="totRow totMain"><span>الإجمالي</span><span>${Number(d.finalTotal||0).toFixed(2)}</span></div><div class="sep"></div><div class="m">${escapeHtml(d.words)}</div>${noteBlock}<div class="qr"><img src="${QR_SRC_MAIN}" onerror="this.onerror=null;this.src='${QR_SRC_FALLBACK}'" alt="QR"><div class="m">امسح الـ QR للتواصل / روابط Axentro</div></div><div class="foot">Axentro – All Rights Reserved 2024 ©<br>By Ahmed Hamouda</div></div></body></html>`;
+  @page { size: ${widthMm}mm auto; margin: 3mm; }
+  body{margin:0;font-family: Arial, Tahoma, sans-serif;color:#000;direction:rtl;background:#fff;}
+  .paper{ width:${widthMm}mm; margin:0 auto; padding:0; }
+  .center{text-align:center}.b{font-weight:900;font-size:13px;line-height:1.45}.m{font-weight:700;font-size:11px;line-height:1.55}
+  .sep{border-top:1px dashed #000;margin:8px 0}.totRow{display:flex;justify-content:space-between;gap:8px;font-weight:900;font-size:12px}.totMain{font-size:14px}
+  .qr{display:flex;flex-direction:column;align-items:center;gap:6px;margin-top:8px}.qr img{width:${widthMm===58? 90:110}px;height:${widthMm===58? 90:110}px;object-fit:contain}
+  .foot{margin-top:8px;font-size:10px;color:#000;text-align:center;line-height:1.5}
+  .logo{width:${widthMm===58? 46:56}px;height:${widthMm===58? 46:56}px;object-fit:contain;display:block;margin:0 auto 6px}
+  .item{padding:6px 0}.itemName{font-weight:900;font-size:12px;line-height:1.5}.itemMeta{display:flex;justify-content:space-between;gap:8px;font-weight:700;font-size:11px;line-height:1.6;margin-top:2px}.itemMeta .l,.itemMeta .r{direction:ltr;text-align:left;unicode-bidi:embed}
+  .itemTotal{display:flex;justify-content:space-between;gap:8px;margin-top:2px;font-weight:900;font-size:12px;direction:ltr;text-align:left;unicode-bidi:embed}*{break-inside: avoid; page-break-inside: avoid;}html,body{height:auto}
+</style></head><body><div class="paper"><div class="center"><img class="logo" src="images/bslogo.webp" onerror="this.style.display='none'"><div class="b">B.S Medical &amp; Aesthetic</div><div class="m">${titleText}: <strong>${escapeHtml(d.invNo)}</strong></div><div class="m">Order ID: <strong>${escapeHtml(d.orderId || "—")}</strong></div></div><div class="sep"></div><div class="m">تاريخ: <strong>${escapeHtml(d.invDate)}</strong></div><div class="m">وقت: <strong>${escapeHtml(d.invTime)}</strong></div><div class="sep"></div><div class="b">بيانات العميل</div><div class="m">الاسم: ${escapeHtml(d.custName)}</div><div class="m">الهاتف: ${escapeHtml(d.custPhone)}</div><div class="m">العنوان: ${escapeHtml(d.custAddress)}</div><div class="sep"></div><div class="b">الأصناف</div><div class="sep"></div>${items}<div class="sep"></div><div class="totRow"><span>قبل الخصم</span><span>${Number(d.totalBefore||0).toFixed(2)}</span></div><div class="totRow"><span>الخصم</span><span>${Number(d.rowDiscountSum||0).toFixed(2)}</span></div><div class="totRow"><span>خصم خاص</span><span>${Number(d.globalDiscount||0).toFixed(2)}</span></div><div class="totRow"><span>قبل التوصيل</span><span>${Number(d.afterAllDiscount||0).toFixed(2)}</span></div><div class="totRow"><span>التوصيل</span><span>${Number(d.deliveryFee||0) > 0 ? Number(d.deliveryFee).toFixed(2) : "مجاني"}</span></div><div class="totRow totMain"><span>الإجمالي</span><span>${Number(d.finalTotal||0).toFixed(2)}</span></div><div class="sep"></div><div class="m">${escapeHtml(d.words)}</div>${noteBlock}<div class="qr"><img src="${QR_SRC_MAIN}" onerror="this.onerror=null;this.src='${QR_SRC_FALLBACK}'" alt="QR"><div class="m">امسح الـ QR للتواصل / روابط Axentro</div></div><div class="foot">Axentro – All Rights Reserved 2024 ©<br>By Ahmed Hamouda</div></div></body></html>`;
 }
-function printThermal(mm){
-  const d = getInvoiceData();
-  openPrintWindow(buildThermalHtml(mm, d, isQuoteMode() ? "quote" : "invoice"), `${isQuoteMode() ? "عرض سعر" : "فاتورة"} ${d.invNo}`);
-}
+
 async function toDataURL(url){
   try{
     const abs = new URL(url, location.href).toString();
@@ -1221,9 +1423,7 @@ async function inlineAllImages(root){
     const src = img.getAttribute("src") || "";
     if(!src || src.startsWith("data:")) continue;
     let dataUrl = await toDataURL(src);
-    if(!dataUrl && (src.includes(QR_SRC_MAIN) || src === QR_SRC_MAIN)){
-      dataUrl = await toDataURL(QR_SRC_FALLBACK);
-    }
+    if(!dataUrl && (src.includes(QR_SRC_MAIN) || src === QR_SRC_MAIN)) dataUrl = await toDataURL(QR_SRC_FALLBACK);
     if(dataUrl) img.setAttribute("src", dataUrl);
   }
 }
@@ -1232,6 +1432,21 @@ function buildA4FragmentForPdf(d, mode){
   const style = (full.match(/<style>([\s\S]*?)<\/style>/i) || [,""])[1];
   const body  = (full.match(/<body[^>]*>([\s\S]*?)<\/body>/i) || [,""])[1];
   return `<div><style>${style}</style>${body}</div>`;
+}
+function openPrintWindowSafe(html, title){
+  const w = window.open("", "_blank");
+  if(!w){ alert("Pop-up blocked. اسمح بفتح النوافذ المنبثقة."); return; }
+  w.document.open(); w.document.write(html); w.document.close();
+  try{ w.document.title = title || "فاتورة"; }catch(e){}
+  w.onload = function(){ w.focus(); setTimeout(()=> w.print(), 250); };
+}
+function exportA4(){
+  const d = getInvoiceData();
+  openPrintWindowSafe(buildA4Html(d, isQuoteMode() ? "quote" : "invoice"), `${isQuoteMode() ? "عرض سعر" : "فاتورة"} ${d.invNo}`);
+}
+function printThermal(mm){
+  const d = getInvoiceData();
+  openPrintWindowSafe(buildThermalHtml(mm, d, isQuoteMode() ? "quote" : "invoice"), `${isQuoteMode() ? "عرض سعر" : "فاتورة"} ${d.invNo}`);
 }
 async function savePdfA4(mode){
   const d = getInvoiceData();
@@ -1248,7 +1463,13 @@ async function savePdfA4(mode){
   document.body.appendChild(holder);
   await new Promise(r=> setTimeout(r, 150));
   await inlineAllImages(holder);
-  const opt = { margin: 10, filename, image: { type: "jpeg", quality: 0.98 }, html2canvas: { scale: 2, useCORS: true, allowTaint: true, backgroundColor: "#ffffff" }, jsPDF: { unit: "mm", format: "a4", orientation: "portrait" } };
+  const opt = {
+    margin: 10,
+    filename,
+    image: { type: "jpeg", quality: 0.98 },
+    html2canvas: { scale: 2, useCORS: true, allowTaint: true, backgroundColor: "#ffffff" },
+    jsPDF: { unit: "mm", format: "a4", orientation: "portrait" }
+  };
   try{ await html2pdf().set(opt).from(holder).save(); }
   catch(e){ console.error(e); alert("فشل حفظ PDF"); }
   finally{ holder.remove(); }
@@ -1283,7 +1504,7 @@ if(sessionStorage.getItem("BS_ADMIN_OK") === "1"){
 addRow(true);
 refreshRowNumbers();
 calcGrand();
-renderOrderStatusInfo_(null);
+renderOrderStatusInfo_(null, null);
 </script>
 </body>
 </html>

@@ -308,24 +308,6 @@
       color:#0f172a;font-weight:1000;line-height:1.7;
       display:none;
     }
-
-    .totalsMini{
-      margin-top:12px;
-      display:flex;
-      flex-direction:column;
-      gap:8px;
-    }
-    .totalsMini .line{
-      display:flex;align-items:center;justify-content:space-between;gap:10px;
-      padding:10px 12px;border:1px solid var(--stroke);border-radius:14px;
-      background:rgba(255,255,255,.95);font-weight:1000;
-      box-shadow: 0 8px 18px rgba(15,23,42,.05);
-    }
-    .totalsMini .line .k{ color:var(--muted); font-size:12px; }
-    .totalsMini .line.primary{
-      border-color: rgba(212,175,55,.55);
-      background: linear-gradient(135deg, rgba(212,175,55,.18), rgba(184,134,11,.14));
-    }
     .empty{
       padding:14px;
       border:1px dashed var(--stroke);
@@ -422,8 +404,6 @@
 
         <div id="cartBox" class="items"></div>
 
-        <div id="totalsMini" class="totalsMini"></div>
-
         <div class="note" id="note" role="status"></div>
 
         <div style="margin-top:10px;font-weight:1000">نوع الطلب</div>
@@ -485,9 +465,8 @@
 
   const LS_KEY   = "AX_CART_V1";
   const cartBox  = document.getElementById("cartBox");
-  const note       = document.getElementById("note");
-  const totalsMini = document.getElementById("totalsMini");
-  const ok         = document.getElementById("ok");
+  const note     = document.getElementById("note");
+  const ok       = document.getElementById("ok");
 
   const sendBtnDesktop = document.getElementById("sendOrder");
   const sendBtnMobile  = document.getElementById("sendOrderMobile");
@@ -517,7 +496,7 @@
 
   const PROD_CACHE_KEY = "AX_PRODUCTS_CACHE_V1";
   const PROD_CACHE_TS  = "AX_PRODUCTS_CACHE_TS_V1";
-  const CACHE_TTL_MS   = 60 * 1000;
+  const CACHE_TTL_MS   = 10 * 60 * 1000;
 
   let products = [];
 
@@ -604,34 +583,6 @@
     return products.find(x=>String(x.id)===String(pid)) || null;
   }
 
-  function getCartTotals(){
-    const cart = getCart();
-    let totalQty = 0;
-    let subtotal = 0;
-    cart.forEach(it=>{
-      const qty = Math.max(1, Number(it.qty)||1);
-      const p = findProduct(it.id);
-      const price = Number(p?.price || 0);
-      totalQty += qty;
-      subtotal += qty * price;
-    });
-    return { totalQty, subtotal };
-  }
-
-  function renderTotalsMini(){
-    if(!totalsMini) return;
-    const cart = getCart();
-    if(!cart.length){
-      totalsMini.innerHTML = "";
-      return;
-    }
-    const { totalQty, subtotal } = getCartTotals();
-    totalsMini.innerHTML = `
-      <div class="line"><span class="k">إجمالي القطع</span><span>${totalQty}</span></div>
-      <div class="line primary"><span class="k">إجمالي الطلب المبدئي</span><span>${subtotal.toFixed(2)} جنيه</span></div>
-    `;
-  }
-
   function updateSendButtonsState(){
     const hasItems = getCart().length > 0;
     const disabled = !hasItems;
@@ -656,8 +607,7 @@
         id: it.id,
         name: "منتج غير متاح (تم تحديث الكتالوج)",
         category: "—",
-        availability: "Unknown",
-        price: 0
+        availability: "Unknown"
       };
 
       const row = document.createElement("div");
@@ -676,9 +626,6 @@
               <span class="status ${statusClass(safe.availability)}">${escapeHtml(safe.availability)}</span> •
               ${escapeHtml(safe.id)}
             </div>
-            <div style="margin-top:6px;font-weight:1000">${Number(safe.price||0).toFixed(2)} جنيه <span style="color:var(--muted);font-size:12px">× ${Number(it.qty)||1}</span></div>
-            <div style="margin-top:4px;color:#0f172a;font-weight:1000">الإجمالي: ${(Number(safe.price||0)*(Number(it.qty)||1)).toFixed(2)} جنيه
-            </div>
           </div>
         </div>
 
@@ -695,7 +642,6 @@
       cartBox.appendChild(row);
     });
 
-    renderTotalsMini();
     updateSendButtonsState();
   }
 
@@ -854,9 +800,9 @@
     return { ok:true, msg:"" };
   }
 
-  function buildMsg(savedOrder){
+  function buildMsg(){
     const cart = getCart();
-    const orderId = savedOrder?.order_id || getStableOrderId();
+    const orderId = getStableOrderId();
     const type = getType();
 
     const name = (nameEl.value||"").trim();
@@ -868,7 +814,6 @@
     const tOnly = formatTimeOnly12(now);
 
     let totalQty = 0;
-    let subtotal = 0;
 
     const lines = [];
     lines.push("🧾 طلب جديد — B.S Medical & Aesthetic");
@@ -893,19 +838,13 @@
       const pr = findProduct(it.id);
       const safeName = pr?.name ? String(pr.name).trim() : "اسم المنتج";
       const qty = Number(it.qty)||1;
-      const price = Number(pr?.price || 0);
-      const lineTotal = qty * price;
       totalQty += qty;
-      subtotal += lineTotal;
-      lines.push(`• ${it.id} | ${safeName} | الكمية: ${qty} | السعر: ${price.toFixed(2)} | الإجمالي: ${lineTotal.toFixed(2)}`);
+      lines.push(`• ${it.id} | ${safeName} | الكمية: ${qty}`);
     });
 
     lines.push("");
     lines.push("🔢 إجمالي القطع:");
     lines.push(String(totalQty));
-    lines.push("");
-    lines.push("💰 الإجمالي المبدئي:");
-    lines.push(`${subtotal.toFixed(2)} جنيه`);
     lines.push("");
     lines.push("━━━━━━━━━━━━━━━━━━━━━━");
     lines.push("👤 بيانات العميل:");
@@ -994,39 +933,6 @@
     }
   }
 
-  async function createOrderRequest(){
-    const cart = getCart();
-    const payload = {
-      action: "createOrder",
-      name: (nameEl.value||"").trim(),
-      phone: (phoneEl.value||"").trim(),
-      address: (addressEl.value||"").trim(),
-      orderType: getType(),
-      items: cart.map(it=>{
-        const p = findProduct(it.id);
-        return {
-          id: String(it.id||""),
-          sku: String(it.id||""),
-          name: String(p?.name || ""),
-          price: Number(p?.price || 0),
-          qty: Math.max(1, Number(it.qty)||1)
-        };
-      })
-    };
-
-    const res = await fetch(API_URL, {
-      method: "POST",
-      cache: "no-store",
-      headers: { "Content-Type": "text/plain;charset=utf-8" },
-      body: JSON.stringify(payload)
-    });
-
-    if(!res.ok) throw new Error("HTTP " + res.status);
-    const data = await res.json();
-    if(!data || data.ok !== true || !data.order_id) throw new Error(data?.error || "تعذر حفظ الطلب");
-    return data;
-  }
-
   function clearCartAll(){
     setCart([]);
     renderCart();
@@ -1036,27 +942,26 @@
     showToast("تم تفريغ السلة");
   }
 
-  
-async function sendOrderFlow(btnRef){
-  const v = validateAndMark();
-  if(!v.ok){
-    showToast(v.msg);
-    return;
-  }
+  async function sendOrderFlow(btnRef){
+    const v = validateAndMark();
+    if(!v.ok){
+      showToast(v.msg);
+      return;
+    }
 
-  const oldText = btnRef.textContent;
-  if(sendBtnDesktop) sendBtnDesktop.disabled = true;
-  if(sendBtnMobile) sendBtnMobile.disabled = true;
-  if(sendBtnDesktop) sendBtnDesktop.textContent = "جارٍ حفظ الطلب...";
-  if(sendBtnMobile) sendBtnMobile.textContent = "جارٍ حفظ الطلب...";
+    const oldText = btnRef.textContent;
+    btnRef.disabled = true;
+    btnRef.textContent = "جارٍ فتح واتساب...";
 
-  try{
-    const saved = await createOrderRequest();
-    const msg = buildMsg(saved);
-    try{ sessionStorage.setItem("BS_LAST_WA_MSG", msg); }catch(e){}
+    const msg = buildMsg();
+    const waUrl = `https://wa.me/${OWNER_WA}?text=${encodeURIComponent(msg)}`;
+    window.open(waUrl, "_blank");
 
     ok.style.display="block";
-    ok.textContent = "✅ تم حفظ الطلب بنجاح. سيتم تحويلك الآن إلى صفحة التأكيد.";
+    ok.textContent =
+      (getType()==="جملة")
+      ? "✅ تم إرسال طلب الجملة بنجاح. سيتم مراجعة الطلب والتواصل معك."
+      : "✅ تم إرسال الطلب بنجاح. سيتم التواصل لتأكيده وإرسال الفاتورة.";
 
     setCart([]);
     renderCart();
@@ -1064,20 +969,13 @@ async function sendOrderFlow(btnRef){
     refreshOrderIdUI();
 
     setTimeout(()=>{
-      window.location.href = `thanks.html?order_id=${encodeURIComponent(saved.order_id)}`;
-    }, 700);
-  }catch(err){
-    console.error(err);
-    showToast(err?.message || "تعذر حفظ الطلب. حاول مرة أخرى.", 2600);
-    ok.style.display="block";
-    ok.textContent = "⚠️ تعذر حفظ الطلب الآن. لم يتم إرسال الطلب.";
-    if(sendBtnDesktop){ sendBtnDesktop.disabled = false; sendBtnDesktop.textContent = oldText; }
-    if(sendBtnMobile){ sendBtnMobile.disabled = false; sendBtnMobile.textContent = oldText; }
-    return;
+      btnRef.disabled = false;
+      btnRef.textContent = oldText;
+      window.location.href = "./";
+    }, 1200);
   }
-}
 
-document.querySelectorAll("input[name='type']").forEach(r=> r.addEventListener("change", setNote));
+  document.querySelectorAll("input[name='type']").forEach(r=> r.addEventListener("change", setNote));
   setNote();
 
   clearDesktop?.addEventListener("click", clearCartAll);
