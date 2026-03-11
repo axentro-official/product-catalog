@@ -4,50 +4,574 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>تم استلام الطلب</title>
+
   <style>
-    :root{--bg:#ffffff;--text:#0f172a;--muted:#64748b;--stroke:#e6e8ee;--gold1:#D4AF37;--gold2:#B8860B;--radius:18px;--shadow:0 18px 50px rgba(15,23,42,.10);}
-    *{box-sizing:border-box} body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Tahoma,Arial;color:var(--text);background:linear-gradient(180deg,var(--bg),#f7f8fb);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:18px}
-    .card{width:min(720px,100%);background:#fff;border:1px solid var(--stroke);border-radius:24px;box-shadow:var(--shadow);padding:24px;text-align:center}
-    .badge{width:74px;height:74px;border-radius:999px;margin:0 auto 14px;display:grid;place-items:center;font-size:34px;background:linear-gradient(135deg,rgba(212,175,55,.22),rgba(184,134,11,.18));border:1px solid rgba(212,175,55,.45)}
-    h1{margin:0 0 10px;font-size:28px} p{margin:0;color:var(--muted);line-height:1.8}
-    .orderBox{margin-top:18px;padding:14px;border-radius:16px;border:1px solid var(--stroke);background:#fafafa}
-    .orderId{font-size:24px;font-weight:1000;letter-spacing:.4px}
-    .btns{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:18px}
-    .btn{padding:12px 16px;border-radius:16px;border:1px solid var(--stroke);background:#fff;color:var(--text);font-weight:1000;text-decoration:none;cursor:pointer}
-    .btn.primary{border-color:rgba(212,175,55,.6);background:linear-gradient(135deg, rgba(212,175,55,.24), rgba(184,134,11,.18))}
-    .mini{margin-top:14px;font-size:13px;color:var(--muted)}
+    :root{
+      --bg:#ffffff;
+      --panel:#ffffff;
+      --text:#0f172a;
+      --muted:#64748b;
+      --stroke:#e6e8ee;
+      --stroke2:#f1f5f9;
+
+      --gold1:#D4AF37;
+      --gold2:#B8860B;
+      --goldSoft:rgba(212,175,55,.18);
+      --goldSoft2:rgba(184,134,11,.12);
+
+      --ok:#16a34a;
+      --shadow:0 18px 50px rgba(15,23,42,.10);
+      --radius:20px;
+
+      --container-max:860px;
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
+
+    body{
+      margin:0;
+      font-family:system-ui,-apple-system,"Segoe UI",Tahoma,Arial;
+      color:var(--text);
+      background:
+        radial-gradient(900px 480px at 10% 10%, var(--goldSoft), transparent 60%),
+        radial-gradient(760px 520px at 90% 20%, rgba(15,23,42,.05), transparent 60%),
+        linear-gradient(180deg, var(--bg), #f7f8fb);
+      min-height:100vh;
+      -webkit-font-smoothing:antialiased;
+      display:flex;
+      flex-direction:column;
+    }
+
+    a{color:inherit;text-decoration:none}
+
+    .topbar{
+      position:sticky;
+      top:0;
+      z-index:20;
+      display:flex;
+      gap:12px;
+      align-items:center;
+      justify-content:space-between;
+      padding:14px 16px;
+      background:linear-gradient(180deg, rgba(255,255,255,.92), rgba(255,255,255,.70));
+      border-bottom:1px solid var(--stroke);
+      backdrop-filter:blur(10px);
+    }
+
+    .brand{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      min-width:0;
+    }
+
+    .logo{
+      width:44px;
+      height:44px;
+      border-radius:999px;
+      display:grid;
+      place-items:center;
+      background:linear-gradient(135deg, rgba(212,175,55,.18), rgba(184,134,11,.12));
+      border:1px solid rgba(212,175,55,.35);
+      box-shadow:0 10px 26px rgba(15,23,42,.10);
+      overflow:hidden;
+      padding:6px;
+      flex:0 0 auto;
+    }
+
+    .logo img{
+      width:100%;
+      height:100%;
+      object-fit:contain;
+      display:block;
+    }
+
+    .brand-text{min-width:0}
+    .brand-title{
+      font-size:16px;
+      font-weight:1000;
+      letter-spacing:.2px;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .brand-sub{
+      font-size:12px;
+      color:var(--muted);
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+
+    .actions{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+    }
+
+    .backBtn{
+      min-width:220px;
+      padding:12px 16px;
+      border-radius:18px;
+      border:1px solid rgba(212,175,55,.55);
+      background:linear-gradient(135deg, rgba(212,175,55,.22), rgba(184,134,11,.18));
+      color:#0f172a;
+      font-weight:1000;
+      box-shadow:0 12px 22px rgba(212,175,55,.14);
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:10px;
+      transition:transform .15s ease, box-shadow .15s ease, filter .15s ease;
+      text-align:center;
+    }
+
+    .backBtn:hover{filter:brightness(1.02)}
+    .backBtn:active{transform:translateY(1px)}
+
+    .backIcon{
+      width:34px;
+      height:34px;
+      border-radius:999px;
+      border:1px solid rgba(212,175,55,.45);
+      background:rgba(255,255,255,.75);
+      display:grid;
+      place-items:center;
+      font-size:16px;
+      line-height:1;
+      flex:0 0 auto;
+    }
+
+    main{
+      flex:1;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:24px 16px;
+    }
+
+    .wrap{
+      width:min(var(--container-max), 100%);
+      margin:0 auto;
+    }
+
+    .card{
+      background:linear-gradient(180deg, rgba(255,255,255,.96), rgba(255,255,255,.92));
+      border:1px solid var(--stroke);
+      border-radius:28px;
+      box-shadow:var(--shadow);
+      padding:28px 22px;
+      text-align:center;
+      overflow:hidden;
+      position:relative;
+    }
+
+    .card::before{
+      content:"";
+      position:absolute;
+      inset:0 auto auto 0;
+      width:100%;
+      height:5px;
+      background:linear-gradient(90deg, rgba(212,175,55,.20), rgba(184,134,11,.45), rgba(212,175,55,.20));
+    }
+
+    .successBadge{
+      width:88px;
+      height:88px;
+      margin:0 auto 16px;
+      border-radius:999px;
+      display:grid;
+      place-items:center;
+      background:linear-gradient(135deg, rgba(22,163,74,.12), rgba(212,175,55,.18));
+      border:1px solid rgba(22,163,74,.18);
+      box-shadow:0 18px 32px rgba(15,23,42,.08);
+      font-size:40px;
+    }
+
+    .title{
+      margin:0;
+      font-size:32px;
+      font-weight:1000;
+      line-height:1.2;
+      color:#0f172a;
+    }
+
+    .subtitle{
+      margin:12px auto 0;
+      max-width:640px;
+      color:var(--muted);
+      font-size:15px;
+      line-height:1.9;
+      font-weight:700;
+    }
+
+    .orderPanel{
+      margin-top:22px;
+      padding:18px;
+      border:1px solid var(--stroke);
+      border-radius:20px;
+      background:linear-gradient(180deg, rgba(250,250,252,.95), rgba(255,255,255,.95));
+      box-shadow:0 10px 22px rgba(15,23,42,.05);
+    }
+
+    .orderLabel{
+      font-size:13px;
+      color:var(--muted);
+      font-weight:900;
+      margin-bottom:8px;
+    }
+
+    .orderId{
+      font-size:28px;
+      font-weight:1000;
+      letter-spacing:.4px;
+      word-break:break-word;
+      color:#111827;
+    }
+
+    .helperBox{
+      margin-top:16px;
+      padding:14px 16px;
+      border-radius:18px;
+      border:1px solid rgba(212,175,55,.32);
+      background:rgba(212,175,55,.08);
+      color:#1f2937;
+      font-size:14px;
+      line-height:1.9;
+      font-weight:800;
+    }
+
+    .btns{
+      margin-top:22px;
+      display:grid;
+      grid-template-columns:repeat(2, minmax(0,1fr));
+      gap:12px;
+    }
+
+    .btn{
+      min-height:54px;
+      padding:13px 16px;
+      border-radius:18px;
+      border:1px solid var(--stroke);
+      background:rgba(255,255,255,.95);
+      color:var(--text);
+      font-weight:1000;
+      font-size:15px;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:10px;
+      cursor:pointer;
+      box-shadow:0 10px 22px rgba(15,23,42,.06);
+      transition:transform .15s ease, filter .15s ease, box-shadow .15s ease;
+    }
+
+    .btn:hover{filter:brightness(1.01)}
+    .btn:active{transform:translateY(1px)}
+
+    .btn.primary{
+      border-color:rgba(212,175,55,.65);
+      background:linear-gradient(135deg, rgba(212,175,55,.28), rgba(184,134,11,.22));
+      box-shadow:0 12px 22px rgba(212,175,55,.14);
+    }
+
+    .btnIcon{
+      width:30px;
+      height:30px;
+      border-radius:999px;
+      background:rgba(255,255,255,.72);
+      border:1px solid rgba(212,175,55,.30);
+      display:grid;
+      place-items:center;
+      flex:0 0 auto;
+      font-size:14px;
+    }
+
+    .miniNote{
+      margin-top:16px;
+      color:var(--muted);
+      font-size:13px;
+      line-height:1.9;
+      font-weight:800;
+    }
+
+    .site-footer{
+      margin-top:auto;
+      padding:18px 16px 22px;
+      text-align:center;
+      color:var(--muted);
+      border-top:1px solid var(--stroke);
+      background:rgba(255,255,255,.78);
+      backdrop-filter:blur(10px);
+      padding-bottom:calc(22px + env(safe-area-inset-bottom));
+    }
+
+    .site-footer .line1{
+      font-weight:1000;
+      color:#0f172a;
+    }
+
+    .site-footer .line2{
+      margin-top:6px;
+      font-weight:900;
+    }
+
+    .footerQr{
+      margin-top:16px;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap:8px;
+    }
+
+    .footerQrLink{
+      display:inline-flex;
+      flex-direction:column;
+      align-items:center;
+      gap:8px;
+      text-decoration:none;
+    }
+
+    .footerQrImg{
+      width:86px;
+      height:86px;
+      object-fit:contain;
+      border-radius:14px;
+      border:1px solid rgba(212,175,55,.30);
+      background:#fff;
+      box-shadow:0 10px 22px rgba(15,23,42,.08);
+      padding:4px;
+    }
+
+    .footerQrText{
+      font-size:12px;
+      font-weight:900;
+      color:#334155;
+    }
+
+    .toast{
+      position:fixed;
+      left:16px;
+      bottom:16px;
+      z-index:999;
+      display:none;
+      max-width:min(90vw, 420px);
+      padding:12px 14px;
+      border-radius:14px;
+      background:rgba(15,23,42,.92);
+      color:#fff;
+      font-weight:900;
+      box-shadow:0 12px 24px rgba(15,23,42,.20);
+    }
+
+    :focus{
+      outline:3px solid rgba(212,175,55,.25);
+      outline-offset:3px;
+    }
+
+    @media (max-width:720px){
+      .topbar{
+        flex-direction:column;
+        align-items:stretch;
+        gap:10px;
+      }
+
+      .actions{
+        justify-content:stretch;
+      }
+
+      .backBtn{
+        width:100%;
+        min-width:0;
+      }
+
+      main{
+        align-items:flex-start;
+        padding:16px 12px 18px;
+      }
+
+      .card{
+        padding:24px 16px;
+        border-radius:24px;
+      }
+
+      .successBadge{
+        width:80px;
+        height:80px;
+        font-size:36px;
+        margin-bottom:14px;
+      }
+
+      .title{
+        font-size:26px;
+      }
+
+      .subtitle{
+        font-size:14px;
+      }
+
+      .orderId{
+        font-size:24px;
+      }
+
+      .btns{
+        grid-template-columns:1fr;
+      }
+    }
+
+    @media (max-width:420px){
+      .brand-title{font-size:15px}
+      .brand-sub{font-size:11px}
+      .title{font-size:24px}
+      .orderId{font-size:22px}
+      .footerQrImg{
+        width:80px;
+        height:80px;
+      }
+    }
   </style>
 </head>
+
 <body>
-  <div class="card">
-    <div class="badge">✓</div>
-    <h1>تم استلام طلبك بنجاح</h1>
-    <p>تم حفظ الطلب في النظام. احتفظ برقم الطلب التالي للمتابعة أو للمراجعة داخل لوحة الفواتير.</p>
-    <div class="orderBox">
-      <div style="font-size:13px;color:var(--muted);margin-bottom:6px">رقم الطلب</div>
-      <div id="orderId" class="orderId">—</div>
+  <header class="topbar">
+    <div class="brand">
+      <div class="logo">
+        <img src="images/bslogo.webp" alt="BS Logo"
+             onerror="this.onerror=null;this.style.display='none';this.parentElement.textContent='BS'">
+      </div>
+
+      <div class="brand-text">
+        <div class="brand-title">B.S Medical &amp; Aesthetic</div>
+        <div class="brand-sub">شكرًا لك، تم استلام طلبك</div>
+      </div>
     </div>
-    <div class="btns">
-      <button id="copyBtn" class="btn primary" type="button">نسخ رقم الطلب</button>
-      <a class="btn" href="./">الرجوع للكتالوج</a>
-      <button id="waBtn" class="btn" type="button">فتح واتساب</button>
+
+    <div class="actions">
+      <a class="backBtn" href="./" aria-label="رجوع للكتالوج">
+        <span class="backIcon">←</span>
+        <span>رجوع للكتالوج</span>
+      </a>
     </div>
-    <div class="mini">يمكنك استخدام رقم الطلب نفسه داخل لوحة إدارة الفواتير لجلب الطلب مباشرة.</div>
-  </div>
-<script>
-  const OWNER_WA = "201146476993";
-  const params = new URLSearchParams(location.search);
-  const orderId = params.get("order_id") || "—";
-  document.getElementById("orderId").textContent = orderId;
-  document.getElementById("copyBtn").addEventListener("click", async ()=>{
-    try{ await navigator.clipboard.writeText(orderId); alert("تم نسخ رقم الطلب"); }
-    catch(e){}
-  });
-  document.getElementById("waBtn").addEventListener("click", ()=>{
-    const msg = sessionStorage.getItem("BS_LAST_WA_MSG") || `مرحبا، أريد المتابعة على الطلب رقم ${orderId}`;
-    const url = `https://wa.me/${OWNER_WA}?text=${encodeURIComponent(msg)}`;
-    window.open(url, "_blank");
-  });
-</script>
+  </header>
+
+  <main>
+    <div class="wrap">
+      <section class="card" aria-live="polite">
+        <div class="successBadge">✓</div>
+
+        <h1 class="title">تم استلام طلبك بنجاح</h1>
+
+        <p class="subtitle">
+          شكرًا لتسوقك معنا. تم تسجيل طلبك بنجاح، وسيتم التواصل معك قريبًا لتأكيد التفاصيل واستكمال المتابعة.
+        </p>
+
+        <div class="orderPanel">
+          <div class="orderLabel">رقم الطلب</div>
+          <div id="orderId" class="orderId">—</div>
+        </div>
+
+        <div class="helperBox">
+          احتفظ برقم الطلب لاستخدامه عند المتابعة أو عند الاستفسار عن حالة الطلب لاحقًا.
+        </div>
+
+        <div class="btns">
+          <button id="copyBtn" class="btn primary" type="button">
+            <span class="btnIcon">⧉</span>
+            <span>نسخ رقم الطلب</span>
+          </button>
+
+          <a class="btn" href="./">
+            <span class="btnIcon">←</span>
+            <span>الرجوع للكتالوج</span>
+          </a>
+        </div>
+
+        <div class="miniNote">
+          يمكنك العودة للكتالوج الآن واستكمال التصفح أو الاحتفاظ برقم الطلب للرجوع إليه لاحقًا.
+        </div>
+      </section>
+    </div>
+  </main>
+  <footer class="site-footer">
+    <div class="line1">Axentro – All Rights Reserved 2024 ©</div>
+    <div class="line2">By Ahmed Hamouda</div>
+
+    <div class="footerQr">
+      <a
+        class="footerQrLink"
+        href="https://axentro-official.github.io/axentro-website/links.html"
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label="Scan me"
+      >
+        <img
+          class="footerQrImg"
+          src="images/qr-links.png"
+          alt="QR Code"
+          onerror="this.onerror=null;this.style.display='none'"
+        >
+        <span class="footerQrText">Scan me</span>
+      </a>
+    </div>
+  </footer>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    const params = new URLSearchParams(location.search);
+    const orderId = params.get("order_id") || sessionStorage.getItem("BS_LAST_ORDER_ID") || "—";
+
+    const orderIdEl = document.getElementById("orderId");
+    const copyBtn   = document.getElementById("copyBtn");
+    const toastEl   = document.getElementById("toast");
+
+    orderIdEl.textContent = orderId;
+
+    function showToast(msg){
+      toastEl.textContent = msg;
+      toastEl.style.display = "block";
+      clearTimeout(showToast._t);
+      showToast._t = setTimeout(()=>{
+        toastEl.style.display = "none";
+      }, 2200);
+    }
+
+    async function copyText(text){
+      try{
+        await navigator.clipboard.writeText(text);
+        return true;
+      }catch(e){
+        try{
+          const ta = document.createElement("textarea");
+          ta.value = text;
+          ta.style.position = "fixed";
+          ta.style.left = "-9999px";
+          document.body.appendChild(ta);
+          ta.focus();
+          ta.select();
+          const ok = document.execCommand("copy");
+          document.body.removeChild(ta);
+          return !!ok;
+        }catch(err){
+          return false;
+        }
+      }
+    }
+
+    copyBtn.addEventListener("click", async ()=>{
+      if(!orderId || orderId === "—"){
+        showToast("لا يوجد رقم طلب للنسخ");
+        return;
+      }
+
+      const ok = await copyText(orderId);
+      if(ok) showToast("تم نسخ رقم الطلب");
+      else showToast("تعذر نسخ رقم الطلب");
+    });
+  </script>
 </body>
 </html>
+  
