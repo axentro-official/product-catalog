@@ -23,7 +23,7 @@
       --shadow:0 18px 50px rgba(15,23,42,.10);
       --radius:20px;
 
-      --container-max:860px;
+      --container-max:960px;
     }
 
     *{box-sizing:border-box}
@@ -88,6 +88,7 @@
     }
 
     .brand-text{min-width:0}
+
     .brand-title{
       font-size:16px;
       font-weight:1000;
@@ -96,6 +97,7 @@
       overflow:hidden;
       text-overflow:ellipsis;
     }
+
     .brand-sub{
       font-size:12px;
       color:var(--muted);
@@ -147,9 +149,6 @@
 
     main{
       flex:1;
-      display:flex;
-      align-items:center;
-      justify-content:center;
       padding:24px 16px;
     }
 
@@ -158,7 +157,7 @@
       margin:0 auto;
     }
 
-    .card{
+    .heroCard{
       background:linear-gradient(180deg, rgba(255,255,255,.96), rgba(255,255,255,.92));
       border:1px solid var(--stroke);
       border-radius:28px;
@@ -169,7 +168,7 @@
       position:relative;
     }
 
-    .card::before{
+    .heroCard::before{
       content:"";
       position:absolute;
       inset:0 auto auto 0;
@@ -201,7 +200,7 @@
 
     .subtitle{
       margin:12px auto 0;
-      max-width:640px;
+      max-width:680px;
       color:var(--muted);
       font-size:15px;
       line-height:1.9;
@@ -244,6 +243,170 @@
       font-weight:800;
     }
 
+    .summaryGrid{
+      margin-top:18px;
+      display:grid;
+      grid-template-columns:repeat(3, minmax(0,1fr));
+      gap:12px;
+    }
+
+    .summaryBox{
+      border:1px solid var(--stroke);
+      border-radius:18px;
+      background:rgba(255,255,255,.95);
+      padding:14px 12px;
+      box-shadow:0 8px 18px rgba(15,23,42,.05);
+    }
+
+    .summaryLabel{
+      font-size:12px;
+      color:var(--muted);
+      font-weight:900;
+      margin-bottom:6px;
+    }
+
+    .summaryValue{
+      font-size:18px;
+      font-weight:1000;
+      color:#0f172a;
+    }
+
+    .amountWords{
+      margin-top:16px;
+      padding:14px 16px;
+      border-radius:18px;
+      border:1px solid rgba(212,175,55,.28);
+      background:linear-gradient(135deg, rgba(212,175,55,.10), rgba(255,255,255,.96));
+      color:#334155;
+      font-size:14px;
+      line-height:1.9;
+      font-weight:1000;
+      text-align:center;
+    }
+
+    .shippingNote{
+      margin-top:12px;
+      padding:14px 16px;
+      border-radius:18px;
+      border:1px dashed rgba(212,175,55,.45);
+      background:rgba(255,255,255,.94);
+      color:#475569;
+      font-size:13px;
+      line-height:1.9;
+      font-weight:900;
+      text-align:center;
+    }
+
+    .itemsCard{
+      margin-top:18px;
+      background:linear-gradient(180deg, rgba(255,255,255,.96), rgba(255,255,255,.92));
+      border:1px solid var(--stroke);
+      border-radius:24px;
+      box-shadow:var(--shadow);
+      padding:18px;
+    }
+
+    .sectionTitle{
+      font-size:20px;
+      font-weight:1000;
+      margin:0 0 12px;
+      color:#0f172a;
+    }
+
+    .itemsList{
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+    }
+
+    .item{
+      border:1px solid var(--stroke);
+      background:rgba(255,255,255,.95);
+      border-radius:18px;
+      padding:12px;
+      display:flex;
+      gap:12px;
+      align-items:flex-start;
+      justify-content:space-between;
+      flex-wrap:wrap;
+      box-shadow:0 8px 18px rgba(15,23,42,.05);
+    }
+
+    .itemMain{
+      display:flex;
+      align-items:flex-start;
+      gap:12px;
+      flex:1;
+      min-width:0;
+    }
+
+    .thumb{
+      width:72px;
+      height:72px;
+      border-radius:16px;
+      border:1px solid var(--stroke);
+      object-fit:cover;
+      background:#fff;
+      flex:0 0 auto;
+    }
+
+    .itemInfo{
+      flex:1;
+      min-width:0;
+    }
+
+    .itemName{
+      font-size:15px;
+      font-weight:1000;
+      color:#0f172a;
+      line-height:1.7;
+    }
+
+    .itemMeta{
+      margin-top:4px;
+      font-size:12px;
+      color:var(--muted);
+      line-height:1.8;
+      font-weight:900;
+    }
+
+    .status{
+      font-weight:1000;
+    }
+
+    .st-available{color:#16a34a}
+    .st-low{color:#d97706}
+    .st-out{color:#dc2626}
+    .st-unknown{color:#475569}
+
+    .itemPrices{
+      width:100%;
+      margin-top:10px;
+      display:grid;
+      grid-template-columns:repeat(3, minmax(0,1fr));
+      gap:8px;
+    }
+
+    .priceBox{
+      border:1px solid var(--stroke);
+      border-radius:14px;
+      background:rgba(248,250,252,.82);
+      padding:10px;
+      text-align:center;
+    }
+
+    .priceLabel{
+      font-size:11px;
+      color:var(--muted);
+      font-weight:900;
+      margin-bottom:6px;
+    }
+
+    .priceValue{
+      font-size:14px;
+      font-weight:1000;
+      color:#0f172a;
+    }
     .btns{
       margin-top:22px;
       display:grid;
@@ -296,6 +459,7 @@
       font-size:13px;
       line-height:1.9;
       font-weight:800;
+      text-align:center;
     }
 
     .site-footer{
@@ -389,11 +553,10 @@
       }
 
       main{
-        align-items:flex-start;
         padding:16px 12px 18px;
       }
 
-      .card{
+      .heroCard{
         padding:24px 16px;
         border-radius:24px;
       }
@@ -415,6 +578,14 @@
 
       .orderId{
         font-size:24px;
+      }
+
+      .summaryGrid{
+        grid-template-columns:1fr;
+      }
+
+      .itemPrices{
+        grid-template-columns:1fr;
       }
 
       .btns{
@@ -459,13 +630,13 @@
 
   <main>
     <div class="wrap">
-      <section class="card" aria-live="polite">
+      <section class="heroCard" aria-live="polite">
         <div class="successBadge">✓</div>
 
         <h1 class="title">تم استلام طلبك بنجاح</h1>
 
         <p class="subtitle">
-          شكرًا لتسوقك معنا. تم تسجيل طلبك بنجاح، وسيتم التواصل معك قريبًا لتأكيد التفاصيل واستكمال المتابعة.
+          شكرًا لتسوقك معنا. تم تسجيل طلبك بنجاح، وسيتم التواصل معك قريبًا لتأكيد التفاصيل ومراجعة بيانات الشحن.
         </p>
 
         <div class="orderPanel">
@@ -475,6 +646,29 @@
 
         <div class="helperBox">
           احتفظ برقم الطلب لاستخدامه عند المتابعة أو عند الاستفسار عن حالة الطلب لاحقًا.
+        </div>
+
+        <div class="summaryGrid">
+          <div class="summaryBox">
+            <div class="summaryLabel">عدد الأصناف</div>
+            <div id="itemsCount" class="summaryValue">0</div>
+          </div>
+
+          <div class="summaryBox">
+            <div class="summaryLabel">إجمالي الكميات</div>
+            <div id="qtyCount" class="summaryValue">0</div>
+          </div>
+
+          <div class="summaryBox">
+            <div class="summaryLabel">الإجمالي الحالي</div>
+            <div id="grandTotal" class="summaryValue">0.00 EGP</div>
+          </div>
+        </div>
+
+        <div id="amountWords" class="amountWords">صفر جنيه مصري فقط لا غير</div>
+
+        <div id="shippingNote" class="shippingNote">
+          رسوم الشحن يتم تحديدها بعد مراجعة الطلب وفقًا للمنطقة وعنوان التسليم.
         </div>
 
         <div class="btns">
@@ -493,8 +687,14 @@
           يمكنك العودة للكتالوج الآن واستكمال التصفح أو الاحتفاظ برقم الطلب للرجوع إليه لاحقًا.
         </div>
       </section>
+
+      <section class="itemsCard">
+        <h2 class="sectionTitle">تفاصيل الطلب</h2>
+        <div id="itemsList" class="itemsList"></div>
+      </section>
     </div>
   </main>
+
   <footer class="site-footer">
     <div class="line1">Axentro – All Rights Reserved 2024 ©</div>
     <div class="line2">By Ahmed Hamouda</div>
@@ -521,14 +721,17 @@
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
   <script>
-    const params = new URLSearchParams(location.search);
-    const orderId = params.get("order_id") || sessionStorage.getItem("BS_LAST_ORDER_ID") || "—";
+    const IMG_PLACEHOLDER = "https://via.placeholder.com/600x400?text=No+Image";
 
-    const orderIdEl = document.getElementById("orderId");
-    const copyBtn   = document.getElementById("copyBtn");
-    const toastEl   = document.getElementById("toast");
-
-    orderIdEl.textContent = orderId;
+    const orderIdEl      = document.getElementById("orderId");
+    const itemsCountEl   = document.getElementById("itemsCount");
+    const qtyCountEl     = document.getElementById("qtyCount");
+    const grandTotalEl   = document.getElementById("grandTotal");
+    const amountWordsEl  = document.getElementById("amountWords");
+    const shippingNoteEl = document.getElementById("shippingNote");
+    const itemsListEl    = document.getElementById("itemsList");
+    const copyBtn        = document.getElementById("copyBtn");
+    const toastEl        = document.getElementById("toast");
 
     function showToast(msg){
       toastEl.textContent = msg;
@@ -537,6 +740,166 @@
       showToast._t = setTimeout(()=>{
         toastEl.style.display = "none";
       }, 2200);
+    }
+
+    function money(n){
+      const v = Number(n || 0);
+      return isFinite(v) ? v : 0;
+    }
+
+    function formatEGP(n){
+      return `${money(n).toFixed(2)} EGP`;
+    }
+
+    function escapeHtml(s){
+      return String(s || "")
+        .replace(/&/g,"&amp;")
+        .replace(/</g,"&lt;")
+        .replace(/>/g,"&gt;")
+        .replace(/"/g,"&quot;");
+    }
+
+    function statusClass(av){
+      if(av === "Low stock") return "st-low";
+      if(av === "Out of stock") return "st-out";
+      if(av === "Available") return "st-available";
+      return "st-unknown";
+    }
+
+    function resolveImageById(id){
+      return `images/${id}.webp`;
+    }
+
+    function numberToArabicWords(number){
+      number = Math.round(Number(number) || 0);
+
+      if(number === 0){
+        return "صفر جنيه مصري فقط لا غير";
+      }
+
+      const ones = ["","واحد","اثنان","ثلاثة","أربعة","خمسة","ستة","سبعة","ثمانية","تسعة","عشرة","أحد عشر","اثنا عشر","ثلاثة عشر","أربعة عشر","خمسة عشر","ستة عشر","سبعة عشر","ثمانية عشر","تسعة عشر"];
+      const tens = ["","عشرة","عشرون","ثلاثون","أربعون","خمسون","ستون","سبعون","ثمانون","تسعون"];
+      const hundreds = ["","مائة","مائتان","ثلاثمائة","أربعمائة","خمسمائة","ستمائة","سبعمائة","ثمانمائة","تسعمائة"];
+
+      function subThousand(n){
+        n = Number(n);
+        if(n === 0) return "";
+        let out = [];
+        const h = Math.floor(n / 100);
+        const r = n % 100;
+
+        if(h) out.push(hundreds[h]);
+
+        if(r){
+          if(r < 20){
+            out.push(ones[r]);
+          }else{
+            const t = Math.floor(r / 10);
+            const o = r % 10;
+            if(o) out.push(ones[o] + " و " + tens[t]);
+            else out.push(tens[t]);
+          }
+        }
+
+        return out.join(" و ");
+      }
+
+      let parts = [];
+      const million  = Math.floor(number / 1000000);
+      const thousand = Math.floor((number % 1000000) / 1000);
+      const rest     = number % 1000;
+
+      if(million){
+        if(million === 1) parts.push("مليون");
+        else if(million === 2) parts.push("مليونان");
+        else parts.push(subThousand(million) + " مليون");
+      }
+
+      if(thousand){
+        if(thousand === 1) parts.push("ألف");
+        else if(thousand === 2) parts.push("ألفان");
+        else parts.push(subThousand(thousand) + " ألف");
+      }
+
+      if(rest){
+        parts.push(subThousand(rest));
+      }
+
+      return `${parts.join(" و ")} جنيه مصري فقط لا غير`;
+    }
+
+    function getSavedSummary(){
+      try{
+        const raw = sessionStorage.getItem("BS_LAST_ORDER_SUMMARY");
+        return raw ? JSON.parse(raw) : null;
+      }catch(e){
+        return null;
+      }
+    }
+
+    function renderItems(items){
+      itemsListEl.innerHTML = "";
+
+      if(!Array.isArray(items) || !items.length){
+        itemsListEl.innerHTML = `
+          <div class="item">
+            <div class="itemInfo">
+              <div class="itemName">تم استلام الطلب بنجاح</div>
+              <div class="itemMeta">سيتم التواصل معك قريبًا لتأكيد التفاصيل.</div>
+            </div>
+          </div>
+        `;
+        return;
+      }
+
+      items.forEach(it=>{
+        const sku = String(it.sku || it.id || "").trim();
+        const name = String(it.name || "منتج").trim();
+        const qty = Math.max(0, Number(it.qty || 0));
+        const unitPrice = money(it.unit_price || it.price || 0);
+        const lineTotal = money(it.line_total || (qty * unitPrice));
+        const availability = String(it.availability || "Available");
+
+        const html = `
+          <div class="item">
+            <div class="itemMain">
+              <img
+                class="thumb"
+                src="${resolveImageById(sku)}"
+                alt="${escapeHtml(name)}"
+                onerror="this.onerror=null;this.src='${IMG_PLACEHOLDER}'"
+              >
+
+              <div class="itemInfo">
+                <div class="itemName">${escapeHtml(name)}</div>
+                <div class="itemMeta">
+                  <span class="${statusClass(availability)} status">${escapeHtml(availability)}</span>
+                  ${sku ? ` • ${escapeHtml(sku)}` : ""}
+                </div>
+
+                <div class="itemPrices">
+                  <div class="priceBox">
+                    <div class="priceLabel">الكمية</div>
+                    <div class="priceValue">${qty}</div>
+                  </div>
+
+                  <div class="priceBox">
+                    <div class="priceLabel">سعر الوحدة</div>
+                    <div class="priceValue">${formatEGP(unitPrice)}</div>
+                  </div>
+
+                  <div class="priceBox">
+                    <div class="priceLabel">إجمالي الصنف</div>
+                    <div class="priceValue">${formatEGP(lineTotal)}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+
+        itemsListEl.insertAdjacentHTML("beforeend", html);
+      });
     }
 
     async function copyText(text){
@@ -561,6 +924,26 @@
       }
     }
 
+    const params = new URLSearchParams(location.search);
+    const savedSummary = getSavedSummary();
+
+    const fallbackOrderId = sessionStorage.getItem("BS_LAST_ORDER_ID") || "—";
+    const orderId = params.get("order_id") || savedSummary?.order_id || fallbackOrderId;
+    const total = money(savedSummary?.total || sessionStorage.getItem("BS_LAST_ORDER_TOTAL") || 0);
+    const totalItems = Number(savedSummary?.total_items || 0);
+    const totalQty = Number(savedSummary?.total_qty || 0);
+    const shippingNote = String(savedSummary?.shipping_note || "رسوم الشحن يتم تحديدها بعد مراجعة الطلب وفقًا للمنطقة وعنوان التسليم.");
+    const items = Array.isArray(savedSummary?.items) ? savedSummary.items : [];
+
+    orderIdEl.textContent = orderId || "—";
+    itemsCountEl.textContent = String(totalItems);
+    qtyCountEl.textContent = String(totalQty);
+    grandTotalEl.textContent = formatEGP(total);
+    amountWordsEl.textContent = numberToArabicWords(total);
+    shippingNoteEl.textContent = shippingNote;
+
+    renderItems(items);
+
     copyBtn.addEventListener("click", async ()=>{
       if(!orderId || orderId === "—"){
         showToast("لا يوجد رقم طلب للنسخ");
@@ -574,4 +957,3 @@
   </script>
 </body>
 </html>
-  
