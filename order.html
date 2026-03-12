@@ -155,9 +155,9 @@
     }
 
     main{
-  padding:18px;
-  flex:0 0 auto;
-}
+      padding:18px;
+      flex:0 0 auto;
+    }
 
     @media (max-width:720px){
       main{ padding:12px; }
@@ -279,6 +279,99 @@
     }
 
     .seg input{width:auto; margin:0}
+
+    .paymentGrid{
+      display:grid;
+      grid-template-columns:repeat(3, minmax(0,1fr));
+      gap:12px;
+      margin-top:10px;
+    }
+
+    .paymentOption{
+      position:relative;
+    }
+
+    .paymentOption input{
+      position:absolute;
+      opacity:0;
+      pointer-events:none;
+    }
+
+    .paymentCard{
+      min-height:66px;
+      border:1px solid var(--stroke);
+      border-radius:16px;
+      background:rgba(255,255,255,.96);
+      padding:12px 14px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      cursor:pointer;
+      box-shadow:0 8px 18px rgba(15,23,42,.05);
+      transition:border-color .15s ease, box-shadow .15s ease, background .15s ease, transform .15s ease;
+    }
+
+    .paymentCard:hover{
+      border-color:rgba(212,175,55,.55);
+      box-shadow:0 12px 22px rgba(212,175,55,.10);
+    }
+
+    .paymentOption input:checked + .paymentCard{
+      border-color:rgba(212,175,55,.72);
+      background:linear-gradient(135deg, rgba(212,175,55,.16), rgba(255,255,255,.98));
+      box-shadow:0 14px 26px rgba(212,175,55,.12);
+    }
+
+    .paymentText{
+      display:flex;
+      flex-direction:column;
+      gap:3px;
+      min-width:0;
+    }
+
+    .paymentTitle{
+      font-size:14px;
+      font-weight:1000;
+      color:#0f172a;
+      line-height:1.4;
+    }
+
+    .paymentSub{
+      font-size:11px;
+      color:var(--muted);
+      font-weight:800;
+      line-height:1.6;
+    }
+
+    .paymentDot{
+      width:22px;
+      height:22px;
+      border-radius:999px;
+      border:2px solid #94a3b8;
+      background:#fff;
+      flex:0 0 auto;
+      position:relative;
+      transition:border-color .15s ease, background .15s ease;
+    }
+
+    .paymentOption input:checked + .paymentCard .paymentDot{
+      border-color:#0f172a;
+    }
+
+    .paymentOption input:checked + .paymentCard .paymentDot::after{
+      content:"";
+      position:absolute;
+      inset:4px;
+      border-radius:999px;
+      background:#111827;
+    }
+
+    @media (max-width:720px){
+      .paymentGrid{
+        grid-template-columns:1fr;
+      }
+    }
 
     label{
       display:block;
@@ -802,6 +895,42 @@
           <label><input type="radio" name="type" value="قطاعي" checked> قطاعي</label>
           <label><input type="radio" name="type" value="جملة"> جملة</label>
         </div>
+
+        <div style="margin-top:14px;font-weight:1000">طريقة الدفع</div>
+        <div class="paymentGrid" role="radiogroup" aria-label="طريقة الدفع">
+          <label class="paymentOption">
+            <input type="radio" name="paymentMethod" value="COD" checked>
+            <span class="paymentCard">
+              <span class="paymentText">
+                <span class="paymentTitle">COD</span>
+                <span class="paymentSub">كاش عند الاستلام</span>
+              </span>
+              <span class="paymentDot" aria-hidden="true"></span>
+            </span>
+          </label>
+
+          <label class="paymentOption">
+            <input type="radio" name="paymentMethod" value="Wallet">
+            <span class="paymentCard">
+              <span class="paymentText">
+                <span class="paymentTitle">محفظة إلكترونية</span>
+                <span class="paymentSub">Vodafone Cash / Orange Cash / WePay</span>
+              </span>
+              <span class="paymentDot" aria-hidden="true"></span>
+            </span>
+          </label>
+
+          <label class="paymentOption">
+            <input type="radio" name="paymentMethod" value="InstaPay">
+            <span class="paymentCard">
+              <span class="paymentText">
+                <span class="paymentTitle">InstaPay</span>
+                <span class="paymentSub">تحويل فوري عبر InstaPay</span>
+              </span>
+              <span class="paymentDot" aria-hidden="true"></span>
+            </span>
+          </label>
+        </div>
       </div>
 
       <div class="card">
@@ -1002,11 +1131,26 @@
     return document.querySelector("input[name='type']:checked").value;
   }
 
+  function getPaymentMethodValue(){
+    const el = document.querySelector("input[name='paymentMethod']:checked");
+    return el ? el.value : "COD";
+  }
+
+  function getPaymentMethodLabel(){
+    const map = {
+      COD: "COD — كاش عند الاستلام",
+      Wallet: "محفظة إلكترونية",
+      InstaPay: "InstaPay"
+    };
+    return map[getPaymentMethodValue()] || "COD — كاش عند الاستلام";
+  }
+
   function setNote(){
+    const pay = getPaymentMethodLabel();
     note.textContent =
       getType() === "جملة"
-      ? "✅ تم استلام طلب الجملة بنجاح. بعد إتمام تسجيل البيانات سنحوّلك لصفحة التأكيد."
-      : "✅ تم تجهيز طلبك. بعد إتمام تسجيل البيانات سنحوّلك لصفحة التأكيد.";
+      ? `✅ تم استلام طلب الجملة بنجاح. طريقة الدفع المختارة: ${pay}. بعد إتمام تسجيل البيانات سنحوّلك لصفحة التأكيد.`
+      : `✅ تم تجهيز طلبك. طريقة الدفع المختارة: ${pay}. بعد إتمام تسجيل البيانات سنحوّلك لصفحة التأكيد.`;
   }
 
   function showToast(msg){
@@ -1187,6 +1331,7 @@
     renderTotals();
     updateSendButtonsState();
   }
+
   cartBox.addEventListener("click", (ev)=>{
     const btn = ev.target.closest("[data-act]");
     if(!btn) return;
@@ -1360,6 +1505,8 @@
     const cart = getCart();
     const orderId = getStableOrderId();
     const type = getType();
+    const paymentMethod = getPaymentMethodValue();
+    const paymentLabel = getPaymentMethodLabel();
 
     const name = (nameEl.value||"").trim();
     const phone = (phoneEl.value||"").trim();
@@ -1395,6 +1542,8 @@
       phone,
       address,
       orderType: type,
+      payment_method: paymentMethod,
+      payment_label: paymentLabel,
       createdDate: dateOnly,
       createdTime: timeOnly,
       subtotal: summary.grandTotal,
@@ -1542,6 +1691,11 @@
         const summaryPayload = {
           order_id: String(data.order_id || payload.orderId || ""),
           customer_name: String(payload.name || ""),
+          phone: String(payload.phone || ""),
+          address: String(payload.address || ""),
+          order_type: String(payload.orderType || ""),
+          payment_method: String(payload.payment_method || "COD"),
+          payment_label: String(payload.payment_label || "COD — كاش عند الاستلام"),
           total: Number(payload.final_total || 0),
           total_items: Number(payload.total_items || 0),
           total_qty: Number(payload.total_qty || 0),
@@ -1552,7 +1706,8 @@
             name: String(it.name || ""),
             qty: Number(it.qty || 0),
             unit_price: Number(it.unit_price || it.price || 0),
-            line_total: Number(it.line_total || 0)
+            line_total: Number(it.line_total || 0),
+            availability: "Available"
           })) : []
         };
 
@@ -1581,6 +1736,10 @@
   }
 
   document.querySelectorAll("input[name='type']").forEach(r=>{
+    r.addEventListener("change", setNote);
+  });
+
+  document.querySelectorAll("input[name='paymentMethod']").forEach(r=>{
     r.addEventListener("change", setNote);
   });
 
