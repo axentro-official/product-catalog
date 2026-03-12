@@ -148,8 +148,8 @@
     }
 
     main{
-      flex:1;
       padding:24px 16px;
+      flex:0 0 auto;
     }
 
     .wrap{
@@ -246,7 +246,7 @@
     .summaryGrid{
       margin-top:18px;
       display:grid;
-      grid-template-columns:repeat(3, minmax(0,1fr));
+      grid-template-columns:repeat(4, minmax(0,1fr));
       gap:12px;
     }
 
@@ -269,6 +269,7 @@
       font-size:18px;
       font-weight:1000;
       color:#0f172a;
+      line-height:1.6;
     }
 
     .amountWords{
@@ -407,6 +408,7 @@
       font-weight:1000;
       color:#0f172a;
     }
+
     .btns{
       margin-top:22px;
       display:grid;
@@ -463,7 +465,7 @@
     }
 
     .site-footer{
-      margin-top:auto;
+      margin-top:18px;
       padding:18px 16px 22px;
       text-align:center;
       color:var(--muted);
@@ -663,6 +665,11 @@
             <div class="summaryLabel">الإجمالي الحالي</div>
             <div id="grandTotal" class="summaryValue">0.00 EGP</div>
           </div>
+
+          <div class="summaryBox">
+            <div class="summaryLabel">طريقة الدفع</div>
+            <div id="paymentMethod" class="summaryValue">COD</div>
+          </div>
         </div>
 
         <div id="amountWords" class="amountWords">صفر جنيه مصري فقط لا غير</div>
@@ -729,6 +736,7 @@
     const grandTotalEl   = document.getElementById("grandTotal");
     const amountWordsEl  = document.getElementById("amountWords");
     const shippingNoteEl = document.getElementById("shippingNote");
+    const paymentMethodEl= document.getElementById("paymentMethod");
     const itemsListEl    = document.getElementById("itemsList");
     const copyBtn        = document.getElementById("copyBtn");
     const toastEl        = document.getElementById("toast");
@@ -837,6 +845,22 @@
       }
     }
 
+    function buildDerivedSummary(items){
+      const arr = Array.isArray(items) ? items : [];
+      const totalItems = arr.length;
+      let totalQty = 0;
+      let total = 0;
+
+      arr.forEach(it=>{
+        const qty = Number(it.qty || 0);
+        const lineTotal = money(it.line_total || (qty * money(it.unit_price || it.price || 0)));
+        totalQty += qty;
+        total += lineTotal;
+      });
+
+      return { totalItems, totalQty, total };
+    }
+
     function renderItems(items){
       itemsListEl.innerHTML = "";
 
@@ -925,15 +949,18 @@
     }
 
     const params = new URLSearchParams(location.search);
-    const savedSummary = getSavedSummary();
+    const savedSummary = getSavedSummary() || {};
 
     const fallbackOrderId = sessionStorage.getItem("BS_LAST_ORDER_ID") || "—";
-    const orderId = params.get("order_id") || savedSummary?.order_id || fallbackOrderId;
-    const total = money(savedSummary?.total || sessionStorage.getItem("BS_LAST_ORDER_TOTAL") || 0);
-    const totalItems = Number(savedSummary?.total_items || 0);
-    const totalQty = Number(savedSummary?.total_qty || 0);
-    const shippingNote = String(savedSummary?.shipping_note || "رسوم الشحن يتم تحديدها بعد مراجعة الطلب وفقًا للمنطقة وعنوان التسليم.");
-    const items = Array.isArray(savedSummary?.items) ? savedSummary.items : [];
+    const orderId = params.get("order_id") || savedSummary.order_id || fallbackOrderId;
+    const items = Array.isArray(savedSummary.items) ? savedSummary.items : [];
+    const derived = buildDerivedSummary(items);
+
+    const total = money(savedSummary.total || sessionStorage.getItem("BS_LAST_ORDER_TOTAL") || derived.total || 0);
+    const totalItems = Number(savedSummary.total_items || derived.totalItems || 0);
+    const totalQty = Number(savedSummary.total_qty || derived.totalQty || 0);
+    const shippingNote = String(savedSummary.shipping_note || "رسوم الشحن يتم تحديدها بعد مراجعة الطلب وفقًا للمنطقة وعنوان التسليم.");
+    const paymentLabel = String(savedSummary.payment_label || savedSummary.payment_method || "COD — كاش عند الاستلام");
 
     orderIdEl.textContent = orderId || "—";
     itemsCountEl.textContent = String(totalItems);
@@ -941,6 +968,7 @@
     grandTotalEl.textContent = formatEGP(total);
     amountWordsEl.textContent = numberToArabicWords(total);
     shippingNoteEl.textContent = shippingNote;
+    paymentMethodEl.textContent = paymentLabel;
 
     renderItems(items);
 
